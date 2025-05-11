@@ -2,15 +2,30 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Valoraciones de Jugadores</title>
+  <title>Jugadores Solar football</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS desde CDN -->
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-  <div class="container py-5">
-    <h2 class="text-center mb-4">Valoraciones de Jugadores</h2>
-    <div class="table-responsive">
+
+<div class="container py-4">
+  <h1 class="text-center mb-4">Gestión de Jugadores</h1>
+
+  <!-- Nav Tabs -->
+  <ul class="nav nav-tabs mb-4" id="tabs">
+    <li class="nav-item">
+      <a class="nav-link active" href="#valoraciones" data-bs-toggle="tab">Valoraciones</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#asistencia" data-bs-toggle="tab">Asistencia</a>
+    </li>
+  </ul>
+
+  <!-- Tab Contents -->
+  <div class="tab-content">
+    <!-- TAB 1: Valoraciones -->
+    <div class="tab-pane fade show active" id="valoraciones">
       <table id="tabla-jugadores" class="table table-striped table-bordered text-center">
         <thead class="table-dark">
           <tr>
@@ -20,14 +35,23 @@
             <th>Media</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Se llenará dinámicamente -->
-        </tbody>
+        <tbody></tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Script personalizado -->
-  <script src="Jugadores.js"></script>
+    <!-- TAB 2: Asistencia -->
+    <div class="tab-pane fade" id="asistencia">
+      <form id="form-asistencia" class="mb-3"></form>
+      <button class="btn btn-primary" id="generar-equipos" disabled>Generar Equipos</button>
+      <div id="resultado-equipos" class="mt-4 row"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Script principal -->
+<script src="Jugadores.js"></script>
 </body>
 </html>
