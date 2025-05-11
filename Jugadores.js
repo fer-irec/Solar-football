@@ -40,77 +40,32 @@ const jugadores = [
       const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
       const fila = `<tr>
         <td>${j.nombre}</td>
-        <td class="${colorClase(j.ataque)}">${j.ataque}</td>
-        <td class="${colorClase(j.defensa)}">${j.defensa}</td>
-        <td class="${colorClase(media)}">${media}</td>
+        <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
+        <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
+        <td><span class="${colorClase(media)}">${media}</span></td>
       </tr>`;
       tbody.insertAdjacentHTML("beforeend", fila);
     });
   }
   
-  function mostrarAsistencia() {
-    const form = document.getElementById("form-asistencia");
-    form.innerHTML = "";
-    jugadores.forEach((j, i) => {
-      form.insertAdjacentHTML("beforeend", `
-        <div class="form-check">
-          <input class="form-check-input jugador-checkbox" type="checkbox" id="jugador${i}" value="${i}">
-          <label class="form-check-label" for="jugador${i}">${j.nombre}</label>
-        </div>`);
-    });
-    document.querySelectorAll(".jugador-checkbox").forEach(cb =>
-      cb.addEventListener("change", validarSeleccion));
-  }
-  
-  function validarSeleccion() {
-    const seleccionados = document.querySelectorAll(".jugador-checkbox:checked");
-    document.getElementById("generar-equipos").disabled = seleccionados.length !== 12;
-  }
-  
-  function generarEquipos() {
-    const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
-      .map(cb => jugadores[parseInt(cb.value)])
-      .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
-  
-    seleccionados.sort((a, b) => b.media - a.media);
-    const eq1 = [], eq2 = [];
-    seleccionados.forEach((j, i) => (i % 2 === 0 ? eq1 : eq2).push(j));
-    mostrarEquipos(eq1, eq2);
-  }
-  
-  function mostrarEquipos(eq1, eq2) {
-    const cont = document.getElementById("resultado-equipos");
-    const media1 = eq1.reduce((s, j) => s + j.ataque, 0) / eq1.length;
-    const media2 = eq1.reduce((s, j) => s + j.defensa, 0) / eq1.length;
-    const media3 = eq2.reduce((s, j) => s + j.ataque, 0) / eq2.length;
-    const media4 = eq2.reduce((s, j) => s + j.defensa, 0) / eq2.length;
-  
-    cont.innerHTML = `
-      <div class="col-md-6">
-        <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-        <p>ATK: ${media1.toFixed(2)} | DEF: ${media2.toFixed(2)}</p>
-        <ul class="list-group">
-          ${eq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}
-        </ul>
-      </div>
-      <div class="col-md-6">
-        <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-        <p>ATK: ${media3.toFixed(2)} | DEF: ${media4.toFixed(2)}</p>
-        <ul class="list-group">
-          ${eq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}
-        </ul>
-      </div>
-    `;
-  }
-  
   function mostrarVotaciones() {
     const form = document.getElementById("form-votaciones");
     form.innerHTML = "";
+    form.insertAdjacentHTML("beforeend", `<div class="row fw-bold text-center">
+      <div class="col-md-4">Jugador</div>
+      <div class="col-md-4">Votar Ataque</div>
+      <div class="col-md-4">Votar Defensa</div>
+    </div>`);
     jugadores.forEach((j, i) => {
       form.insertAdjacentHTML("beforeend", `
-        <div class="col-md-6">
-          <label for="voto${i}" class="form-label">${j.nombre}</label>
-          <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="voto${i}" data-index="${i}">
+        <div class="row align-items-center mb-2">
+          <div class="col-md-4">${j.nombre}</div>
+          <div class="col-md-4">
+            <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="atk${i}" data-index="${i}">
+          </div>
+          <div class="col-md-4">
+            <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="def${i}" data-index="${i}">
+          </div>
         </div>`);
     });
   }
@@ -119,10 +74,13 @@ const jugadores = [
     const resultados = document.getElementById("votacion-resultado");
     resultados.innerHTML = "<h5>Media de votaciones:</h5><ul class='list-group'>";
     jugadores.forEach((j, i) => {
-      const input = document.getElementById(`voto${i}`);
-      if (input && input.value) {
-        const nuevo = (parseFloat(j.ataque + j.defensa + parseFloat(input.value)) / 3).toFixed(2);
-        resultados.innerHTML += `<li class='list-group-item'>${j.nombre}: Nueva media = ${nuevo}</li>`;
+      const atkInput = document.getElementById(`atk${i}`);
+      const defInput = document.getElementById(`def${i}`);
+      const atk = parseFloat(atkInput?.value);
+      const def = parseFloat(defInput?.value);
+      if (!isNaN(atk) && !isNaN(def)) {
+        const nuevaMedia = ((atk + def) / 2).toFixed(2);
+        resultados.innerHTML += `<li class='list-group-item'>${j.nombre}: Nueva media = ${nuevaMedia}</li>`;
       }
     });
     resultados.innerHTML += "</ul>";
@@ -135,3 +93,4 @@ const jugadores = [
     document.getElementById("generar-equipos").addEventListener("click", generarEquipos);
     document.getElementById("guardar-votaciones").addEventListener("click", guardarVotaciones);
   });
+  
