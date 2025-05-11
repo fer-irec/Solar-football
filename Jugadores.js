@@ -108,6 +108,7 @@ const jugadores = [
       const resultado = document.getElementById("votacion-resultado");
       resultado.prepend(alerta);
       setTimeout(() => alerta.remove(), 3000);
+    });
   });
   });
   
