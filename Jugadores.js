@@ -5,7 +5,7 @@ const jugadores = [
     { nombre: "Jacob", ataque: 4, defensa: 4 },
     { nombre: "Min", ataque: 1.8, defensa: 2 },
     { nombre: "Damián", ataque: 4.2, defensa: 4 },
-    { nombre: "Mario", ataque: 1, defensa: 2.2 },
+    { nombre: "Mario", ataque: 1.0, defensa: 2.2 },
     { nombre: "Mirko", ataque: 4, defensa: 4 },
     { nombre: "Qecco (GK)", ataque: 1.5, defensa: 4 },
     { nombre: "Oriol (GK)", ataque: 1.5, defensa: 4 },
