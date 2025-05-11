@@ -1,4 +1,3 @@
-// Lista de 20 jugadores
 const jugadores = [
     { nombre: "Carlos Gómez", ataque: 4.5, defensa: 3.8 },
     { nombre: "Luis Torres", ataque: 3.2, defensa: 2.9 },
@@ -22,12 +21,10 @@ const jugadores = [
     { nombre: "Gabriel Reyes", ataque: 3.6, defensa: 4.5 }
   ];
   
-  // Limita los valores entre 0 y 5
   function limitar(valor) {
     return Math.max(0, Math.min(5, valor));
   }
   
-  // Aplica clase de color según valor
   function colorear(valor) {
     valor = parseFloat(valor);
     if (valor < 2) return "bg-danger text-white";       // rojo
@@ -35,7 +32,6 @@ const jugadores = [
     return "bg-primary text-white";                     // azul
   }
   
-  // Mostrar tabla con colores por valor
   function mostrarTabla() {
     const cuerpo = document.querySelector("#tabla-jugadores tbody");
   
@@ -53,14 +49,16 @@ const jugadores = [
     });
   }
   
-  // Mostrar formulario de asistencia
   function mostrarAsistencia() {
     const form = document.getElementById("form-asistencia");
+    form.innerHTML = ""; // Evitar duplicados al recargar
+  
     jugadores.forEach((j, i) => {
-      const check = `<div class="form-check">
-        <input class="form-check-input jugador-checkbox" type="checkbox" id="jugador${i}" value="${i}">
-        <label class="form-check-label" for="jugador${i}">${j.nombre}</label>
-      </div>`;
+      const check = `
+        <div class="form-check mb-2">
+          <input class="form-check-input jugador-checkbox" type="checkbox" id="jugador${i}" value="${i}">
+          <label class="form-check-label" for="jugador${i}">${j.nombre}</label>
+        </div>`;
       form.insertAdjacentHTML('beforeend', check);
     });
   
@@ -69,13 +67,11 @@ const jugadores = [
     );
   }
   
-  // Habilita botón si hay 12 confirmados
   function validarSeleccion() {
     const activos = document.querySelectorAll(".jugador-checkbox:checked");
     document.getElementById("generar-equipos").disabled = activos.length !== 12;
   }
   
-  // Genera equipos equilibrados por media
   function generarEquipos() {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
       .map(cb => jugadores[parseInt(cb.value)])
@@ -90,7 +86,6 @@ const jugadores = [
     mostrarEquipos(equipo1, equipo2);
   }
   
-  // Muestra equipos en pantalla
   function mostrarEquipos(eq1, eq2) {
     const cont = document.getElementById("resultado-equipos");
     cont.innerHTML = `
@@ -109,7 +104,6 @@ const jugadores = [
     `;
   }
   
-  // Inicializar todo
   document.addEventListener("DOMContentLoaded", () => {
     mostrarTabla();
     mostrarAsistencia();
