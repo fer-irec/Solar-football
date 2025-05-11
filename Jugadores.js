@@ -57,14 +57,16 @@ const jugadores = [
       <div class="col-md-4">Votar Defensa</div>
     </div>`);
     jugadores.forEach((j, i) => {
+      const savedAtk = localStorage.getItem(`jugador_${i}_ataque`) || "";
+      const savedDef = localStorage.getItem(`jugador_${i}_defensa`) || "";
       form.insertAdjacentHTML("beforeend", `
         <div class="row align-items-center mb-2">
           <div class="col-md-4">${j.nombre}</div>
           <div class="col-md-4">
-            <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="atk${i}" data-index="${i}">
+            <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="atk${i}" value="${savedAtk}" data-index="${i}">
           </div>
           <div class="col-md-4">
-            <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="def${i}" data-index="${i}">
+            <input type="number" min="0" max="5" step="0.1" class="form-control voto-input" id="def${i}" value="${savedDef}" data-index="${i}">
           </div>
         </div>`);
     });
@@ -81,13 +83,15 @@ const jugadores = [
       if (!isNaN(atk) && !isNaN(def)) {
         j.ataque = atk;
         j.defensa = def;
+        localStorage.setItem(`jugador_${i}_ataque`, atk);
+        localStorage.setItem(`jugador_${i}_defensa`, def);
         const nuevaMedia = ((atk + def) / 2).toFixed(2);
         resultados.innerHTML += `<li class='list-group-item'>${j.nombre}: Nueva media = ${nuevaMedia}</li>`;
       }
     });
     resultados.innerHTML += "</ul>";
     mostrarTabla();
-    mostrarVotaciones(); // Limpia formulario
+    mostrarVotaciones();
   }
   }
     });
@@ -108,7 +112,6 @@ const jugadores = [
       const resultado = document.getElementById("votacion-resultado");
       resultado.prepend(alerta);
       setTimeout(() => alerta.remove(), 3000);
-    });
-  });
+      });
   });
   
