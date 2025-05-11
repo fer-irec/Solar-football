@@ -92,11 +92,10 @@ const jugadores = [
     resultados.innerHTML += "</ul>";
     mostrarTabla();
     mostrarVotaciones();
+    document.querySelectorAll('.voto-input').forEach(input => input.value = '');
   }
-  }
-    });
+  ;
     resultados.innerHTML += "</ul>";
-  }
   
   document.addEventListener("DOMContentLoaded", () => {
     mostrarTabla();
