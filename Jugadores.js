@@ -112,3 +112,51 @@ const jugadores = [
     });
   });
   
+
+  function mostrarAsistencia() {
+    const form = document.getElementById("form-asistencia");
+    form.innerHTML = "";
+    jugadores.forEach((j, i) => {
+      form.insertAdjacentHTML("beforeend", `
+        <div class="form-check col-md-6">
+          <input class="form-check-input jugador-checkbox" type="checkbox" id="jugador${i}" value="${i}">
+          <label class="form-check-label" for="jugador${i}">${j.nombre}</label>
+        </div>`);
+    });
+    document.querySelectorAll(".jugador-checkbox").forEach(cb =>
+      cb.addEventListener("change", validarSeleccion));
+  }
+  
+  function validarSeleccion() {
+    const seleccionados = document.querySelectorAll(".jugador-checkbox:checked");
+    document.getElementById("generar-equipos").disabled = seleccionados.length !== 12;
+  }
+  
+  function generarEquipos() {
+    const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
+      .map(cb => jugadores[parseInt(cb.value)])
+      .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
+  
+    seleccionados.sort((a, b) => b.media - a.media);
+    const eq1 = [], eq2 = [];
+    seleccionados.forEach((j, i) => (i % 2 === 0 ? eq1 : eq2).push(j));
+  
+    const media1_atk = (eq1.reduce((s, j) => s + j.ataque, 0) / eq1.length).toFixed(2);
+    const media1_def = (eq1.reduce((s, j) => s + j.defensa, 0) / eq1.length).toFixed(2);
+    const media2_atk = (eq2.reduce((s, j) => s + j.ataque, 0) / eq2.length).toFixed(2);
+    const media2_def = (eq2.reduce((s, j) => s + j.defensa, 0) / eq2.length).toFixed(2);
+  
+    const cont = document.getElementById("resultado-equipos");
+    cont.innerHTML = `
+      <div class="col-md-6">
+        <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
+        <p>ATK: ${media1_atk} | DEF: ${media1_def}</p>
+        <ul class="list-group">${eq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
+      </div>
+      <div class="col-md-6">
+        <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
+        <p>ATK: ${media2_atk} | DEF: ${media2_def}</p>
+        <ul class="list-group">${eq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
+      </div>`;
+  }
+  
