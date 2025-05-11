@@ -95,24 +95,6 @@ const jugadores = [
     document.querySelectorAll('.voto-input').forEach(input => input.value = '');
   }
   
-  document.addEventListener("DOMContentLoaded", () => {
-    mostrarTabla();
-    mostrarAsistencia();
-    mostrarVotaciones();
-    document.getElementById("generar-equipos").addEventListener("click", generarEquipos);
-    document.getElementById("guardar-votaciones").addEventListener("click", () => {
-      guardarVotaciones();
-      const alerta = document.createElement('div');
-      alerta.className = "alert alert-success mt-3";
-      alerta.role = "alert";
-      alerta.innerText = "¡Votos guardados y tabla actualizada!";
-      const resultado = document.getElementById("votacion-resultado");
-      resultado.prepend(alerta);
-      setTimeout(() => alerta.remove(), 3000);
-    });
-  });
-  
-
   function mostrarAsistencia() {
     const form = document.getElementById("form-asistencia");
     form.innerHTML = "";
@@ -159,4 +141,21 @@ const jugadores = [
         <ul class="list-group">${eq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>`;
   }
+  
+  document.addEventListener("DOMContentLoaded", () => {
+    mostrarTabla();
+    mostrarAsistencia();
+    mostrarVotaciones();
+    document.getElementById("generar-equipos").addEventListener("click", generarEquipos);
+    document.getElementById("guardar-votaciones").addEventListener("click", () => {
+      guardarVotaciones();
+      const alerta = document.createElement('div');
+      alerta.className = "alert alert-success mt-3";
+      alerta.role = "alert";
+      alerta.innerText = "¡Votos guardados y tabla actualizada!";
+      const resultado = document.getElementById("votacion-resultado");
+      resultado.prepend(alerta);
+      setTimeout(() => alerta.remove(), 3000);
+    });
+  });
   
