@@ -4,30 +4,46 @@
   <meta charset="UTF-8">
   <title>Jugadores Solar football</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .valor-rojo { color: red; }
+    .valor-naranja { color: orange; }
+    .valor-verde { color: green; }
+    .circle {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .white-circle { background-color: white; border: 1px solid #ccc; }
+    .blue-circle { background-color: blue; }
+    .red-circle { background-color: red; }
+    .orange-circle { background-color: orange; }
+  </style>
 </head>
 <body class="bg-light">
 
 <div class="container py-4">
   <h1 class="text-center mb-4">Jugadores Solar football</h1>
 
-  <!-- Pestañas de navegación -->
+  <!-- Pestañas -->
   <ul class="nav nav-tabs mb-4" id="tabs">
     <li class="nav-item">
-      <a class="nav-link active" href="#jugadores" data-bs-toggle="tab">Jugadores</a>
+      <a class="nav-link active" data-bs-toggle="tab" href="#jugadores">Jugadores</a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#convocatoria" data-bs-toggle="tab">Convocatoria</a>
+      <a class="nav-link" data-bs-toggle="tab" href="#convocatoria">Convocatoria</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-bs-toggle="tab" href="#votaciones">Votaciones</a>
     </li>
   </ul>
 
-  <!-- Contenido de pestañas -->
   <div class="tab-content">
-    <!-- Pestaña Jugadores -->
+    <!-- Jugadores -->
     <div class="tab-pane fade show active" id="jugadores">
-      <table id="tabla-jugadores" class="table table-bordered table-hover text-center">
+      <table id="tabla-jugadores" class="table table-bordered text-center">
         <thead class="table-dark">
           <tr>
             <th>Jugador</th>
@@ -40,19 +56,24 @@
       </table>
     </div>
 
-    <!-- Pestaña Convocatoria -->
+    <!-- Convocatoria -->
     <div class="tab-pane fade" id="convocatoria">
-      <form id="form-asistencia" class="mb-3"></form>
-      <button class="btn btn-primary" id="generar-equipos" disabled>Generar Equipos</button>
-      <div id="resultado-equipos" class="mt-4 row"></div>
+      <form id="form-asistencia" class="mb-3 row row-cols-2"></form>
+      <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
+      <div id="resultado-equipos" class="row"></div>
+    </div>
+
+    <!-- Votaciones -->
+    <div class="tab-pane fade" id="votaciones">
+      <form id="form-votaciones" class="row g-3">
+        <!-- Se genera dinámicamente -->
+      </form>
+      <button class="btn btn-success mt-3" id="guardar-votaciones">Guardar Votos</button>
     </div>
   </div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Archivo de funcionalidad -->
 <script src="Jugadores.js"></script>
-
 </body>
 </html>
