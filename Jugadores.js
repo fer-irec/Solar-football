@@ -79,9 +79,17 @@ const jugadores = [
       const atk = parseFloat(atkInput?.value);
       const def = parseFloat(defInput?.value);
       if (!isNaN(atk) && !isNaN(def)) {
+        j.ataque = atk;
+        j.defensa = def;
         const nuevaMedia = ((atk + def) / 2).toFixed(2);
         resultados.innerHTML += `<li class='list-group-item'>${j.nombre}: Nueva media = ${nuevaMedia}</li>`;
       }
+    });
+    resultados.innerHTML += "</ul>";
+    mostrarTabla();
+    mostrarVotaciones(); // Limpia formulario
+  }
+  }
     });
     resultados.innerHTML += "</ul>";
   }
@@ -91,6 +99,15 @@ const jugadores = [
     mostrarAsistencia();
     mostrarVotaciones();
     document.getElementById("generar-equipos").addEventListener("click", generarEquipos);
-    document.getElementById("guardar-votaciones").addEventListener("click", guardarVotaciones);
+    document.getElementById("guardar-votaciones").addEventListener("click", () => {
+      guardarVotaciones();
+      const alerta = document.createElement('div');
+      alerta.className = "alert alert-success mt-3";
+      alerta.role = "alert";
+      alerta.innerText = "¡Votos guardados y tabla actualizada!";
+      const resultado = document.getElementById("votacion-resultado");
+      resultado.prepend(alerta);
+      setTimeout(() => alerta.remove(), 3000);
+  });
   });
   
