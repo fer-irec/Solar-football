@@ -1,4 +1,4 @@
-// Lista de jugadores con valores de ataque y defensa
+// Lista de jugadores con puntuaciones
 const jugadores = [
     { nombre: "Carlos Gómez", ataque: 4.5, defensa: 3.8 },
     { nombre: "Luis Torres", ataque: 3.2, defensa: 2.9 },
@@ -7,47 +7,28 @@ const jugadores = [
     { nombre: "Marco Díaz", ataque: 3.9, defensa: 3.5 }
   ];
   
-  // Función para limitar el valor entre 0 y 5
+  // Calcula media limitada entre 0 y 5
   function limitar(valor) {
     return Math.max(0, Math.min(5, valor));
   }
   
-  // Crear tabla de jugadores
-  function crearTablaJugadores(jugadores) {
-    const tabla = document.createElement('table');
-    tabla.style.borderCollapse = 'collapse';
-    tabla.style.width = '100%';
-  
-    // Encabezado
-    const encabezado = tabla.insertRow();
-    ['Jugador', 'Ataque', 'Defensa', 'Media'].forEach(texto => {
-      const th = document.createElement('th');
-      th.innerText = texto;
-      th.style.border = '1px solid #ccc';
-      th.style.padding = '8px';
-      th.style.backgroundColor = '#f2f2f2';
-      encabezado.appendChild(th);
-    });
-  
-    // Filas de jugadores
+  // Crea e inserta las filas en la tabla
+  function mostrarTabla() {
+    const cuerpo = document.querySelector("#tabla-jugadores tbody");
     jugadores.forEach(jugador => {
-      const fila = tabla.insertRow();
-      const media = limitar((jugador.ataque + jugador.defensa) / 2);
+      const fila = document.createElement("tr");
+      const media = limitar((jugador.ataque + jugador.defensa) / 2).toFixed(2);
   
-      [jugador.nombre, jugador.ataque, jugador.defensa, media.toFixed(2)].forEach(valor => {
-        const celda = fila.insertCell();
-        celda.innerText = valor;
-        celda.style.border = '1px solid #ccc';
-        celda.style.padding = '8px';
-      });
+      fila.innerHTML = `
+        <td>${jugador.nombre}</td>
+        <td>${jugador.ataque}</td>
+        <td>${jugador.defensa}</td>
+        <td>${media}</td>
+      `;
+  
+      cuerpo.appendChild(fila);
     });
-  
-    // Insertar tabla en el documento
-    document.getElementById('tabla-jugadores').appendChild(tabla);
   }
   
-  // Ejecutar cuando el DOM esté listo
-  document.addEventListener('DOMContentLoaded', () => {
-    crearTablaJugadores(jugadores);
-  });
+  document.addEventListener("DOMContentLoaded", mostrarTabla);
   
