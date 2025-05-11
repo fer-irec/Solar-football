@@ -94,8 +94,6 @@ const jugadores = [
     mostrarVotaciones();
     document.querySelectorAll('.voto-input').forEach(input => input.value = '');
   }
-  ;
-    resultados.innerHTML += "</ul>";
   
   document.addEventListener("DOMContentLoaded", () => {
     mostrarTabla();
@@ -111,6 +109,6 @@ const jugadores = [
       const resultado = document.getElementById("votacion-resultado");
       resultado.prepend(alerta);
       setTimeout(() => alerta.remove(), 3000);
-      });
+    });
   });
   
