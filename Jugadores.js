@@ -55,7 +55,7 @@ const jugadores = [
     const tbody = document.querySelector("#tabla-jugadores tbody");
     tbody.innerHTML = "";
     jugadores.forEach(j => {
-      const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
+      const media = limitar((parseFloat(j.ataque) + parseFloat(j.defensa)) / 2).toFixed(2);
       const fila = `<tr>
         <td>${j.nombre}</td>
         <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
@@ -99,11 +99,13 @@ const jugadores = [
       const atk = parseFloat(atkInput?.value);
       const def = parseFloat(defInput?.value);
       if (!isNaN(atk) && !isNaN(def)) {
-        j.ataque = atk;
-        j.defensa = def;
+        const atkProm = ((parseFloat(j.ataque) + atk) / 2).toFixed(2);
+        const defProm = ((parseFloat(j.defensa) + def) / 2).toFixed(2);
+        j.ataque = parseFloat(atkProm);
+        j.defensa = parseFloat(defProm);
         localStorage.setItem(`jugador_${i}_ataque`, atk);
         localStorage.setItem(`jugador_${i}_defensa`, def);
-        const nuevaMedia = ((atk + def) / 2).toFixed(2);
+        const nuevaMedia = ((j.ataque + j.defensa) / 2).toFixed(2);
         resultados.innerHTML += `<li class='list-group-item'>${j.nombre}: Nueva media = ${nuevaMedia}</li>`;
       }
     });
@@ -137,25 +139,60 @@ const jugadores = [
       .map(cb => jugadores[parseInt(cb.value)])
       .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
   
-    seleccionados.sort((a, b) => b.media - a.media);
-    const eq1 = [], eq2 = [];
-    seleccionados.forEach((j, i) => (i % 2 === 0 ? eq1 : eq2).push(j));
+    if (seleccionados.length !== 12) return;
   
-    const media1_atk = (eq1.reduce((s, j) => s + j.ataque, 0) / eq1.length).toFixed(2);
-    const media1_def = (eq1.reduce((s, j) => s + j.defensa, 0) / eq1.length).toFixed(2);
-    const media2_atk = (eq2.reduce((s, j) => s + j.ataque, 0) / eq2.length).toFixed(2);
-    const media2_def = (eq2.reduce((s, j) => s + j.defensa, 0) / eq2.length).toFixed(2);
+    function combinaciones(arr, k) {
+      const res = [];
+      function backtrack(start, path) {
+        if (path.length === k) {
+          res.push([...path]);
+          return;
+        }
+        for (let i = start; i < arr.length; i++) {
+          path.push(arr[i]);
+          backtrack(i + 1, path);
+          path.pop();
+        }
+      }
+      backtrack(0, []);
+      return res;
+    }
+  
+    const posibles = combinaciones(seleccionados, 6);
+    let mejor = null;
+    let menorDiff = Infinity;
+  
+    posibles.forEach(eq1 => {
+      const eq2 = seleccionados.filter(j => !eq1.includes(j));
+      const media1 = eq1.reduce((s, j) => s + j.media, 0) / 6;
+      const media2 = eq2.reduce((s, j) => s + j.media, 0) / 6;
+      const diff = Math.abs(media1 - media2);
+      if (diff < menorDiff) {
+        menorDiff = diff;
+        mejor = [eq1, eq2];
+      }
+    });
+  
+    const [eq1, eq2] = mejor;
+  
+    const promedio = eq => ({
+      atk: (eq.reduce((s, j) => s + j.ataque, 0) / eq.length).toFixed(2),
+      def: (eq.reduce((s, j) => s + j.defensa, 0) / eq.length).toFixed(2)
+    });
+  
+    const m1 = promedio(eq1);
+    const m2 = promedio(eq2);
   
     const cont = document.getElementById("resultado-equipos");
     cont.innerHTML = `
       <div class="col-md-6">
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-        <p>ATK: ${media1_atk} | DEF: ${media1_def}</p>
+        <p>ATK: ${m1.atk} | DEF: ${m1.def}</p>
         <ul class="list-group">${eq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-        <p>ATK: ${media2_atk} | DEF: ${media2_def}</p>
+        <p>ATK: ${m2.atk} | DEF: ${m2.def}</p>
         <ul class="list-group">${eq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>`;
   }
@@ -164,7 +201,9 @@ const jugadores = [
     mostrarTabla();
     mostrarAsistencia();
     mostrarVotaciones();
+  
     document.getElementById("generar-equipos").addEventListener("click", generarEquipos);
+  
     document.getElementById("guardar-votaciones").addEventListener("click", () => {
       guardarVotaciones();
       const alerta = document.createElement('div');
