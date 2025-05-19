@@ -69,6 +69,12 @@ const jugadores = [
     const thead = document.querySelector("#tabla-jugadores thead tr");
     if (!thead.querySelector("th.fifa")) {
       thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+    }
+    const allTh = thead.querySelectorAll("th.fifa");
+    if (allTh.length > 1) {
+      for (let i = 1; i < allTh.length; i++) {
+        allTh[i].remove();
+      }
     } else {
       const allTh = thead.querySelectorAll("th.fifa");
       if (allTh.length > 1) allTh[1].remove();
