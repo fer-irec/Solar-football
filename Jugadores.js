@@ -40,7 +40,9 @@ const jugadores = [
     { nombre: "Alex Lopez", ataque: 3.5, defensa: 3.35, media: 3.425, fifa: 69 },
     { nombre: "Buda", ataque: 3.625, defensa: 3.9, media: 3.76, fifa: 75 },
     { nombre: "Lori", ataque: 3.475, defensa: 2.85, media: 3.16, fifa: 63 },
-    { nombre: "Tobi", ataque: 2.6, defensa: 4.03, media: 3.31, fifa: 66 },
+    { nombre: "Visitor 1", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
+    { nombre: "Visitor 2", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
+    { nombre: "Tobi", ataque: 2.6, defensa: 4.03, media: 3.31, fifa: 66 }
   ];
 
 function limitar(valor) {
