@@ -12,7 +12,7 @@ const jugadores = [
     { nombre: "Abel", ataque: 2.96, defensa: 2.86, media: 2.91, fifa: 58 },
     { nombre: "Arnau", ataque: 4.28, defensa: 3.94, media: 4.11, fifa: 82 },
     { nombre: "Niccolo", ataque: 3.74, defensa: 3.88, media: 3.81, fifa: 76 },
-    { nombre: "Merino", ataque: 2.75, defensa: 3.72, media: 3.23, fifa: 114354 },
+    { nombre: "Merino", ataque: 2.75, defensa: 3.72, media: 3.23, fifa: 65 },
     { nombre: "Liya", ataque: 3.42, defensa: 3.38, media: 3.4, fifa: 68 },
     { nombre: "Yuancai", ataque: 1.56, defensa: 1.44, media: 1.5, fifa: 30 },
     { nombre: "Jon", ataque: 2.72, defensa: 2.5, media: 2.61, fifa: 52 },
