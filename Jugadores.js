@@ -33,7 +33,7 @@ const jugadores = [
     { nombre: "Mario Lecce", ataque: 3.3, defensa: 3.45, media: 3.375, fifa: 68 },
     { nombre: "Jeff", ataque: 3.9, defensa: 3.65, media: 3.77, fifa: 76 },
     { nombre: "Payno", ataque: 3.26, defensa: 3.13, media: 3.2, fifa: 64 },
-    { nombre: "Kavin", ataque: 4.6, defensa: 4.22, media: 4.41, fifa: 88 },
+    { nombre: "Kevin", ataque: 4.6, defensa: 4.22, media: 4.41, fifa: 88 },
     { nombre: "Fabien", ataque: 3.13, defensa: 3.13, media: 3.13, fifa: 63 },
     { nombre: "Romain", ataque: 4.37, defensa: 4.3, media: 4.33, fifa: 87 },
     { nombre: "Maykel", ataque: 3.25, defensa: 3.175, media: 3.21, fifa: 64 },
