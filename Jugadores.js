@@ -76,6 +76,7 @@ function mostrarTabla() {
     const tbody = document.querySelector("#tabla-jugadores tbody");
     tbody.innerHTML = "";
     jugadores.forEach(j => {
+      if (isNaN(j.ataque) || isNaN(j.defensa) || isNaN(j.media)) return; // ignora datos incompletos
       const media = limitar((parseFloat(j.ataque) + parseFloat(j.defensa)) / 2).toFixed(2);
       const fila = `<tr>
         <td>${j.nombre}</td>
