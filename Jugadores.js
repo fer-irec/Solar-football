@@ -67,18 +67,16 @@ const jugadores = [
     const tbody = document.querySelector("#tabla-jugadores tbody");
     tbody.innerHTML = "";
     const thead = document.querySelector("#tabla-jugadores thead tr");
+  
     if (!thead.querySelector("th.fifa")) {
       thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
     }
+  
     const allTh = thead.querySelectorAll("th.fifa");
-    if (allTh.length > 1) {
-      for (let i = 1; i < allTh.length; i++) {
-        allTh[i].remove();
-      }
-    } else {
-      const allTh = thead.querySelectorAll("th.fifa");
-      if (allTh.length > 1) allTh[1].remove();
+    for (let i = 1; i < allTh.length; i++) {
+      allTh[i].remove();
     }
+  
     jugadores.forEach(j => {
       const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
       const fila = `<tr>
@@ -86,7 +84,8 @@ const jugadores = [
         <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
         <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
         <td><span class="${colorClase(media)}">${media}</span></td>
-      <td><span class="${colorFifa(j.fifa)}">${j.fifa ?? 0}</span></td></tr>`;
+        <td><span class="${colorFifa(j.fifa)}">${j.fifa ?? 0}</span></td>
+      </tr>`;
       tbody.insertAdjacentHTML("beforeend", fila);
     });
   }
