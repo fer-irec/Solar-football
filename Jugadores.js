@@ -1,44 +1,49 @@
-// Lista de jugadores completa
+// Lista de jugadores completa con columna FIFA
 const jugadores = [
-    { nombre: "Ale Navarro", ataque: 2.2, defensa: 2.2 },
-    { nombre: "Fer", ataque: 3, defensa: 3 },
-    { nombre: "Jacob", ataque: 4, defensa: 4 },
-    { nombre: "Min", ataque: 1.8, defensa: 2 },
-    { nombre: "Damián", ataque: 4.2, defensa: 4 },
-    { nombre: "Mario", ataque: 1.0, defensa: 2.2 },
-    { nombre: "Mirko", ataque: 4, defensa: 4 },
-    { nombre: "Qecco (GK)", ataque: 1.5, defensa: 4 },
-    { nombre: "Oriol (GK)", ataque: 1.5, defensa: 4 },
-    { nombre: "Abel", ataque: 2.5, defensa: 2.5 },
-    { nombre: "Arnau", ataque: 4.1, defensa: 4 },
-    { nombre: "Niccolo", ataque: 3.8, defensa: 3.4 },
-    { nombre: "Merino", ataque: 2.5, defensa: 3.5 },
-    { nombre: "Liya", ataque: 3, defensa: 2.8 },
-    { nombre: "Yuancai", ataque: 1.3, defensa: 1.2 },
-    { nombre: "Jon", ataque: 2.0, defensa: 2.3 },
-    { nombre: "Peña", ataque: 2.0, defensa: 2.3 },
-    { nombre: "Manu", ataque: 4.2, defensa: 3.7 },
-    { nombre: "Vito", ataque: 3.8, defensa: 4 },
-    { nombre: "Alex Jimenez", ataque: 4.2, defensa: 4.5 },
-    { nombre: "Andrea Magioli", ataque: 4.5, defensa: 4.5 },
-    { nombre: "Outman", ataque: 4.5, defensa: 4.7 },
-    { nombre: "David Rovira", ataque: 3, defensa: 2.5 },
-    { nombre: "Gustavo Madrigal", ataque: 2.5, defensa: 3 },
-    { nombre: "Diego", ataque: 1.6, defensa: 2 },
-    { nombre: "Andrea Aroldi", ataque: 1.6, defensa: 1.6 },
-    { nombre: "Ricard", ataque: 1.6, defensa: 2.8 },
-    { nombre: "Vitor", ataque: 2.2, defensa: 2.4 },
-    { nombre: "Mario Lecce", ataque: 2.8, defensa: 2.8 },
-    { nombre: "Jeff", ataque: 4, defensa: 4 },
-    { nombre: "Payno", ataque: 2.5, defensa: 2.5 },
-    { nombre: "Kevin", ataque: 4.5, defensa: 4 },
-    { nombre: "Romain", ataque: 4, defensa: 4 },
-    { nombre: "Maykel", ataque: 3.6, defensa: 3 },
-    { nombre: "Alex Lopez", ataque: 3.6, defensa: 3 },
-    { nombre: "Buda", ataque: 3.6, defensa: 3.2 },
-    { nombre: "Lori", ataque: 3.6, defensa: 3.2 },
-    { nombre: "Tobi", ataque: 2.8, defensa: 3.8 }
-];
+    { nombre: "Ale Navarro", ataque: 2.2, defensa: 2.2, fifa: 0 },
+    { nombre: "Fer", ataque: 3, defensa: 3, fifa: 0 },
+    { nombre: "Jacob", ataque: 4, defensa: 4, fifa: 0 },
+    { nombre: "Min", ataque: 1.8, defensa: 2, fifa: 0 },
+    { nombre: "Damián", ataque: 4.2, defensa: 4, fifa: 0 },
+    { nombre: "Mario", ataque: 1.0, defensa: 2.2, fifa: 0 },
+    { nombre: "Mirko", ataque: 4, defensa: 4, fifa: 0 },
+    { nombre: "Qecco (GK)", ataque: 1.5, defensa: 4, fifa: 0 },
+    { nombre: "Oriol (GK)", ataque: 1.5, defensa: 4, fifa: 0 },
+    { nombre: "Abel", ataque: 2.5, defensa: 2.5, fifa: 0 },
+    { nombre: "Arnau", ataque: 4.1, defensa: 4, fifa: 0 },
+    { nombre: "Niccolo", ataque: 3.8, defensa: 3.4, fifa: 0 },
+    { nombre: "Merino", ataque: 2.5, defensa: 3.5, fifa: 0 },
+    { nombre: "Liya", ataque: 3, defensa: 2.8, fifa: 0 },
+    { nombre: "Yuancai", ataque: 1.3, defensa: 1.2, fifa: 0 },
+    { nombre: "Jon", ataque: 2.0, defensa: 2.3, fifa: 0 },
+    { nombre: "Peña", ataque: 2.0, defensa: 2.3, fifa: 0 },
+    { nombre: "Manu", ataque: 4.2, defensa: 3.7, fifa: 0 },
+    { nombre: "Vito", ataque: 3.8, defensa: 4, fifa: 0 },
+    { nombre: "Alex Jimenez", ataque: 4.2, defensa: 4.5, fifa: 0 },
+    { nombre: "Andrea Magioli", ataque: 4.5, defensa: 4.5, fifa: 0 },
+    { nombre: "Outman", ataque: 4.5, defensa: 4.7, fifa: 0 },
+    { nombre: "Tolga", ataque: 3.4, defensa: 3, fifa: 0 },
+    { nombre: "Sergio Ramos", ataque: 3.5, defensa: 3.5, fifa: 0 },
+    { nombre: "David Rovira", ataque: 3, defensa: 2.5, fifa: 0 },
+    { nombre: "Gustavo Madrigal", ataque: 2.5, defensa: 3, fifa: 0 },
+    { nombre: "Diego", ataque: 1.6, defensa: 2, fifa: 0 },
+    { nombre: "Steven", ataque: 3, defensa: 3, fifa: 0 },
+    { nombre: "Andrea Aroldi", ataque: 1.6, defensa: 1.6, fifa: 0 },
+    { nombre: "Ricard", ataque: 1.6, defensa: 2.8, fifa: 0 },
+    { nombre: "Vitor", ataque: 2.2, defensa: 2.4, fifa: 0 },
+    { nombre: "Mario Lecce", ataque: 2.8, defensa: 2.8, fifa: 0 },
+    { nombre: "Jeff", ataque: 4, defensa: 4, fifa: 0 },
+    { nombre: "Payno", ataque: 2.5, defensa: 2.5, fifa: 0 },
+    { nombre: "Kevin", ataque: 4.5, defensa: 4, fifa: 0 },
+    { nombre: "Fabien", ataque: 2.0, defensa: 2.0, fifa: 0 },
+    { nombre: "Romain", ataque: 4, defensa: 4, fifa: 0 },
+    { nombre: "Maykel", ataque: 3.6, defensa: 3, fifa: 0 },
+    { nombre: "Alex Lopez", ataque: 3.6, defensa: 3, fifa: 0 },
+    { nombre: "Buda", ataque: 3.6, defensa: 3.2, fifa: 0 },
+    { nombre: "Lori", ataque: 3.6, defensa: 3.2, fifa: 0 },
+    { nombre: "David Rovira", ataque: 3, defensa: 2.5, fifa: 0 },
+    { nombre: "Tobi", ataque: 2.8, defensa: 3.8, fifa: 0 }
+  ];
 
 function limitar(valor) {
   return Math.max(0, Math.min(5, valor));
@@ -70,19 +75,21 @@ function cargarDesdeLocalStorage() {
 
 
 function mostrarTabla() {
-  const tbody = document.querySelector("#tabla-jugadores tbody");
-  tbody.innerHTML = "";
-  jugadores.forEach(j => {
-    const media = limitar((parseFloat(j.ataque) + parseFloat(j.defensa)) / 2).toFixed(2);
-    const fila = `<tr>
-      <td>${j.nombre}</td>
-      <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
-      <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
-      <td><span class="${colorClase(media)}">${media}</span></td>
-    </tr>`;
-    tbody.insertAdjacentHTML("beforeend", fila);
-  });
-}
+    const tbody = document.querySelector("#tabla-jugadores tbody");
+    tbody.innerHTML = "";
+    jugadores.forEach(j => {
+      const media = limitar((parseFloat(j.ataque) + parseFloat(j.defensa)) / 2).toFixed(2);
+      const fila = `<tr>
+        <td>${j.nombre}</td>
+        <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
+        <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
+        <td><span class="${colorClase(media)}">${media}</span></td>
+        <td><span>${j.fifa ?? 0}</span></td>
+      </tr>`;
+      tbody.insertAdjacentHTML("beforeend", fila);
+    });
+  }
+  
 
 function mostrarVotaciones() {
   const form = document.getElementById("form-votaciones");

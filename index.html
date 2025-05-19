@@ -25,7 +25,11 @@
 <body class="bg-light">
 
 <div class="container py-4">
-  <h1 class="text-center mb-4">Jugadores Solar football</h1>
+  <div class="text-center mb-3">
+    <img src="logo-solarfc.jpg" alt="Logo Solar Football" class="img-fluid" style="max-height: 100px;">
+  </div>
+  <h1 class="text-center mb-2">Jugadores Solar football</h1>
+  <p class="text-center text-muted" id="ultima-modificacion">Última actualización: <span id="fecha-modificacion"></span></p>
 
   <!-- Pestañas -->
   <ul class="nav nav-tabs mb-4" id="tabs">
@@ -50,6 +54,7 @@
             <th>Ataque</th>
             <th>Defensa</th>
             <th>Media</th>
+            <th>FIFA</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -71,6 +76,15 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Mostrar la fecha de última modificación del documento
+  document.addEventListener("DOMContentLoaded", () => {
+    const fecha = new Date(document.lastModified);
+    const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    document.getElementById("fecha-modificacion").textContent = fecha.toLocaleDateString('es-ES', opciones);
+  });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="Jugadores.js"></script>
