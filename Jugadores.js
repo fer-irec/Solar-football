@@ -45,11 +45,7 @@ const jugadores = [
     { nombre: "Tobi", ataque: 2.6, defensa: 4.03, media: 3.31, fifa: 66 }
   ];
 
-function limitar(valor) {
-  return Math.max(0, Math.min(5, valor));
-}
-
-function limitar(valor) {
+  function limitar(valor) {
     return Math.max(0, Math.min(5, valor));
   }
   
@@ -73,6 +69,9 @@ function limitar(valor) {
     const thead = document.querySelector("#tabla-jugadores thead tr");
     if (!thead.querySelector("th.fifa")) {
       thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+    } else {
+      const allTh = thead.querySelectorAll("th.fifa");
+      if (allTh.length > 1) allTh[1].remove();
     }
     jugadores.forEach(j => {
       const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
