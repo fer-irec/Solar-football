@@ -170,6 +170,12 @@ const jugadores = [
     const total = seleccionados.length;
     if (total < 2) return alert("Selecciona al menos dos jugadores.");
   
+    const topPlayers = seleccionados.filter(j => j.media > 4);
+    const numTop = topPlayers.length;
+  
+    // Solo es posible dividir si hay un número par de jugadores top
+    if (numTop % 2 !== 0) return alert("No se pueden dividir equitativamente los jugadores con media > 4.");
+  
     let mejorDiferencia = Infinity;
     let mejorEq1 = [], mejorEq2 = [];
   
@@ -177,19 +183,30 @@ const jugadores = [
     for (let i = 0; i < intentos; i++) {
       const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
       const eq1 = [], eq2 = [];
+      let top1 = 0, top2 = 0;
   
       mezcla.forEach(j => {
+        const esTop = j.media > 4;
         const sumaAtk1 = eq1.reduce((s, x) => s + x.ataque, 0);
         const sumaAtk2 = eq2.reduce((s, x) => s + x.ataque, 0);
         const media1 = sumaAtk1 / (eq1.length || 1);
         const media2 = sumaAtk2 / (eq2.length || 1);
   
-        if (eq1.length < total / 2 && (media1 <= media2 || eq2.length >= total / 2)) {
+        if (
+          eq1.length < total / 2 &&
+          (media1 <= media2 || eq2.length >= total / 2) &&
+          (!esTop || top1 < numTop / 2)
+        ) {
           eq1.push(j);
-        } else {
+          if (esTop) top1++;
+        } else if (!esTop || top2 < numTop / 2) {
           eq2.push(j);
+          if (esTop) top2++;
         }
       });
+  
+      if (eq1.length !== Math.floor(total / 2) || eq2.length !== Math.ceil(total / 2)) continue;
+      if (top1 !== top2) continue;
   
       const avg = arr => arr.reduce((s, x) => s + x, 0) / arr.length;
       const mediaAtk1 = avg(eq1.map(j => j.ataque));
@@ -209,7 +226,7 @@ const jugadores = [
     }
   
     if (!mejorEq1.length || !mejorEq2.length) {
-      return alert("No se pudo formar equipos equilibrados. Ajusta el número de jugadores o las restricciones.");
+      return alert("No se pudo formar equipos equilibrados con las condiciones actuales.");
     }
   
     const media1_atk = (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2);
@@ -233,6 +250,7 @@ const jugadores = [
         <ul class="list-group">${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>`;
   }
+  
   
   
   
