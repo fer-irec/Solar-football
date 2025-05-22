@@ -157,6 +157,8 @@ const jugadores = [
     document.getElementById("generar-equipos").disabled = seleccionados.length !== 12;
   }
   
+ 
+ 
   function generarEquipos() {
     const MAX_DIFF_ATK = 0.1;
     const MAX_DIFF_DEF = 0.1;
@@ -212,22 +214,26 @@ const jugadores = [
   
     const media1_atk = (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2);
     const media1_def = (mejorEq1.reduce((s, j) => s + j.defensa, 0) / mejorEq1.length).toFixed(2);
+    const fifa1 = mejorEq1.reduce((s, j) => s + (j.fifa ?? 0), 0);
+  
     const media2_atk = (mejorEq2.reduce((s, j) => s + j.ataque, 0) / mejorEq2.length).toFixed(2);
     const media2_def = (mejorEq2.reduce((s, j) => s + j.defensa, 0) / mejorEq2.length).toFixed(2);
+    const fifa2 = mejorEq2.reduce((s, j) => s + (j.fifa ?? 0), 0);
   
     const cont = document.getElementById("resultado-equipos");
     cont.innerHTML = `
       <div class="col-md-6">
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-        <p>ATK: ${media1_atk} | DEF: ${media1_def}</p>
+        <p>ATK: ${media1_atk} | DEF: ${media1_def} | FIFA: ${fifa1}</p>
         <ul class="list-group">${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-        <p>ATK: ${media2_atk} | DEF: ${media2_def}</p>
+        <p>ATK: ${media2_atk} | DEF: ${media2_def} | FIFA: ${fifa2}</p>
         <ul class="list-group">${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>`;
   }
+  
   
   
   document.addEventListener("DOMContentLoaded", () => {
