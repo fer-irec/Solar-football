@@ -158,34 +158,77 @@ const jugadores = [
   }
   
   function generarEquipos() {
+    const MAX_DIFF_ATK = 0.1;
+    const MAX_DIFF_DEF = 0.1;
+  
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
       .map(cb => jugadores[parseInt(cb.value)])
       .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
   
-    seleccionados.sort((a, b) => b.media - a.media);
-    const eq1 = [], eq2 = [];
-    seleccionados.forEach((j, i) => (i % 2 === 0 ? eq1 : eq2).push(j));
+    const total = seleccionados.length;
+    if (total < 2) return alert("Selecciona al menos dos jugadores.");
   
-    const media1_atk = (eq1.reduce((s, j) => s + j.ataque, 0) / eq1.length).toFixed(2);
-    const media1_def = (eq1.reduce((s, j) => s + j.defensa, 0) / eq1.length).toFixed(2);
-    const fifa1 = eq1.reduce((s, j) => s + (j.fifa ?? 0), 0);
-    const media2_atk = (eq2.reduce((s, j) => s + j.ataque, 0) / eq2.length).toFixed(2);
-    const media2_def = (eq2.reduce((s, j) => s + j.defensa, 0) / eq2.length).toFixed(2);
-    const fifa2 = eq2.reduce((s, j) => s + (j.fifa ?? 0), 0);
+    let mejorDiferencia = Infinity;
+    let mejorEq1 = [], mejorEq2 = [];
+  
+    const intentos = 1000;
+    for (let i = 0; i < intentos; i++) {
+      const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
+      const eq1 = [], eq2 = [];
+  
+      mezcla.forEach(j => {
+        const sumaAtk1 = eq1.reduce((s, x) => s + x.ataque, 0);
+        const sumaAtk2 = eq2.reduce((s, x) => s + x.ataque, 0);
+        const media1 = sumaAtk1 / (eq1.length || 1);
+        const media2 = sumaAtk2 / (eq2.length || 1);
+  
+        if (eq1.length < total / 2 && (media1 <= media2 || eq2.length >= total / 2)) {
+          eq1.push(j);
+        } else {
+          eq2.push(j);
+        }
+      });
+  
+      const avg = arr => arr.reduce((s, x) => s + x, 0) / arr.length;
+      const mediaAtk1 = avg(eq1.map(j => j.ataque));
+      const mediaDef1 = avg(eq1.map(j => j.defensa));
+      const mediaAtk2 = avg(eq2.map(j => j.ataque));
+      const mediaDef2 = avg(eq2.map(j => j.defensa));
+  
+      const diffAtk = Math.abs(mediaAtk1 - mediaAtk2);
+      const diffDef = Math.abs(mediaDef1 - mediaDef2);
+      const score = diffAtk + diffDef;
+  
+      if (diffAtk <= MAX_DIFF_ATK && diffDef <= MAX_DIFF_DEF && score < mejorDiferencia) {
+        mejorDiferencia = score;
+        mejorEq1 = eq1;
+        mejorEq2 = eq2;
+      }
+    }
+  
+    if (!mejorEq1.length || !mejorEq2.length) {
+      return alert("No se pudo formar equipos equilibrados. Ajusta el número de jugadores o las restricciones.");
+    }
+  
+    const media1_atk = (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2);
+    const media1_def = (mejorEq1.reduce((s, j) => s + j.defensa, 0) / mejorEq1.length).toFixed(2);
+    const media2_atk = (mejorEq2.reduce((s, j) => s + j.ataque, 0) / mejorEq2.length).toFixed(2);
+    const media2_def = (mejorEq2.reduce((s, j) => s + j.defensa, 0) / mejorEq2.length).toFixed(2);
   
     const cont = document.getElementById("resultado-equipos");
     cont.innerHTML = `
       <div class="col-md-6">
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-        <p>ATK: ${media1_atk} | DEF: ${media1_def} | FIFA: ${fifa1}</p>
-        <ul class="list-group">${eq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
+        <p>ATK: ${media1_atk} | DEF: ${media1_def}</p>
+        <ul class="list-group">${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-        <p>ATK: ${media2_atk} | DEF: ${media2_def} | FIFA: ${fifa2}</p>
-        <ul class="list-group">${eq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
+        <p>ATK: ${media2_atk} | DEF: ${media2_def}</p>
+        <ul class="list-group">${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>`;
   }
+  
   
   document.addEventListener("DOMContentLoaded", () => {
     mostrarTabla();
