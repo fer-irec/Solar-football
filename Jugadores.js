@@ -24,7 +24,7 @@ const jugadores = [
     { nombre: "Outman", ataque: 4.26, defensa: 4.88, media: 4.57, fifa: 91 },
     { nombre: "Sergio Ramos", ataque: 3.7, defensa: 3.7, media: 3.5, fifa: 70 },
     { nombre: "Tolga", ataque: 3.5, defensa: 3.5, media: 3.1, fifa: 62 },
-    {nombre: "Harris", ataque: 2, defensa: 2, media: 2, fifa: 40 },
+    { nombre: "Harris", ataque: 2, defensa: 2, media: 2, fifa: 40 },
     { nombre: "Steven", ataque: 3, defensa: 3, media: 3, fifa: 60 },
     { nombre: "David Rovira", ataque: 3.26, defensa: 3.1, media: 3.18, fifa: 64 },
     { nombre: "Gustavo Madrigal", ataque: 2.95, defensa: 3.2, media: 3.07, fifa: 62 },
