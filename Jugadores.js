@@ -25,6 +25,7 @@ const jugadores = [
     { nombre: "Sergio Ramos", ataque: 3.7, defensa: 3.7, media: 3.5, fifa: 70 },
     { nombre: "Tolga", ataque: 3.5, defensa: 3.5, media: 3.1, fifa: 62 },
     { nombre: "Harris", ataque: 2, defensa: 2, media: 2, fifa: 40 },
+    { nombre: "Amadou", ataque: 3, defensa: 3, media: 3, fifa: 60 },
     { nombre: "Steven", ataque: 3, defensa: 3, media: 3, fifa: 60 },
     { nombre: "David Rovira", ataque: 3.26, defensa: 3.1, media: 3.18, fifa: 64 },
     { nombre: "Gustavo Madrigal", ataque: 2.95, defensa: 3.2, media: 3.07, fifa: 62 },
@@ -80,16 +81,53 @@ const jugadores = [
   
     jugadores.forEach(j => {
       const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
+      const fifa = j.fifa ?? 0;
+      const estrellasHTML = generarEstrellasFIFA(fifa);
+  
       const fila = `<tr>
         <td>${j.nombre}</td>
         <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
         <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
         <td><span class="${colorClase(media)}">${media}</span></td>
-        <td><span class="${colorFifa(j.fifa)}">${j.fifa ?? 0}</span></td>
+        <td><span class="${colorFifa(fifa)}">${fifa} ${estrellasHTML}</span></td>
       </tr>`;
       tbody.insertAdjacentHTML("beforeend", fila);
     });
   }
+  
+  function generarEstrellasFIFA(puntuacion) {
+    const estrellasTotales = 5;
+    const valorNormalizado = Math.max(0, Math.min(puntuacion, 100)) / 100 * estrellasTotales;
+    const llenas = Math.floor(valorNormalizado);
+    const decimal = valorNormalizado - llenas;
+  
+    let media = 0;
+    if (decimal >= 0.75) media = 1;
+    else if (decimal >= 0.25) media = 0.5;
+  
+    let estrellas = "";
+  
+    // Estrellas llenas
+    for (let i = 0; i < llenas; i++) {
+      estrellas += '<i class="fas fa-star"></i>';
+    }
+  
+    // Media estrella
+    if (media === 1) {
+      estrellas += '<i class="fas fa-star"></i>';
+    } else if (media === 0.5) {
+      estrellas += '<i class="fas fa-star-half-alt"></i>';
+    }
+  
+    // Estrellas vacías
+    const vacías = estrellasTotales - llenas - (media > 0 ? 1 : 0);
+    for (let i = 0; i < vacías; i++) {
+      estrellas += '<i class="far fa-star"></i>';
+    }
+  
+    return `<span class="fifa-stars">${estrellas}</span>`;
+  }
+  
   
   function mostrarVotaciones() {
     const form = document.getElementById("form-votaciones");
@@ -173,9 +211,6 @@ const jugadores = [
     const topPlayers = seleccionados.filter(j => j.media > 4);
     const numTop = topPlayers.length;
   
-    // Solo es posible dividir si hay un número par de jugadores top
-    if (numTop % 2 !== 0) return alert("No se pueden dividir equitativamente los jugadores con media > 4.");
-  
     let mejorDiferencia = Infinity;
     let mejorEq1 = [], mejorEq2 = [];
   
@@ -194,19 +229,17 @@ const jugadores = [
   
         if (
           eq1.length < total / 2 &&
-          (media1 <= media2 || eq2.length >= total / 2) &&
-          (!esTop || top1 < numTop / 2)
+          (media1 <= media2 || eq2.length >= total / 2)
         ) {
           eq1.push(j);
           if (esTop) top1++;
-        } else if (!esTop || top2 < numTop / 2) {
+        } else {
           eq2.push(j);
           if (esTop) top2++;
         }
       });
   
       if (eq1.length !== Math.floor(total / 2) || eq2.length !== Math.ceil(total / 2)) continue;
-      if (top1 !== top2) continue;
   
       const avg = arr => arr.reduce((s, x) => s + x, 0) / arr.length;
       const mediaAtk1 = avg(eq1.map(j => j.ataque));
@@ -250,6 +283,7 @@ const jugadores = [
         <ul class="list-group">${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
       </div>`;
   }
+  
   
   
   
