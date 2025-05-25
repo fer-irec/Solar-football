@@ -53,16 +53,20 @@ const jugadores = [
   
   function colorClase(valor) {
     valor = parseFloat(valor);
-    if (valor < 1.7) return "valor-rojo";
-    if (valor < 3.5) return "valor-naranja";
-    return "valor-verde";
+    if (valor < 1.5) return "valor-rojo";
+    if (valor < 2.5) return "valor-naranja";
+    if (valor < 3.5) return "valor-amarillo";
+    if (valor < 4.5) return "valor-verde-claro";
+    return "valor-verde-oscuro";
   }
   
   function colorFifa(valor) {
     valor = parseFloat(valor);
-    if (valor < 34) return "valor-rojo";
-    if (valor < 67) return "valor-naranja";
-    return "valor-verde";
+    if (valor < 20) return "valor-rojo";
+    if (valor < 40) return "valor-naranja";
+    if (valor < 60) return "valor-amarillo";
+    if (valor < 80) return "valor-verde-claro";
+    return "valor-verde-oscuro";
   }
   
   function mostrarTabla() {
