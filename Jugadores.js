@@ -14,7 +14,7 @@ const jugadores = [
     { nombre: "Niccolo", ataque: 3.74, defensa: 3.88, media: 3.81, fifa: 76 },
     { nombre: "Merino", ataque: 2.75, defensa: 3.72, media: 3.23, fifa: 65 },
     { nombre: "Liya", ataque: 3.42, defensa: 3.38, media: 3.4, fifa: 68 },
-    { nombre: "Yuancai", ataque: 1.56, defensa: 1.44, media: 1.5, fifa: 30 },
+    { nombre: "Yuancai", ataque: 1.6, defensa: 1.6, media: 1.6, fifa: 32 },
     { nombre: "Jon", ataque: 2.72, defensa: 2.5, media: 2.61, fifa: 52 },
     { nombre: "Peña", ataque: 2.64, defensa: 2.64, media: 2.64, fifa: 53 },
     { nombre: "Manu", ataque: 4.4, defensa: 4.06, media: 4.23, fifa: 85 },
