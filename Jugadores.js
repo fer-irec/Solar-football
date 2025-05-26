@@ -20,6 +20,7 @@ const jugadores = [
     { nombre: "Manu", ataque: 4.4, defensa: 4.06, media: 4.23, fifa: 85 },
     { nombre: "Vito", ataque: 3.7, defensa: 4.3, media: 4.0, fifa: 80 },
     { nombre: "Alex Jimenez", ataque: 4.48, defensa: 4.36, media: 4.42, fifa: 88 },
+    { nombre: "Ricard", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
     { nombre: "Andrea Maioli", ataque: 4.54, defensa: 4.4, media: 4.47, fifa: 89 },
     { nombre: "Outman", ataque: 4.26, defensa: 4.88, media: 4.57, fifa: 91 },
     { nombre: "Sergio Ramos", ataque: 3.7, defensa: 3.7, media: 3.5, fifa: 70 },
