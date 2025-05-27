@@ -101,69 +101,91 @@
     const fecha = new Date(document.lastModified);
     const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     document.getElementById("fecha-modificacion").textContent = fecha.toLocaleDateString('es-ES', opciones);
-  });
 
-  function generarTorneo() {
-    const seleccionados = jugadores.map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
-    if (seleccionados.length < 20 || seleccionados.length > 24) {
-      alert("Debe haber entre 20 y 24 jugadores para formar 4 equipos.");
-      return;
-    }
-    const MAX_DIFF = 0.15;
-    const intentos = 2000;
-    let mejorScore = Infinity;
-    let mejoresEquipos = null;
-    let mejorTopBalance = Infinity;
-    for (let i = 0; i < intentos; i++) {
-      const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
-      const eq = [[], [], [], []];
-      mezcla.forEach((j, idx) => eq[idx % 4].push(j));
-      const stats = eq.map(e => ({
-        atk: e.reduce((s, x) => s + x.ataque, 0) / e.length,
-        def: e.reduce((s, x) => s + x.defensa, 0) / e.length,
-        fifa: e.reduce((s, x) => s + (x.fifa ?? 0), 0),
-        top: e.filter(x => x.media > 4).length
-      }));
-      const maxAtk = Math.max(...stats.map(e => e.atk));
-      const minAtk = Math.min(...stats.map(e => e.atk));
-      const maxDef = Math.max(...stats.map(e => e.def));
-      const minDef = Math.min(...stats.map(e => e.def));
-      const maxTop = Math.max(...stats.map(e => e.top));
-      const minTop = Math.min(...stats.map(e => e.top));
-      const diff = (maxAtk - minAtk) + (maxDef - minDef);
-      const topDiff = maxTop - minTop;
-      if (diff <= MAX_DIFF && (diff < mejorScore || (diff === mejorScore && topDiff < mejorTopBalance))) {
-        mejorScore = diff;
-        mejorTopBalance = topDiff;
-        mejoresEquipos = eq;
-      }
-    }
-    if (!mejoresEquipos) {
-      alert("No se pudieron formar equipos equilibrados. Intenta ajustar las puntuaciones o el número de jugadores.");
-      return;
-    }
-    const colores = ["Azul", "Blanco", "Rojo", "Verde"];
-    const cont = document.getElementById("resultado-torneo");
-    cont.innerHTML = "";
-    mejoresEquipos.forEach((e, i) => {
-      const atk = (e.reduce((s, j) => s + j.ataque, 0) / e.length).toFixed(2);
-      const def = (e.reduce((s, j) => s + j.defensa, 0) / e.length).toFixed(2);
-      const fifa = e.reduce((s, j) => s + (j.fifa ?? 0), 0);
-      cont.innerHTML += `
-        <div class="col-md-6 col-lg-3">
-          <h5><span class="circle ${colores[i].toLowerCase()}-circle"></span> Equipo ${colores[i]}</h5>
-          <p>ATK: ${atk} | DEF: ${def} | FIFA: ${fifa}</p>
-          <ul class="list-group">
-            ${e.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
-          </ul>
-        </div>`;
+    const formTorneo = document.getElementById("form-torneo");
+    const contador = document.getElementById("contador-torneo");
+
+    jugadores.forEach((j, i) => {
+      formTorneo.insertAdjacentHTML("beforeend", `
+        <div class="form-check col-md-6">
+          <input class="form-check-input jugador-torneo-checkbox" type="checkbox" id="jugadorTorneo${i}" value="${i}">
+          <label class="form-check-label" for="jugadorTorneo${i}">${j.nombre}</label>
+        </div>`);
     });
-  }
-  document.addEventListener("DOMContentLoaded", () => {
-    const btn = document.getElementById("generar-torneo");
-    if (btn) btn.addEventListener("click", generarTorneo);
+
+    document.querySelectorAll(".jugador-torneo-checkbox").forEach(cb =>
+      cb.addEventListener("change", () => {
+        const seleccionados = document.querySelectorAll(".jugador-torneo-checkbox:checked").length;
+        contador.textContent = `Seleccionados: ${seleccionados}`;
+        document.getElementById("generar-torneo").disabled = seleccionados < 20 || seleccionados > 24;
+      })
+    );
+
+    document.getElementById("generar-torneo").addEventListener("click", () => {
+      const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
+        .map(cb => jugadores[parseInt(cb.value)])
+        .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
+
+      const MAX_DIFF = 0.15;
+      const intentos = 2000;
+      let mejorScore = Infinity;
+      let mejoresEquipos = null;
+      let mejorTopBalance = Infinity;
+
+      for (let i = 0; i < intentos; i++) {
+        const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
+        const eq = [[], [], [], []];
+        mezcla.forEach((j, idx) => eq[idx % 4].push(j));
+
+        const stats = eq.map(e => ({
+          atk: e.reduce((s, x) => s + x.ataque, 0) / e.length,
+          def: e.reduce((s, x) => s + x.defensa, 0) / e.length,
+          fifa: e.reduce((s, x) => s + (x.fifa ?? 0), 0),
+          top: e.filter(x => x.media > 4).length
+        }));
+
+        const maxAtk = Math.max(...stats.map(e => e.atk));
+        const minAtk = Math.min(...stats.map(e => e.atk));
+        const maxDef = Math.max(...stats.map(e => e.def));
+        const minDef = Math.min(...stats.map(e => e.def));
+        const maxTop = Math.max(...stats.map(e => e.top));
+        const minTop = Math.min(...stats.map(e => e.top));
+
+        const diff = (maxAtk - minAtk) + (maxDef - minDef);
+        const topDiff = maxTop - minTop;
+
+        if (diff <= MAX_DIFF && (diff < mejorScore || (diff === mejorScore && topDiff < mejorTopBalance))) {
+          mejorScore = diff;
+          mejorTopBalance = topDiff;
+          mejoresEquipos = eq;
+        }
+      }
+
+      if (!mejoresEquipos) {
+        alert("No se pudieron formar equipos equilibrados.");
+        return;
+      }
+
+      const colores = ["Azul", "Blanco", "Rojo", "Verde"];
+      const cont = document.getElementById("resultado-torneo");
+      cont.innerHTML = "";
+      mejoresEquipos.forEach((e, i) => {
+        const atk = (e.reduce((s, j) => s + j.ataque, 0) / e.length).toFixed(2);
+        const def = (e.reduce((s, j) => s + j.defensa, 0) / e.length).toFixed(2);
+        const fifa = e.reduce((s, j) => s + (j.fifa ?? 0), 0);
+        cont.innerHTML += `
+          <div class="col-md-6 col-lg-3">
+            <h5><span class="circle ${colores[i].toLowerCase()}-circle"></span> Equipo ${colores[i]}</h5>
+            <p>ATK: ${atk} | DEF: ${def} | FIFA: ${fifa}</p>
+            <ul class="list-group">
+              ${e.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+            </ul>
+          </div>`;
+      });
+    });
   });
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="Jugadores.js"></script>
 </body>
