@@ -133,11 +133,9 @@
             .map(cb => jugadores[parseInt(cb.value)])
             .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
     
-          const MAX_DIFF = 0.15;
           const intentos = 2000;
           let mejorScore = Infinity;
           let mejoresEquipos = null;
-          let mejorTopBalance = Infinity;
     
           for (let i = 0; i < intentos; i++) {
             const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
@@ -151,19 +149,17 @@
               top: e.filter(x => x.media > 4).length
             }));
     
-            const maxAtk = Math.max(...stats.map(e => e.atk));
-            const minAtk = Math.min(...stats.map(e => e.atk));
-            const maxDef = Math.max(...stats.map(e => e.def));
-            const minDef = Math.min(...stats.map(e => e.def));
-            const maxTop = Math.max(...stats.map(e => e.top));
-            const minTop = Math.min(...stats.map(e => e.top));
+            const avgAtk = stats.reduce((s, e) => s + e.atk, 0) / 4;
+            const avgDef = stats.reduce((s, e) => s + e.def, 0) / 4;
     
-            const diff = (maxAtk - minAtk) + (maxDef - minDef);
-            const topDiff = maxTop - minTop;
+            const diffAtk = stats.reduce((s, e) => s + Math.abs(e.atk - avgAtk), 0);
+            const diffDef = stats.reduce((s, e) => s + Math.abs(e.def - avgDef), 0);
+            const topVar = Math.max(...stats.map(e => e.top)) - Math.min(...stats.map(e => e.top));
     
-            if (diff <= MAX_DIFF && (diff < mejorScore || (diff === mejorScore && topDiff < mejorTopBalance))) {
-              mejorScore = diff;
-              mejorTopBalance = topDiff;
+            const score = diffAtk + diffDef + topVar * 0.1;
+    
+            if (score < mejorScore) {
+              mejorScore = score;
               mejoresEquipos = eq;
             }
           }
@@ -193,6 +189,7 @@
         });
       });
     </script>
+    
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="Jugadores.js"></script>
