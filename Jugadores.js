@@ -212,6 +212,29 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
 
+  const checkboxesTorneo = document.querySelectorAll(".jugador-torneo-checkbox");
+  const botonTorneo = document.getElementById("generar-torneo");
+  checkboxesTorneo.forEach(cb => {
+    cb.addEventListener("change", () => {
+      const seleccionados = document.querySelectorAll(".jugador-torneo-checkbox:checked").length;
+      const aviso = document.getElementById("aviso-torneo") || (() => {
+        const div = document.createElement("div");
+        div.id = "aviso-torneo";
+        div.className = "text-center text-danger mb-2";
+        document.getElementById("form-torneo").before(div);
+        return div;
+      })();
+
+      if (seleccionados < 20 || seleccionados > 24) {
+        botonTorneo.disabled = true;
+        aviso.textContent = "Selecciona entre 20 y 24 jugadores para poder generar 4 equipos.";
+      } else {
+        botonTorneo.disabled = false;
+        aviso.textContent = "";
+      }
+    });
+  });
+
   const checkboxes = document.querySelectorAll(".jugador-checkbox");
   const botonGenerar = document.getElementById("generar-equipos");
   checkboxes.forEach(cb => {
@@ -234,5 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-  });
+});
+
 
