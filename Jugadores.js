@@ -57,6 +57,9 @@ const jugadores = [
 // Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
 // const jugadores = [...]; // Tu lista completa de jugadores con ataque, defensa, fifa
 
+// Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
+// const jugadores = [...]; // Tu lista completa de jugadores con ataque, defensa, fifa
+
 function limitar(valor) {
   return Math.max(0, Math.min(5, valor));
 }
@@ -102,6 +105,7 @@ function generarEstrellasFIFA(puntuacion) {
 
 function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
   const thead = document.querySelector("#tabla-jugadores thead tr");
 
@@ -140,15 +144,20 @@ function generarEquipos() {
   const total = seleccionados.length;
   if (total < 2) return alert("Selecciona al menos dos jugadores.");
 
+  const cracks = seleccionados.filter(j => j.media > 4);
+
   let mejorDiferencia = Infinity;
   let mejorEq1 = [], mejorEq2 = [];
+  let mejorTopDiff = Infinity;
 
   const intentos = 1000;
   for (let i = 0; i < intentos; i++) {
     const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
     const eq1 = [], eq2 = [];
+    let cracks1 = 0, cracks2 = 0;
 
     mezcla.forEach(j => {
+      const esCrack = j.media > 4;
       const sumaAtk1 = eq1.reduce((s, x) => s + x.ataque, 0);
       const sumaAtk2 = eq2.reduce((s, x) => s + x.ataque, 0);
       const media1 = sumaAtk1 / (eq1.length || 1);
@@ -156,8 +165,10 @@ function generarEquipos() {
 
       if (eq1.length < total / 2 && (media1 <= media2 || eq2.length >= total / 2)) {
         eq1.push(j);
+        if (esCrack) cracks1++;
       } else {
         eq2.push(j);
+        if (esCrack) cracks2++;
       }
     });
 
@@ -172,11 +183,15 @@ function generarEquipos() {
     const diffAtk = Math.abs(mediaAtk1 - mediaAtk2);
     const diffDef = Math.abs(mediaDef1 - mediaDef2);
     const score = diffAtk + diffDef;
+    const diffCracks = Math.abs(cracks1 - cracks2);
 
-    if (diffAtk <= MAX_DIFF_ATK && diffDef <= MAX_DIFF_DEF && score < mejorDiferencia) {
-      mejorDiferencia = score;
-      mejorEq1 = eq1;
-      mejorEq2 = eq2;
+    if (diffAtk <= MAX_DIFF_ATK && diffDef <= MAX_DIFF_DEF) {
+      if (score < mejorDiferencia || (score === mejorDiferencia && diffCracks < mejorTopDiff)) {
+        mejorDiferencia = score;
+        mejorTopDiff = diffCracks;
+        mejorEq1 = eq1;
+        mejorEq2 = eq2;
+      }
     }
   }
 
@@ -198,18 +213,19 @@ function generarEquipos() {
       <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
       <p>ATK: ${media1_atk} | DEF: ${media1_def} | FIFA: ${fifa1}</p>
       <ul class="list-group">
-        ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}</li>`).join("")}
+        ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
       </ul>
     </div>
     <div class="col-md-6">
       <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
       <p>ATK: ${media2_atk} | DEF: ${media2_def} | FIFA: ${fifa2}</p>
       <ul class="list-group">
-        ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}</li>`).join("")}
+        ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
       </ul>
     </div>`;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
+  document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
 });
