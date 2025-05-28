@@ -204,9 +204,17 @@ function generarEquipos() {
   }
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
+
+  const checkboxes = document.querySelectorAll(".jugador-checkbox");
+  const botonGenerar = document.getElementById("generar-equipos");
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", () => {
+      const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
+      botonGenerar.disabled = seleccionados < 10 || seleccionados > 12;
+    });
+  });
 });
