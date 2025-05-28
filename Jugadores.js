@@ -54,6 +54,9 @@ const jugadores = [
   { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3, media: 3, fifa: 60 }
 ];
 
+// Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
+// const jugadores = [...]; // Tu lista completa de jugadores con ataque, defensa, fifa
+
 function limitar(valor) {
   return Math.max(0, Math.min(5, valor));
 }
@@ -214,8 +217,22 @@ document.addEventListener("DOMContentLoaded", () => {
   checkboxes.forEach(cb => {
     cb.addEventListener("change", () => {
       const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
-      botonGenerar.disabled = seleccionados < 10 || seleccionados > 12;
+      const aviso = document.getElementById("aviso-seleccion") || (() => {
+        const div = document.createElement("div");
+        div.id = "aviso-seleccion";
+        div.className = "text-center text-danger mb-2";
+        document.getElementById("form-asistencia").before(div);
+        return div;
+      })();
+
+      if (seleccionados < 10 || seleccionados > 12) {
+        botonGenerar.disabled = true;
+        aviso.textContent = "Selecciona entre 10 y 12 jugadores para poder generar equipos.";
+      } else {
+        botonGenerar.disabled = false;
+        aviso.textContent = "";
+      }
     });
   });
-});
+  });
 
