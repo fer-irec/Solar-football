@@ -50,7 +50,8 @@ const jugadores = [
   { nombre: "Dominic", ataque: 3.5, defensa: 3.5, media: 3.5, fifa: 70 },
   { nombre: "Rolando", ataque: 3.0, defensa: 3.0, media: 3.0, fifa: 60 },
   { nombre: "Visitor 1", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
-  { nombre: "Visitor 2", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 }
+  { nombre: "Visitor 2", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
+  { nombre: "Visitor 3", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 }
 ];
 
 function limitar(valor) {
