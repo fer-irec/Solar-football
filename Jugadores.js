@@ -210,7 +210,14 @@ function generarEquipos() {
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
-  document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
+  document.getElementById("generar-torneo")?.addEventListener("click", () => {
+    try {
+      generarEquiposTorneo();
+    } catch (err) {
+      const cont = document.getElementById("resultado-torneo");
+      if (cont) cont.innerHTML = `<div class="alert alert-danger">Error inesperado: ${err.message}</div>`;
+    }
+  });
 
   const checkboxesTorneo = document.querySelectorAll(".jugador-torneo-checkbox");
   const botonTorneo = document.getElementById("generar-torneo");
@@ -256,6 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
         aviso.textContent = "";
       }
     });
+  });
   });
 });
 
