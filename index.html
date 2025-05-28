@@ -71,11 +71,16 @@
     </div>
 
     <div class="tab-pane fade" id="convocatoria">
-      <form id="form-asistencia" class="mb-3 row row-cols-2"></form>
-      <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
-      <div id="resultado-equipos" class="row"></div>
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Crear Equipos para el Partido</h3>
+        <p class="text-center text-muted" id="contador-partido">Seleccionados: 0</p>
+        <form id="form-asistencia" class="mb-3 row row-cols-2"></form>
+        <div class="text-center">
+          <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
+        </div>
+        <div id="resultado-equipos" class="row"></div>
+      </div>
     </div>
-
     <div class="tab-pane fade" id="torneo">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
@@ -87,6 +92,7 @@
         <div id="resultado-torneo" class="row mt-4"></div>
       </div>
     </div>
+    
   </div>
 </div>
 
