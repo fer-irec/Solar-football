@@ -43,8 +43,8 @@ const jugadores = [
     { nombre: "Alex Lopez", ataque: 3.5, defensa: 3.35, media: 3.42, fifa: 69 },
     { nombre: "Buda", ataque: 3.62, defensa: 3.9, media: 3.76, fifa: 75 },
     { nombre: "Lori", ataque: 3.47, defensa: 2.85, media: 3.16, fifa: 63 },
-    { nombre: "Massi", ataque: 4.5, defensa: 4, media: 4.25, fifa: 8.5 },
-    { nombre: "Trompia", ataque: 4.5, defensa: 4, media: 4.25, fifa: 8.5 },
+    { nombre: "Massi", ataque: 4.5, defensa: 4, media: 4.25, fifa: 85 },
+    { nombre: "Trompia", ataque: 4.5, defensa: 4, media: 4.25, fifa: 85 },
     { nombre: "Treppo", ataque: 4.0, defensa: 3.5, media: 3.75, fifa: 75 },
     { nombre: "Visitor 1", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
     { nombre: "Visitor 2", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
@@ -81,27 +81,31 @@ function colorClase(valor) {
     const tbody = document.querySelector("#tabla-jugadores tbody");
     tbody.innerHTML = "";
     const thead = document.querySelector("#tabla-jugadores thead tr");
-  
+
     if (!thead.querySelector("th.fifa")) {
       thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
     }
-  
-    const allTh = thead.querySelectorAll("th.fifa");
-    for (let i = 1; i < allTh.length; i++) {
-      allTh[i].remove();
+    if (!thead.querySelector("th.stars")) {
+      thead.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
     }
-  
+
+    const allFifaTh = thead.querySelectorAll("th.fifa");
+    const allStarsTh = thead.querySelectorAll("th.stars");
+    for (let i = 1; i < allFifaTh.length; i++) allFifaTh[i].remove();
+    for (let i = 1; i < allStarsTh.length; i++) allStarsTh[i].remove();
+
     jugadores.forEach(j => {
-      const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
+      const media = ((j.ataque + j.defensa) / 2).toFixed(2);
       const fifa = j.fifa ?? 0;
       const estrellasHTML = generarEstrellasFIFA(fifa);
-  
+
       const fila = `<tr>
         <td>${j.nombre}</td>
         <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
         <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
         <td><span class="${colorClase(media)}">${media}</span></td>
-        <td><span class="${colorFifa(fifa)}">${fifa} ${estrellasHTML}</span></td>
+        <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
+        <td>${estrellasHTML}</td>
       </tr>`;
       tbody.insertAdjacentHTML("beforeend", fila);
     });
