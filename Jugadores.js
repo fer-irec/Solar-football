@@ -287,12 +287,12 @@ function colorClase(valor) {
       <div class="col-md-6">
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
         <p>ATK: ${media1_atk} | DEF: ${media1_def} | FIFA: ${fifa1}</p>
-        <ul class="list-group">${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
+        <ul class="list-group">${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}</li>`).join("")}</ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
         <p>ATK: ${media2_atk} | DEF: ${media2_def} | FIFA: ${fifa2}</p>
-        <ul class="list-group">${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})</li>`).join("")}</ul>
+        <ul class="list-group">${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}</li>`).join("")}</ul>
       </div>`;
   }
   
