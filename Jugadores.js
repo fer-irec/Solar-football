@@ -211,8 +211,13 @@ function colorClase(valor) {
     document.getElementById("generar-equipos").disabled = seleccionados.length !== 12;
   }
   
- 
- 
+  document.addEventListener("DOMContentLoaded", () => {
+    const boton = document.getElementById("generar-equipos");
+    if (boton) {
+      boton.addEventListener("click", generarEquipos);
+    }
+  });
+
   function generarEquipos() {
     const MAX_DIFF_ATK = 0.1;
     const MAX_DIFF_DEF = 0.1;
@@ -300,24 +305,3 @@ function colorClase(valor) {
         </ul>
       </div>`;
   }
-  
-  
-  
-  
-  document.addEventListener("DOMContentLoaded", () => {
-    mostrarTabla();
-    mostrarAsistencia();
-    mostrarVotaciones();
-    document.getElementById("generar-equipos").addEventListener("click", generarEquipos);
-    document.getElementById("guardar-votaciones").addEventListener("click", () => {
-      guardarVotaciones();
-      const alerta = document.createElement('div');
-      alerta.className = "alert alert-success mt-3";
-      alerta.role = "alert";
-      alerta.innerText = "¡Votos guardados y tabla actualizada!";
-      const resultado = document.getElementById("votacion-resultado");
-      resultado.prepend(alerta);
-      setTimeout(() => alerta.remove(), 3000);
-    });
-  });
-  
