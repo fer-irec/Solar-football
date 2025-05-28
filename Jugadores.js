@@ -211,13 +211,6 @@ function colorClase(valor) {
     document.getElementById("generar-equipos").disabled = seleccionados.length !== 12;
   }
   
-  document.addEventListener("DOMContentLoaded", () => {
-    const boton = document.getElementById("generar-equipos");
-    if (boton) {
-      boton.addEventListener("click", generarEquipos);
-    }
-  });
-
   function generarEquipos() {
     const MAX_DIFF_ATK = 0.1;
     const MAX_DIFF_DEF = 0.1;
