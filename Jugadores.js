@@ -204,6 +204,7 @@ function generarEquipos() {
   }
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
