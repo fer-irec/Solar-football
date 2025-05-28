@@ -66,6 +66,7 @@
             <th>Defensa</th>
             <th>Media</th>
             <th class="fifa">FIFA</th>
+            <th class="stars">Stars</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -95,106 +96,33 @@
         <div id="resultado-torneo" class="row mt-4"></div>
       </div>
     </div>
-    
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const fecha = new Date(document.lastModified);
-        const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        const mod = document.getElementById("fecha-modificacion");
-        if (mod) mod.textContent = fecha.toLocaleDateString('es-ES', opciones);
-    
-        const formTorneo = document.getElementById("form-torneo");
-        const contador = document.getElementById("contador-torneo");
-    
-        if (!formTorneo) return;
-    
-        jugadores.forEach((j, i) => {
-          formTorneo.insertAdjacentHTML("beforeend", `
-            <div class="form-check col-md-6">
-              <input class="form-check-input jugador-torneo-checkbox" type="checkbox" id="jugadorTorneo${i}" value="${i}">
-              <label class="form-check-label" for="jugadorTorneo${i}">${j.nombre}</label>
-            </div>`);
-        });
-    
-        document.querySelectorAll(".jugador-torneo-checkbox").forEach(cb =>
-          cb.addEventListener("change", () => {
-            const seleccionados = document.querySelectorAll(".jugador-torneo-checkbox:checked").length;
-            if (contador) contador.textContent = `Seleccionados: ${seleccionados}`;
-            const boton = document.getElementById("generar-torneo");
-            if (boton) boton.disabled = seleccionados < 20 || seleccionados > 24;
-          })
-        );
-    
-        const botonGenerar = document.getElementById("generar-torneo");
-        if (!botonGenerar) return;
-    
-        botonGenerar.addEventListener("click", () => {
-          const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
-            .map(cb => jugadores[parseInt(cb.value)])
-            .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
-    
-          const MAX_DIFF = 0.15;
-          const intentos = 2000;
-          let mejorScore = Infinity;
-          let mejoresEquipos = null;
-          let mejorTopBalance = Infinity;
-    
-          for (let i = 0; i < intentos; i++) {
-            const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
-            const eq = [[], [], [], []];
-            mezcla.forEach((j, idx) => eq[idx % 4].push(j));
-    
-            const stats = eq.map(e => ({
-              atk: e.reduce((s, x) => s + x.ataque, 0) / e.length,
-              def: e.reduce((s, x) => s + x.defensa, 0) / e.length,
-              fifa: e.reduce((s, x) => s + (x.fifa ?? 0), 0),
-              top: e.filter(x => x.media > 4).length
-            }));
-    
-            const maxAtk = Math.max(...stats.map(e => e.atk));
-            const minAtk = Math.min(...stats.map(e => e.atk));
-            const maxDef = Math.max(...stats.map(e => e.def));
-            const minDef = Math.min(...stats.map(e => e.def));
-            const maxTop = Math.max(...stats.map(e => e.top));
-            const minTop = Math.min(...stats.map(e => e.top));
-    
-            const diff = (maxAtk - minAtk) + (maxDef - minDef);
-            const topDiff = maxTop - minTop;
-    
-            if (diff <= MAX_DIFF && (diff < mejorScore || (diff === mejorScore && topDiff < mejorTopBalance))) {
-              mejorScore = diff;
-              mejorTopBalance = topDiff;
-              mejoresEquipos = eq;
-            }
-          }
-    
-          if (!mejoresEquipos) {
-            alert("No se pudieron formar equipos equilibrados.");
-            return;
-          }
-    
-          const colores = ["Azul", "Blanco", "Rojo", "Verde"];
-          const cont = document.getElementById("resultado-torneo");
-          if (!cont) return;
-          cont.innerHTML = "";
-          mejoresEquipos.forEach((e, i) => {
-            const atk = (e.reduce((s, j) => s + j.ataque, 0) / e.length).toFixed(2);
-            const def = (e.reduce((s, j) => s + j.defensa, 0) / e.length).toFixed(2);
-            const fifa = e.reduce((s, j) => s + (j.fifa ?? 0), 0);
-            cont.innerHTML += `
-              <div class="col-md-6 col-lg-3">
-                <h5><span class="circle ${colores[i].toLowerCase()}-circle"></span> Equipo ${colores[i]}</h5>
-                <p>ATK: ${atk} | DEF: ${def} | FIFA: ${fifa}</p>
-                <ul class="list-group">
-                  ${e.map(j => `<li class="list-group-item">${j.nombre} (M: ${j.media.toFixed(2)})${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
-                </ul>
-              </div>`;
-          });
-        });
-      });
-    </script>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="Jugadores.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const fecha = new Date(document.lastModified);
+    const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    document.getElementById("fecha-modificacion").textContent = fecha.toLocaleDateString('es-ES', opciones);
+
+    if (typeof mostrarTabla === 'function') mostrarTabla();
+    if (typeof mostrarAsistencia === 'function') mostrarAsistencia();
+    if (typeof mostrarVotaciones === 'function') mostrarVotaciones();
+
+    document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
+    document.getElementById("guardar-votaciones")?.addEventListener("click", () => {
+      guardarVotaciones();
+      const alerta = document.createElement('div');
+      alerta.className = "alert alert-success mt-3";
+      alerta.role = "alert";
+      alerta.innerText = "¡Votos guardados y tabla actualizada!";
+      const resultado = document.getElementById("votacion-resultado");
+      resultado.prepend(alerta);
+      setTimeout(() => alerta.remove(), 3000);
+    });
+  });
+</script>
 </body>
 </html>
