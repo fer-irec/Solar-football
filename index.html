@@ -42,21 +42,13 @@
   <p class="text-center text-muted" id="ultima-modificacion">Última actualización: <span id="fecha-modificacion"></span></p>
 
   <ul class="nav nav-tabs mb-4" id="tabs">
-    <li class="nav-item">
-      <a class="nav-link active" data-bs-toggle="tab" href="#jugadores">Jugadores</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#convocatoria">Convocatoria</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#votaciones">Votaciones</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a>
-    </li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#jugadores">Jugadores</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#convocatoria">Partido</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
   </ul>
-
+  
   <div class="tab-content">
+    <!-- Jugadores -->
     <div class="tab-pane fade show active" id="jugadores">
       <table id="tabla-jugadores" class="table table-bordered text-center">
         <thead class="table-dark">
@@ -71,19 +63,15 @@
         <tbody></tbody>
       </table>
     </div>
-
+  
+    <!-- Convocatoria (ahora llamado Partido) -->
     <div class="tab-pane fade" id="convocatoria">
       <form id="form-asistencia" class="mb-3 row row-cols-2"></form>
       <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
       <div id="resultado-equipos" class="row"></div>
     </div>
-
-    <div class="tab-pane fade" id="votaciones">
-      <form id="form-votaciones" class="row g-3"></form>
-      <div id="votacion-resultado" class="mt-4"></div>
-      <button class="btn btn-success mt-3" id="guardar-votaciones">Guardar Votos</button>
-    </div>
-
+  
+    <!-- Torneo -->
     <div class="tab-pane fade" id="torneo">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
@@ -95,6 +83,7 @@
         <div id="resultado-torneo" class="row mt-4"></div>
       </div>
     </div>
+  </div>
     
     <script>
       document.addEventListener("DOMContentLoaded", () => {
