@@ -62,13 +62,14 @@
     </li>
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a>
-    </li> 
+    </li>
     <li class="nav-item">
       <a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a>
     </li>
   </ul>
 
   <div class="tab-content">
+    <!-- Jugadores -->
     <div class="tab-pane fade show active" id="jugadores">
       <table id="tabla-jugadores" class="table table-bordered text-center">
         <thead class="table-dark">
@@ -85,7 +86,7 @@
       </table>
     </div>
 
-    <!-- Pestaña Partido -->
+    <!-- Partido -->
     <div class="tab-pane fade" id="convocatoria">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear Equipos para Partido</h3>
@@ -98,7 +99,7 @@
       </div>
     </div>
 
-    <!-- Pestaña Torneo -->
+    <!-- Torneo -->
     <div class="tab-pane fade" id="torneo">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
@@ -110,7 +111,21 @@
         <div id="resultado-torneo" class="row mt-4"></div>
       </div>
     </div>
-    <!-- Pestaña Fotos -->
+
+    <!-- Consejos -->
+    <div class="tab-pane fade" id="consejos">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Consejos para jugar en Solar FC</h3>
+        <div class="ratio ratio-16x9">
+          <video controls>
+            <source src="SolarFC_tip.mp4" type="video/mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fotos -->
     <div class="tab-pane fade" id="fotos">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Ganadores 5º torneo</h3>
@@ -123,18 +138,9 @@
             <img src="images/players-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Jugadores 5º Torneo">
             <p class="text-center mt-2">Jugadores participantes</p>
           </div>
-        </div>  
-    <div class="tab-pane fade" id="consejos">
-  <div class="container mt-4">
-    <h3 class="text-center mb-4">Consejos para jugar en Solar FC</h3>
-    <div class="ratio ratio-16x9">
-      <video controls>
-        <source src="SolarFC_tip.mp4" type="video/mp4">
-        Tu navegador no soporta la reproducción de video.
-      </video>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
   </div>
 </div>
 
@@ -142,12 +148,10 @@
 <script src="Jugadores.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    // Fecha de última modificación
     const fecha = new Date(document.lastModified);
     const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     document.querySelector("#fecha-modificacion span").textContent = fecha.toLocaleDateString('es-ES', opciones);
 
-    // Contador dinámico para pestaña Partido
     const formAsistencia = document.getElementById("form-asistencia");
     const contadorPartido = document.getElementById("contador-partido");
     if (formAsistencia && contadorPartido) {
@@ -167,7 +171,6 @@
       );
     }
 
-    // Contador dinámico para pestaña Torneo
     const formTorneo = document.getElementById("form-torneo");
     const contadorTorneo = document.getElementById("contador-torneo");
     if (formTorneo && contadorTorneo) {
