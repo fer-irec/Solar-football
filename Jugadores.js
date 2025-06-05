@@ -24,7 +24,7 @@ const jugadores = [
   { nombre: "Outman", ataque: 4.37, defensa: 4.87, media: 4.62, fifa: 92 },
   { nombre: "Harris", ataque: 2.35, defensa: 2.15, media: 2.25, fifa: 45 },
   { nombre: "Sergio Ramos", ataque: 3.65, defensa: 3.35, media: 3.5, fifa: 70 },
-  { nombre: "Tolga", ataque: 3.3, defensa: 3.0, media: 3.15, fifa: 63 },
+  { nombre: "Tolga", ataque: 3.45, defensa: 3.0, media: 3.23, fifa: 65 },
   { nombre: "Amadou**", ataque: 3, defensa: 3, media: 3, fifa: 60 },
   { nombre: "Steven", ataque: 3.05, defensa: 3.1, media: 3.08, fifa: 62 },
   { nombre: "Ricard", ataque: 2.4, defensa: 2.5, media: 2.45, fifa: 49 },
@@ -49,6 +49,7 @@ const jugadores = [
   { nombre: "Tobi", ataque: 2.62, defensa: 4.03, media: 3.31, fifa: 66 },
   { nombre: "Dominic**", ataque: 3.5, defensa: 3.5, media: 3.5, fifa: 70 },
   { nombre: "Rolando**", ataque: 3.0, defensa: 3.0, media: 3.0, fifa: 60 },
+  { nombre: "Tomas**", ataque: 3.5, defensa: 3.2, media: 3.3, fifa: 66 },
   { nombre: "Visitor 1 (2.5)", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
   { nombre: "Visitor 2( 2.5)", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
   { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3, media: 3, fifa: 60 }
