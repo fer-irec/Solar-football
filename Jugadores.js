@@ -1,58 +1,57 @@
-// Lista de jugadores completa con columna FIFA
 const jugadores = [
-  { nombre: "Ale", ataque: 2.62, defensa: 2.57, media: 2.59, fifa: 52 },
-  { nombre: "Fer", ataque: 3.30, defensa: 3.10, media: 3.20, fifa: 64 },
-  { nombre: "Jacob", ataque: 4.13, defensa: 3.67, media: 3.90, fifa: 78 },
-  { nombre: "Min", ataque: 1.93, defensa: 1.92, media: 1.93, fifa: 39 },
-  { nombre: "Damian", ataque: 4.52, defensa: 4.01, media: 4.26, fifa: 85 },
-  { nombre: "Mario", ataque: 1.72, defensa: 2.37, media: 2.04, fifa: 41 },
-  { nombre: "Mirko", ataque: 3.65, defensa: 3.98, media: 3.82, fifa: 76 },
-  { nombre: "Queco (GK)", ataque: 1.38, defensa: 4.25, media: 2.82, fifa: 56 },
-  { nombre: "Oriol (GK)", ataque: 1.28, defensa: 4.10, media: 2.69, fifa: 54 },
-  { nombre: "Abel", ataque: 3.0, defensa: 2.95, media: 2.98, fifa: 54 },
-  { nombre: "Arnau", ataque: 4.25, defensa: 3.99, media: 4.12, fifa: 82 },
-  { nombre: "Niccolo", ataque: 3.70, defensa: 3.73, media: 3.72, fifa: 74 },
-  { nombre: "Merino", ataque: 3.0, defensa: 3.74, media: 3.37, fifa: 67 },
-  { nombre: "Liya", ataque: 3.53, defensa: 3.38, media: 3.45, fifa: 69 },
-  { nombre: "Yuancai", ataque: 1.6, defensa: 1.6, media: 1.6, fifa: 32 },
-  { nombre: "Jon", ataque: 2.63, defensa: 2.45, media: 2.54, fifa: 51 },
-  { nombre: "Peña", ataque: 2.70, defensa: 2.68, media: 2.69, fifa: 54 },
-  { nombre: "Manu", ataque: 4.47, defensa: 4.08, media: 4.28, fifa: 86 },
-  { nombre: "Vito", ataque: 3.73, defensa: 4.33, media: 4.03, fifa: 81 },
-  { nombre: "Alex Jimenez", ataque: 4.53, defensa: 4.42, media: 4.48, fifa: 90 },
-  { nombre: "Andrea Maioli", ataque: 4.58, defensa: 4.48, media: 4.48, fifa: 90 },
-  { nombre: "Outman", ataque: 4.37, defensa: 4.87, media: 4.62, fifa: 92 },
-  { nombre: "Harris", ataque: 2.35, defensa: 2.15, media: 2.25, fifa: 45 },
-  { nombre: "Sergio Ramos", ataque: 3.65, defensa: 3.35, media: 3.5, fifa: 70 },
-  { nombre: "Tolga", ataque: 3.45, defensa: 3.0, media: 3.23, fifa: 65 },
-  { nombre: "Amadou**", ataque: 3, defensa: 3, media: 3, fifa: 60 },
-  { nombre: "Steven", ataque: 3.05, defensa: 3.1, media: 3.08, fifa: 62 },
-  { nombre: "Ricard", ataque: 2.4, defensa: 2.5, media: 2.45, fifa: 49 },
-  { nombre: "David Rovira", ataque: 3.03, defensa: 3.03, media: 3.03, fifa: 61 },
-  { nombre: "Gustavo Madrigal", ataque: 2.81, defensa: 3.01, media: 2.91, fifa: 58 },
-  { nombre: "Diego", ataque: 2.02, defensa: 2.42, media: 2.22, fifa: 44 },
-  { nombre: "Andrea Aroldi", ataque: 1.92, defensa: 1.92, media: 1.92, fifa: 38 },
-  { nombre: "Vitor", ataque: 2.76, defensa: 2.72, media: 2.74, fifa: 55 },
-  { nombre: "Mario Lecce", ataque: 3.37, defensa: 3.47, media: 3.42, fifa: 68 },
-  { nombre: "Jeff", ataque: 3.9, defensa: 3.66, media: 3.78, fifa: 76 },
-  { nombre: "Payno", ataque: 3.27, defensa: 3.47, media: 3.42, fifa: 68 },
-  { nombre: "Kevin", ataque: 4.69, defensa: 4.32, media: 4.51, fifa: 90 },
-  { nombre: "Fabien", ataque: 3.13, defensa: 3.13, media: 3.13, fifa: 63 },
-  { nombre: "Romain", ataque: 4.42, defensa: 4.34, media: 4.38, fifa: 88 },
-  { nombre: "Maykel", ataque: 3.25, defensa: 3.18, media: 3.21, fifa: 64 },
-  { nombre: "Alex Lopez", ataque: 3.5, defensa: 3.35, media: 3.43, fifa: 69 },
-  { nombre: "Buda", ataque: 3.68, defensa: 3.84, media: 3.76, fifa: 75 },
-  { nombre: "Massi", ataque: 4.7, defensa: 4, media: 4.35, fifa: 87 },
-  { nombre: "Trompia", ataque: 4.65, defensa: 4.25, media: 4.45, fifa: 89 },
-  { nombre: "Treppo", ataque: 3.9, defensa: 3.5, media: 3.70, fifa: 74 },
-  { nombre: "Lori", ataque: 3.5, defensa: 2.92, media: 3.21, fifa: 64 },
-  { nombre: "Tobi", ataque: 2.62, defensa: 4.03, media: 3.31, fifa: 66 },
-  { nombre: "Dominic**", ataque: 3.5, defensa: 3.5, media: 3.5, fifa: 70 },
-  { nombre: "Rolando**", ataque: 3.0, defensa: 3.0, media: 3.0, fifa: 60 },
-  { nombre: "Tomas**", ataque: 3.5, defensa: 3.2, media: 3.3, fifa: 66 },
-  { nombre: "Visitor 1 (2.5)", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
-  { nombre: "Visitor 2( 2.5)", ataque: 2.5, defensa: 2.5, media: 2.5, fifa: 50 },
-  { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3, media: 3, fifa: 60 }
+  { nombre: "Ale", ataque: 2.62, defensa: 2.57 },
+  { nombre: "Fer", ataque: 3.30, defensa: 3.10 },
+  { nombre: "Jacob", ataque: 4.13, defensa: 3.67 },
+  { nombre: "Min", ataque: 1.93, defensa: 1.92 },
+  { nombre: "Damian", ataque: 4.52, defensa: 4.01 },
+  { nombre: "Mario", ataque: 1.72, defensa: 2.37 },
+  { nombre: "Mirko", ataque: 3.65, defensa: 3.98 },
+  { nombre: "Queco (GK)", ataque: 1.38, defensa: 4.25 },
+  { nombre: "Oriol (GK)", ataque: 1.28, defensa: 4.10 },
+  { nombre: "Abel", ataque: 3.0, defensa: 2.95 },
+  { nombre: "Arnau", ataque: 4.25, defensa: 3.99 },
+  { nombre: "Niccolo", ataque: 3.70, defensa: 3.73 },
+  { nombre: "Merino", ataque: 3.0, defensa: 3.74 },
+  { nombre: "Liya", ataque: 3.53, defensa: 3.38 },
+  { nombre: "Yuancai", ataque: 1.6, defensa: 1.6 },
+  { nombre: "Jon", ataque: 2.63, defensa: 2.45 },
+  { nombre: "Peña", ataque: 2.70, defensa: 2.68 },
+  { nombre: "Manu", ataque: 4.47, defensa: 4.08 },
+  { nombre: "Vito", ataque: 3.73, defensa: 4.33 },
+  { nombre: "Alex Jimenez", ataque: 4.53, defensa: 4.42 },
+  { nombre: "Andrea Maioli", ataque: 4.58, defensa: 4.48 },
+  { nombre: "Outman", ataque: 4.37, defensa: 4.87 },
+  { nombre: "Harris", ataque: 2.35, defensa: 2.15 },
+  { nombre: "Sergio Ramos", ataque: 3.65, defensa: 3.35 },
+  { nombre: "Tolga", ataque: 3.45, defensa: 3.0 },
+  { nombre: "Amadou**", ataque: 3, defensa: 3 },
+  { nombre: "Steven", ataque: 3.05, defensa: 3.1 },
+  { nombre: "Ricard", ataque: 2.4, defensa: 2.5 },
+  { nombre: "David Rovira", ataque: 3.03, defensa: 3.03 },
+  { nombre: "Gustavo Madrigal", ataque: 2.81, defensa: 3.01 },
+  { nombre: "Diego", ataque: 2.02, defensa: 2.42 },
+  { nombre: "Andrea Aroldi", ataque: 1.92, defensa: 1.92 },
+  { nombre: "Vitor", ataque: 2.76, defensa: 2.72 },
+  { nombre: "Mario Lecce", ataque: 3.37, defensa: 3.47 },
+  { nombre: "Jeff", ataque: 3.9, defensa: 3.66 },
+  { nombre: "Payno", ataque: 3.27, defensa: 3.47 },
+  { nombre: "Kevin", ataque: 4.69, defensa: 4.32 },
+  { nombre: "Fabien", ataque: 3.13, defensa: 3.13 },
+  { nombre: "Romain", ataque: 4.42, defensa: 4.34 },
+  { nombre: "Maykel", ataque: 3.25, defensa: 3.18 },
+  { nombre: "Alex Lopez", ataque: 3.5, defensa: 3.35 },
+  { nombre: "Buda", ataque: 3.68, defensa: 3.84 },
+  { nombre: "Massi", ataque: 4.7, defensa: 4 },
+  { nombre: "Trompia", ataque: 4.65, defensa: 4.25 },
+  { nombre: "Treppo", ataque: 3.9, defensa: 3.5 },
+  { nombre: "Lori", ataque: 3.5, defensa: 2.92 },
+  { nombre: "Tobi", ataque: 2.62, defensa: 4.03 },
+  { nombre: "Dominic**", ataque: 3.5, defensa: 3.5 },
+  { nombre: "Rolando**", ataque: 3.0, defensa: 3.0 },
+  { nombre: "Tomas**", ataque: 3.5, defensa: 3.2 },
+  { nombre: "Visitor 1 (2.5)", ataque: 2.5, defensa: 2.5 },
+  { nombre: "Visitor 2( 2.5)", ataque: 2.5, defensa: 2.5 },
+  { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3 }
 ];
 
 // Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
@@ -116,8 +115,8 @@ function mostrarTabla() {
   for (let i = 1; i < allStarsTh.length; i++) allStarsTh[i].remove();
 
   jugadores.forEach(j => {
-    const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
-    const fifa = j.fifa ?? 0;
+    const media = limitar(calcularMedia(j)).toFixed(2);
+    const fifa = calcularFifa(j);
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
@@ -131,11 +130,12 @@ function mostrarTabla() {
   });
 }
 
+
+
 function generarEquipos() {
   try {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
-      .map(cb => jugadores[parseInt(cb.value)])
-      .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
+      .map(cb => jugadores[parseInt(cb.value)]);
 
     if (seleccionados.length < 10 || seleccionados.length > 12) {
       throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
@@ -150,12 +150,15 @@ function generarEquipos() {
       const eq1 = mezcla.slice(0, Math.floor(seleccionados.length / 2));
       const eq2 = mezcla.slice(Math.floor(seleccionados.length / 2));
 
-      const stat = team => ({
-        atk: team.reduce((s, x) => s + x.ataque, 0) / team.length,
-        def: team.reduce((s, x) => s + x.defensa, 0) / team.length,
-        fifa: team.reduce((s, x) => s + (x.fifa ?? 0), 0),
-        top: team.filter(x => x.media > 4).length
-      });
+      const stat = team => {
+        const medias = team.map(j => calcularMedia(j));
+        return {
+          atk: team.reduce((s, x) => s + x.ataque, 0) / team.length,
+          def: team.reduce((s, x) => s + x.defensa, 0) / team.length,
+          fifa: medias.reduce((s, m) => s + Math.round(m * 20), 0),
+          top: medias.filter(m => m > 4).length
+        };
+      };
 
       const s1 = stat(eq1);
       const s2 = stat(eq2);
@@ -179,12 +182,12 @@ function generarEquipos() {
     const s1 = {
       atk: (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2),
       def: (mejorEq1.reduce((s, j) => s + j.defensa, 0) / mejorEq1.length).toFixed(2),
-      fifa: mejorEq1.reduce((s, j) => s + (j.fifa ?? 0), 0)
+      fifa: mejorEq1.reduce((s, j) => s + calcularFifa(j), 0)
     };
     const s2 = {
       atk: (mejorEq2.reduce((s, j) => s + j.ataque, 0) / mejorEq2.length).toFixed(2),
       def: (mejorEq2.reduce((s, j) => s + j.defensa, 0) / mejorEq2.length).toFixed(2),
-      fifa: mejorEq2.reduce((s, j) => s + (j.fifa ?? 0), 0)
+      fifa: mejorEq2.reduce((s, j) => s + calcularFifa(j), 0)
     };
 
     cont.innerHTML = `
@@ -192,14 +195,20 @@ function generarEquipos() {
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
         <p>ATK: ${s1.atk} | DEF: ${s1.def} | FIFA: ${s1.fifa}</p>
         <ul class="list-group">
-          ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${mejorEq1.map(j => {
+            const media = calcularMedia(j);
+            return `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(calcularFifa(j))}${media > 4 ? ' <strong>(C)</strong>' : ''}</li>`;
+          }).join("")}
         </ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
         <p>ATK: ${s2.atk} | DEF: ${s2.def} | FIFA: ${s2.fifa}</p>
         <ul class="list-group">
-          ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${mejorEq2.map(j => {
+            const media = calcularMedia(j);
+            return `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(calcularFifa(j))}${media > 4 ? ' <strong>(C)</strong>' : ''}</li>`;
+          }).join("")}
         </ul>
       </div>`;
   } catch (error) {
@@ -208,15 +217,10 @@ function generarEquipos() {
   }
 }
 
-// Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
-// const jugadores = [...]; // Tu lista completa de jugadores con ataque, defensa, fifa
-
-// ... (resto del código intacto) ...
 
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
-    .map(cb => jugadores[parseInt(cb.value)])
-    .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
+    .map(cb => jugadores[parseInt(cb.value)]);
 
   if (seleccionados.length < 20 || seleccionados.length > 24) {
     throw new Error("Selecciona entre 20 y 24 jugadores para el torneo.");
@@ -232,12 +236,15 @@ function generarEquiposTorneo() {
     const eqs = [[], [], [], []];
     mezcla.forEach((j, idx) => eqs[idx % 4].push(j));
 
-    const stats = eqs.map(eq => ({
-      atk: eq.reduce((s, j) => s + j.ataque, 0) / eq.length,
-      def: eq.reduce((s, j) => s + j.defensa, 0) / eq.length,
-      fifa: eq.reduce((s, j) => s + (j.fifa ?? 0), 0),
-      top: eq.filter(j => j.media > 4).length
-    }));
+    const stats = eqs.map(eq => {
+      const medias = eq.map(j => calcularMedia(j));
+      return {
+        atk: eq.reduce((s, j) => s + j.ataque, 0) / eq.length,
+        def: eq.reduce((s, j) => s + j.defensa, 0) / eq.length,
+        fifa: medias.reduce((s, m) => s + Math.round(m * 20), 0),
+        top: medias.filter(m => m > 4).length
+      };
+    });
 
     const atkDiff = Math.max(...stats.map(s => s.atk)) - Math.min(...stats.map(s => s.atk));
     const defDiff = Math.max(...stats.map(s => s.def)) - Math.min(...stats.map(s => s.def));
@@ -266,7 +273,10 @@ function generarEquiposTorneo() {
         <h5><span class="circle ${colores[i]}-circle"></span> Equipo ${colores[i].charAt(0).toUpperCase() + colores[i].slice(1)}</h5>
         <p>ATK: ${s.atk.toFixed(2)} | DEF: ${s.def.toFixed(2)} | FIFA: ${s.fifa}</p>
         <ul class="list-group">
-          ${eq.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${eq.map(j => {
+            const media = calcularMedia(j);
+            return `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(calcularFifa(j))}${media > 4 ? ' <strong>(C)</strong>' : ''}</li>`;
+          }).join("")}
         </ul>
       </div>`;
   });
