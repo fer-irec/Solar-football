@@ -106,6 +106,44 @@ function generarEstrellasFIFA(puntuacion) {
   return `<span class="fifa-stars">${estrellas}</span>`;
 }
 
+// ===============================
+// Ordenamiento de tabla
+// ===============================
+
+let jugadoresOriginal = [...jugadores];
+let jugadoresOrdenados = [...jugadores];
+let ordenActual = { columna: null, estado: 0 }; // 0: original, 1: desc, 2: asc
+
+function ordenarPor(columna) {
+  if (ordenActual.columna !== columna) {
+    ordenActual = { columna, estado: 1 };
+  } else {
+    ordenActual.estado = (ordenActual.estado + 1) % 3;
+  }
+
+  if (ordenActual.estado === 0) {
+    jugadoresOrdenados = [...jugadoresOriginal];
+  } else {
+    const dir = ordenActual.estado === 1 ? -1 : 1;
+    jugadoresOrdenados.sort((a, b) => {
+      const valor = (j, col) => {
+        if (col === "media") return calcularMedia(j);
+        if (col === "nombre") return j[col].toLowerCase();
+        return parseFloat(j[col]);
+      };
+      const valA = valor(a, columna);
+      const valB = valor(b, columna);
+      return valA < valB ? -1 * dir : valA > valB ? 1 * dir : 0;
+    });
+  }
+
+  mostrarTabla();
+}
+
+// ===============================
+// Mostrar tabla
+// ===============================
+
 function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
@@ -114,18 +152,12 @@ function mostrarTabla() {
   const theadRow = document.querySelector("#tabla-jugadores thead tr");
   if (!theadRow) return;
 
-  // ⚠️ Elimina TODAS las columnas FIFA y Stars antes de volver a insertarlas
+  // Asegura columnas sin duplicados
   theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
+  if (!theadRow.querySelector("th.fifa")) theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+  if (!theadRow.querySelector("th.stars")) theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
 
-  // Añade una sola vez las columnas FIFA y Stars
-  if (!theadRow.querySelector("th.fifa")) {
-    theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
-  }
-  if (!theadRow.querySelector("th.stars")) {
-    theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
-  }
-
-  jugadores.forEach(j => {
+  jugadoresOrdenados.forEach(j => {
     const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
     const fifa = Math.round(media * 20);
     const estrellasHTML = generarEstrellasFIFA(fifa);
@@ -296,6 +328,27 @@ function generarEquiposTorneo() {
 
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
+
+  // Ordenamiento de columnas de la tabla de jugadores
+  const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
+  document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
+    const columna = columnas[index];
+    if (columna) {
+      th.classList.add("sortable");
+      th.style.cursor = "pointer";
+      th.addEventListener("click", () => {
+        ordenarPor(columna);
+
+        // Actualizar indicadores visuales de orden
+        document.querySelectorAll("#tabla-jugadores thead th").forEach(th =>
+          th.classList.remove("orden-asc", "orden-desc")
+        );
+        if (ordenActual.estado === 1) th.classList.add("orden-desc");
+        else if (ordenActual.estado === 2) th.classList.add("orden-asc");
+      });
+    }
+  });
+
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", () => {
     try {
@@ -351,4 +404,5 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   });
-  });
+});
+
