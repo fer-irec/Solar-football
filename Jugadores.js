@@ -92,6 +92,33 @@ function ordenarPor(columna) {
   mostrarTabla();
 }
 
+function mostrarTabla() {
+  const tbody = document.querySelector("#tabla-jugadores tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  jugadores.forEach(j => {
+    const media = limitar(j.media).toFixed(2);
+    const fila = `<tr>
+      <td>${j.nombre}</td>
+      <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
+      <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
+      <td><span class="${colorClase(media)}">${media}</span></td>
+      <td><span class="${colorFifa(j.fifa)}">${j.fifa}</span></td>
+      <td>${generarEstrellasFIFA(j.fifa)}</td>
+    </tr>`;
+    tbody.insertAdjacentHTML("beforeend", fila);
+  });
+
+  document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
+    const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
+    const columna = columnas[index];
+    if (!columna) return;
+    th.style.cursor = "pointer";
+    th.classList.add("sortable");
+    th.addEventListener("click", () => ordenarPor(columna));
+  });
+}
+
 // =====================
 // Funciones auxiliares
 // =====================
