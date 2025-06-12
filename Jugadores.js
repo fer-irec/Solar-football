@@ -110,19 +110,16 @@ function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  const thead = document.querySelector("#tabla-jugadores thead tr");
 
-thead.querySelectorAll("th.fifa").forEach((th, i) => { if (i > 0) th.remove(); });
-thead.querySelectorAll("th.stars").forEach((th, i) => { if (i > 0) th.remove(); });
+  const theadRow = document.querySelector("#tabla-jugadores thead tr");
+  if (!theadRow) return;
 
-// Añadir solo si no existe al menos uno
-if (!thead.querySelector("th.fifa")) {
-  thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
-}
-if (!thead.querySelector("th.stars")) {
-  thead.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
-}
+  // ⚠️ Elimina TODAS las columnas FIFA y Stars antes de volver a insertarlas
+  theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
 
+  // Añade una sola vez las columnas FIFA y Stars
+  theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+  theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
 
   jugadores.forEach(j => {
     const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
@@ -133,12 +130,13 @@ if (!thead.querySelector("th.stars")) {
       <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
       <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
-      <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
-      <td>${estrellasHTML}</td>
+      <td class="fifa"><span class="${colorFifa(fifa)}">${fifa}</span></td>
+      <td class="stars">${estrellasHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
 }
+
 
 function generarEquipos() {
   try {
@@ -220,6 +218,7 @@ function generarEquipos() {
     cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
   }
 }
+
 
 
 // Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
