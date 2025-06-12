@@ -118,8 +118,12 @@ function mostrarTabla() {
   theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
 
   // Añade una sola vez las columnas FIFA y Stars
-  theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
-  theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
+  if (!theadRow.querySelector("th.fifa")) {
+    theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+  }
+  if (!theadRow.querySelector("th.stars")) {
+    theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
+  }
 
   jugadores.forEach(j => {
     const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
