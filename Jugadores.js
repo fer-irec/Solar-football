@@ -112,8 +112,9 @@ function mostrarTabla() {
   tbody.innerHTML = "";
   jugadores.forEach(j => {
     const media = limitar(j.media).toFixed(2);
+    const capitan = j.media > 4 ? ' <strong>(C)</strong>' : '';
     const fila = `<tr>
-      <td>${j.nombre}</td>
+      <td>${j.nombre}${capitan}</td>
       <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
       <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
@@ -122,7 +123,32 @@ function mostrarTabla() {
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
+
+  // Habilitar ordenamiento
+  document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
+    const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
+    const columna = columnas[index];
+    if (!columna) return;
+    th.style.cursor = "pointer";
+    th.classList.add("sortable");
+    th.addEventListener("click", () => ordenarPor(columna));
+  });
 }
+
+function ordenarPor(columna) {
+  const ordenAsc = ordenActual.columna === columna ? !ordenActual.ascendente : true;
+  ordenActual = { columna, ascendente: ordenAsc };
+  jugadores.sort((a, b) => {
+    const valA = columna === 'nombre' ? a[columna].toLowerCase() : a[columna];
+    const valB = columna === 'nombre' ? b[columna].toLowerCase() : b[columna];
+    if (valA < valB) return ordenAsc ? -1 : 1;
+    if (valA > valB) return ordenAsc ? 1 : -1;
+    return 0;
+  });
+  mostrarTabla();
+}
+
+let ordenActual = { columna: null, ascendente: true };
 
 // =====================
 // Generar Equipos Partido
