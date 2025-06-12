@@ -144,7 +144,11 @@ function generarEquipos() {
   try {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
       .map(cb => jugadores[parseInt(cb.value)])
-      .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
+      .map(j => ({
+        ...j,
+        media: (j.ataque + j.defensa) / 2,
+        fifa: calcularFifa(j) // ← Aquí se añade correctamente la propiedad fifa
+      }));
 
     if (seleccionados.length < 10 || seleccionados.length > 12) {
       throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
@@ -162,7 +166,7 @@ function generarEquipos() {
       const stat = team => ({
         atk: team.reduce((s, x) => s + x.ataque, 0) / team.length,
         def: team.reduce((s, x) => s + x.defensa, 0) / team.length,
-        fifa: team.reduce((s, x) => s + (x.fifa ?? 0), 0),
+        fifa: team.reduce((s, x) => s + x.fifa, 0),
         top: team.filter(x => x.media > 4).length
       });
 
@@ -188,12 +192,12 @@ function generarEquipos() {
     const s1 = {
       atk: (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2),
       def: (mejorEq1.reduce((s, j) => s + j.defensa, 0) / mejorEq1.length).toFixed(2),
-      fifa: mejorEq1.reduce((s, j) => s + (j.fifa ?? 0), 0)
+      fifa: mejorEq1.reduce((s, j) => s + j.fifa, 0)
     };
     const s2 = {
       atk: (mejorEq2.reduce((s, j) => s + j.ataque, 0) / mejorEq2.length).toFixed(2),
       def: (mejorEq2.reduce((s, j) => s + j.defensa, 0) / mejorEq2.length).toFixed(2),
-      fifa: mejorEq2.reduce((s, j) => s + (j.fifa ?? 0), 0)
+      fifa: mejorEq2.reduce((s, j) => s + j.fifa, 0)
     };
 
     cont.innerHTML = `
@@ -201,14 +205,14 @@ function generarEquipos() {
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
         <p>ATK: ${s1.atk} | DEF: ${s1.def} | FIFA: ${s1.fifa}</p>
         <ul class="list-group">
-          ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
         <p>ATK: ${s2.atk} | DEF: ${s2.def} | FIFA: ${s2.fifa}</p>
         <ul class="list-group">
-          ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>`;
   } catch (error) {
@@ -216,6 +220,7 @@ function generarEquipos() {
     cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
   }
 }
+
 
 // Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
 // const jugadores = [...]; // Tu lista completa de jugadores con ataque, defensa, fifa
@@ -225,7 +230,11 @@ function generarEquipos() {
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[parseInt(cb.value)])
-    .map(j => ({ ...j, media: (j.ataque + j.defensa) / 2 }));
+    .map(j => ({
+      ...j,
+      media: (j.ataque + j.defensa) / 2,
+      fifa: calcularFifa(j) // ← Añadido cálculo de FIFA individual
+    }));
 
   if (seleccionados.length < 20 || seleccionados.length > 24) {
     throw new Error("Selecciona entre 20 y 24 jugadores para el torneo.");
@@ -244,7 +253,7 @@ function generarEquiposTorneo() {
     const stats = eqs.map(eq => ({
       atk: eq.reduce((s, j) => s + j.ataque, 0) / eq.length,
       def: eq.reduce((s, j) => s + j.defensa, 0) / eq.length,
-      fifa: eq.reduce((s, j) => s + (j.fifa ?? 0), 0),
+      fifa: eq.reduce((s, j) => s + j.fifa, 0),
       top: eq.filter(j => j.media > 4).length
     }));
 
@@ -275,11 +284,12 @@ function generarEquiposTorneo() {
         <h5><span class="circle ${colores[i]}-circle"></span> Equipo ${colores[i].charAt(0).toUpperCase() + colores[i].slice(1)}</h5>
         <p>ATK: ${s.atk.toFixed(2)} | DEF: ${s.def.toFixed(2)} | FIFA: ${s.fifa}</p>
         <ul class="list-group">
-          ${eq.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa ?? 0)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${eq.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>`;
   });
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
