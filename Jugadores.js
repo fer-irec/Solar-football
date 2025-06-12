@@ -61,11 +61,35 @@ jugadores.forEach(j => {
   j.fifa = Math.round(j.media * 20);
 });
 
+console.log("Jugadores:", jugadores);
+
 function logEquipos(equipos) {
   equipos.forEach((equipo, i) => {
     console.log(`Equipo ${i + 1}:`);
-    equipo.forEach(j => console.log(` - ${j.nombre} | Media: ${j.media.toFixed(2)} | FIFA: ${j.fifa}`));
+    equipo.forEach(j => {
+      const esCapitan = j.media > 4 ? " (C)" : "";
+      console.log(` - ${j.nombre}${esCapitan} | Media: ${j.media.toFixed(2)} | FIFA: ${j.fifa}`);
+    });
   });
+}
+
+let ordenActual = { columna: null, ascendente: true };
+
+function ordenarPor(columna) {
+  if (ordenActual.columna === columna) {
+    ordenActual.ascendente = !ordenActual.ascendente;
+  } else {
+    ordenActual.columna = columna;
+    ordenActual.ascendente = true;
+  }
+  jugadores.sort((a, b) => {
+    let valA = columna === 'nombre' ? a[columna].toLowerCase() : a[columna];
+    let valB = columna === 'nombre' ? b[columna].toLowerCase() : b[columna];
+    if (valA < valB) return ordenActual.ascendente ? -1 : 1;
+    if (valA > valB) return ordenActual.ascendente ? 1 : -1;
+    return 0;
+  });
+  mostrarTabla();
 }
 
 // =====================
