@@ -12,10 +12,23 @@
     .valor-amarillo { color: #fbc02d; font-weight: bold; }
     .valor-verde-claro { color: #7cb342; font-weight: bold; }
     .valor-verde-oscuro { color: #72a8da; font-weight: bold; }
-    .fifa-stars { white-space: nowrap; display: inline-block; min-width: 80px; }
-    .fifa-stars i { color: gold; margin: 0 1px; }
-
-    .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .fifa-stars {
+      white-space: nowrap;
+      display: inline-block;
+      min-width: 80px;
+    }
+    .fifa-stars i {
+      color: gold;
+      margin-left: 1px;
+      margin-right: 1px;
+    }
+    .circle {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
     .white-circle { background-color: white; border: 1px solid #ccc; }
     .blue-circle { background-color: blue; }
     .red-circle { background-color: #d93025; }
@@ -27,22 +40,8 @@
     .blanco-circle { background-color: #f8f9fa; border: 1px solid #ccc; }
     .rojo-circle { background-color: #dc3545; }
     .verde-circle { background-color: #28a745; }
-
-    th.sortable::after {
-      content: " ⇅";
-      font-weight: normal;
-      opacity: 0.5;
-    }
-    th.orden-asc::after {
-      content: " ↑";
-      font-weight: bold;
-      opacity: 1;
-    }
-    th.orden-desc::after {
-      content: " ↓";
-      font-weight: bold;
-      opacity: 1;
-    }
+    th.orden-asc::after { content: " ↑"; font-weight: bold; }
+    th.orden-desc::after { content: " ↓"; font-weight: bold; }
   </style>
 </head>
 <body class="bg-light">
@@ -67,12 +66,12 @@
       <table id="tabla-jugadores" class="table table-bordered text-center">
         <thead class="table-dark">
           <tr>
-            <th class="sortable">Jugador</th>
-            <th class="sortable">Ataque</th>
-            <th class="sortable">Defensa</th>
-            <th class="sortable">Media</th>
-            <th class="sortable">FIFA</th>
-            <th>Stars</th>
+            <th>Jugador</th>
+            <th>Ataque</th>
+            <th>Defensa</th>
+            <th>Media</th>
+            <th class="fifa">FIFA</th>
+            <th class="stars">Stars</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -143,14 +142,13 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const fecha = new Date(document.lastModified);
-    document.querySelector("#fecha-modificacion span").textContent =
-      fecha.toLocaleDateString("es-ES", { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const opciones = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    document.querySelector("#fecha-modificacion span").textContent = fecha.toLocaleDateString('es-ES', opciones);
 
-    // Inicializar checkboxes para partido
+    // Partido
     const formAsistencia = document.getElementById("form-asistencia");
     const contadorPartido = document.getElementById("contador-partido");
     const botonPartido = document.getElementById("generar-equipos");
-
     if (formAsistencia && contadorPartido) {
       jugadores.forEach((j, i) => {
         formAsistencia.insertAdjacentHTML("beforeend", `
@@ -168,11 +166,10 @@
       );
     }
 
-    // Inicializar checkboxes para torneo
+    // Torneo
     const formTorneo = document.getElementById("form-torneo");
     const contadorTorneo = document.getElementById("contador-torneo");
     const botonTorneo = document.getElementById("generar-torneo");
-
     if (formTorneo && contadorTorneo) {
       jugadores.forEach((j, i) => {
         formTorneo.insertAdjacentHTML("beforeend", `
@@ -189,23 +186,6 @@
         })
       );
     }
-
-    // Activar ordenamiento visual inicial
-    document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
-      const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
-      const columna = columnas[index];
-      if (columna) {
-        th.classList.add("sortable");
-        th.style.cursor = "pointer";
-        th.addEventListener("click", () => {
-          ordenarPor(columna);
-          document.querySelectorAll("#tabla-jugadores thead th").forEach(th =>
-            th.classList.remove("orden-asc", "orden-desc")
-          );
-          th.classList.add(ordenActual.ascendente ? "orden-asc" : "orden-desc");
-        });
-      }
-    });
   });
 </script>
 </body>

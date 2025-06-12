@@ -339,5 +339,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   });
-
-
