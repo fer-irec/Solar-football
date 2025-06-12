@@ -55,73 +55,14 @@ const jugadores = [
   { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3 }
 ];
 
-// Calcular propiedades derivadas
-jugadores.forEach(j => {
-  j.media = (j.ataque + j.defensa) / 2;
-  j.fifa = Math.round(j.media * 20);
-});
-
-console.log("Jugadores:", jugadores);
-
-function logEquipos(equipos) {
-  equipos.forEach((equipo, i) => {
-    console.log(`Equipo ${i + 1}:`);
-    equipo.forEach(j => {
-      const esCapitan = j.media > 4 ? " (C)" : "";
-      console.log(` - ${j.nombre}${esCapitan} | Media: ${j.media.toFixed(2)} | FIFA: ${j.fifa}`);
-    });
-  });
+function calcularMedia(j) {
+  return (j.ataque + j.defensa) / 2;
 }
 
-let ordenActual = { columna: null, ascendente: true };
-
-function ordenarPor(columna) {
-  if (ordenActual.columna === columna) {
-    ordenActual.ascendente = !ordenActual.ascendente;
-  } else {
-    ordenActual.columna = columna;
-    ordenActual.ascendente = true;
-  }
-  jugadores.sort((a, b) => {
-    let valA = columna === 'nombre' ? a[columna].toLowerCase() : a[columna];
-    let valB = columna === 'nombre' ? b[columna].toLowerCase() : b[columna];
-    if (valA < valB) return ordenActual.ascendente ? -1 : 1;
-    if (valA > valB) return ordenActual.ascendente ? 1 : -1;
-    return 0;
-  });
-  mostrarTabla();
+function calcularFifa(j) {
+  return Math.round(calcularMedia(j) * 20);
 }
 
-function mostrarTabla() {
-  const tbody = document.querySelector("#tabla-jugadores tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-  jugadores.forEach(j => {
-    const media = limitar(j.media).toFixed(2);
-    const fila = `<tr>
-      <td>${j.nombre}</td>
-      <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
-      <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
-      <td><span class="${colorClase(media)}">${media}</span></td>
-      <td><span class="${colorFifa(j.fifa)}">${j.fifa}</span></td>
-      <td>${generarEstrellasFIFA(j.fifa)}</td>
-    </tr>`;
-    tbody.insertAdjacentHTML("beforeend", fila);
-  });
-
-  document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
-    const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
-    const columna = columnas[index];
-    if (!columna) return;
-    th.style.cursor = "pointer";
-    th.classList.add("sortable");
-    th.addEventListener("click", () => ordenarPor(columna));
-  });
-}
-
-// =====================
-// Funciones auxiliares
-// =====================
 function limitar(valor) {
   return Math.max(0, Math.min(5, valor));
 }
@@ -149,34 +90,47 @@ function generarEstrellasFIFA(puntuacion) {
   const valorNormalizado = Math.max(0, Math.min(puntuacion, 100)) / 100 * estrellasTotales;
   const llenas = Math.floor(valorNormalizado);
   const decimal = valorNormalizado - llenas;
+
   let media = 0;
   if (decimal >= 0.75) media = 1;
   else if (decimal >= 0.25) media = 0.5;
+
   let estrellas = "";
   for (let i = 0; i < llenas; i++) estrellas += '<i class="fas fa-star"></i>';
   if (media === 1) estrellas += '<i class="fas fa-star"></i>';
   else if (media === 0.5) estrellas += '<i class="fas fa-star-half-alt"></i>';
+
   const vacias = estrellasTotales - llenas - (media > 0 ? 1 : 0);
   for (let i = 0; i < vacias; i++) estrellas += '<i class="far fa-star"></i>';
+
   return `<span class="fifa-stars">${estrellas}</span>`;
 }
 
-// =====================
-// Mostrar tabla
-// =====================
 function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
+  const thead = document.querySelector("#tabla-jugadores thead tr");
+
+  if (!thead.querySelector("th.fifa")) thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+  if (!thead.querySelector("th.stars")) thead.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
+
+  const allFifaTh = thead.querySelectorAll("th.fifa");
+  const allStarsTh = thead.querySelectorAll("th.stars");
+  for (let i = 1; i < allFifaTh.length; i++) allFifaTh[i].remove();
+  for (let i = 1; i < allStarsTh.length; i++) allStarsTh[i].remove();
+
   jugadores.forEach(j => {
-    const media = limitar(j.media).toFixed(2);
+    const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
+    const fifa = Math.round(media * 20);
+    const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
       <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
       <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
-      <td><span class="${colorFifa(j.fifa)}">${j.fifa}</span></td>
-      <td>${generarEstrellasFIFA(j.fifa)}</td>
+      <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
+      <td>${estrellasHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
@@ -322,7 +276,6 @@ function generarEquiposTorneo() {
       </div>`;
   });
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
