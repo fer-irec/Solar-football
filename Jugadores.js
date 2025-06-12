@@ -112,13 +112,17 @@ function mostrarTabla() {
   tbody.innerHTML = "";
   const thead = document.querySelector("#tabla-jugadores thead tr");
 
-  if (!thead.querySelector("th.fifa")) thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
-  if (!thead.querySelector("th.stars")) thead.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
+thead.querySelectorAll("th.fifa").forEach((th, i) => { if (i > 0) th.remove(); });
+thead.querySelectorAll("th.stars").forEach((th, i) => { if (i > 0) th.remove(); });
 
-  const allFifaTh = thead.querySelectorAll("th.fifa");
-  const allStarsTh = thead.querySelectorAll("th.stars");
-  for (let i = 1; i < allFifaTh.length; i++) allFifaTh[i].remove();
-  for (let i = 1; i < allStarsTh.length; i++) allStarsTh[i].remove();
+// Añadir solo si no existe al menos uno
+if (!thead.querySelector("th.fifa")) {
+  thead.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+}
+if (!thead.querySelector("th.stars")) {
+  thead.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
+}
+
 
   jugadores.forEach(j => {
     const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
