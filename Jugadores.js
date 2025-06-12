@@ -114,7 +114,7 @@ function mostrarTabla() {
 
   jugadores.forEach(j => {
     const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
-    const fifa = j.fifa ?? 0;
+    const fifa = Math.round(parseFloat(media) * 20);
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
@@ -127,6 +127,7 @@ function mostrarTabla() {
     tbody.insertAdjacentHTML("beforeend", fila);
   });
 }
+
 
 function generarEquipos() {
   try {
