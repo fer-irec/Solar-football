@@ -71,7 +71,9 @@
             <th class="sortable">Ataque</th>
             <th class="sortable">Defensa</th>
             <th class="sortable">Puntualidad</th>
-            <!--<th>Stars</th>-->
+            <th class="sortable">Media</th>
+            <th class="sortable">FIFA</th>
+            <th>Stars</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -191,7 +193,8 @@
 
     // Activar ordenamiento visual inicial
     document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
-      const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
+      //const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
+      const columnas = ["nombre", "ataque", "defensa", "puntualidad", "media", "fifa"];
       const columna = columnas[index];
       if (columna) {
         th.classList.add("sortable");

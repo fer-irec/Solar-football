@@ -153,9 +153,10 @@ function mostrarTabla() {
   if (!theadRow) return;
 
   // Asegura columnas sin duplicados
-  theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
-  if (!theadRow.querySelector("th.fifa")) theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
-  if (!theadRow.querySelector("th.stars")) theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
+  
+  //theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
+  //if (!theadRow.querySelector("th.fifa")) theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+  //if (!theadRow.querySelector("th.stars")) theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
 
   jugadoresOrdenados.forEach(j => {
     const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
@@ -165,9 +166,9 @@ function mostrarTabla() {
       <td>${j.nombre}</td>
       <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
       <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
-      <td><span class="${colorClase(media)}">${media}</span></td>
-      <td class="fifa"><span class="${colorFifa(fifa)}">${fifa}</span></td>
       <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad}</span></td>
+      <td><span class="${colorClase(media)}">${media}</span></td>
+      <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
       <td class="stars">${estrellasHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
@@ -332,7 +333,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Ordenamiento de columnas de la tabla de jugadores
   //const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
-  const columnas = ["nombre", "ataque", "defensa", "media", "fifa", "puntualidad"];
+  const columnas = ["nombre", "ataque", "defensa", "puntualidad", "media", "fifa"];
 
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
