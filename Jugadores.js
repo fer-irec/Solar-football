@@ -167,8 +167,8 @@ function mostrarTabla() {
       <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td class="fifa"><span class="${colorFifa(fifa)}">${fifa}</span></td>
-      <td class="stars">${estrellasHTML}</td>
       <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad}</span></td>
+      <td class="stars">${estrellasHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
