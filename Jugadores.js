@@ -176,7 +176,7 @@ function mostrarTabla() {
 }
 
 function mostrarHistorial() {
-  fetch("historial_simple.json")
+  fetch("historial.json")
     .then(res => res.json())
     .then(data => {
       const cont = document.getElementById("lista-historial");
