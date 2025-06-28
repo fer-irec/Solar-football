@@ -1,15 +1,16 @@
 [
   {
     "fecha": "2025-06-27",
+    "marcador": "7 - 6",
     "equipo1": {
       "nombre": "Equipo Azul",
       "jugadores": [
-        "Damian ⭐⭐⭐⭐☆ (C)",
-        "Outman ⭐⭐⭐⭐☆ (C)",
-        "Visitor 3 (3) ⭐⭐⭐☆",
-        "Tobi ⭐⭐⭐☆",
-        "Vito ⭐⭐⭐⭐ (C)",
-        "Ale ⭐⭐☆"
+        "Damian",
+        "Outman",
+        "Visitor 3 (3)",
+        "Tobi",
+        "Vito",
+        "Ale"
       ],
       "atk": 3.47,
       "def": 3.75,
@@ -19,12 +20,12 @@
     "equipo2": {
       "nombre": "Equipo Rojo",
       "jugadores": [
-        "Harris ⭐⭐☆",
-        "Alex Jimenez ⭐⭐⭐⭐☆ (C)",
-        "Arnau ⭐⭐⭐⭐⭐ (C)",
-        "Fer ⭐⭐☆",
-        "Oriol (GK) ⭐⭐⭐",
-        "Andrea Maioli ⭐⭐⭐⭐☆ (C)"
+        "Harris",
+        "Alex Jimenez",
+        "Arnau",
+        "Fer",
+        "Oriol (GK)",
+        "Andrea Maioli"
       ],
       "atk": 3.46,
       "def": 3.74,

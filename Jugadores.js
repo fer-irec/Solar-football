@@ -175,7 +175,47 @@ function mostrarTabla() {
   });
 }
 
+function mostrarHistorial() {
+  fetch("historial_simple.json")
+    .then(res => res.json())
+    .then(data => {
+      const cont = document.getElementById("lista-historial");
+      cont.innerHTML = "";
 
+      data.forEach(partido => {
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "col";
+
+        const equipoHTML = (eq, color) => `
+          <h5><span class="circle ${color}-circle"></span> ${eq.nombre}</h5>
+          <p>ATK: ${eq.atk.toFixed(2)} | DEF: ${eq.def.toFixed(2)} | FIFA: ${eq.fifa} | Goles: ${eq.goles}</p>
+          <ul class="list-group mb-2">
+            ${eq.jugadores.map(j => `<li class="list-group-item">${j}</li>`).join("")}
+          </ul>`;
+
+        tarjeta.innerHTML = `
+          <div class="card shadow-sm">
+            <div class="card-header text-center">
+              <div class="fw-bold mb-1">${new Date(partido.fecha).toLocaleDateString("es-ES")}</div>
+              <div class="fs-4 fw-bold text-dark">${partido.marcador}</div>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">${equipoHTML(partido.equipo1, "azul")}</div>
+                <div class="col-md-6">${equipoHTML(partido.equipo2, "rojo")}</div>
+              </div>
+            </div>
+          </div>`;
+        cont.appendChild(tarjeta);
+      });
+    })
+    .catch(err => {
+      document.getElementById("lista-historial").innerHTML = `
+        <div class="alert alert-danger">Error al cargar historial: ${err.message}</div>`;
+    });
+}
+
+document.querySelector('a[href="#historial"]').addEventListener("click", mostrarHistorial);
 function generarEquipos() {
   try {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
