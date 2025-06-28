@@ -59,7 +59,6 @@
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historial">Historial</a></li>
   </ul>
 
   <div class="tab-content">
@@ -136,13 +135,6 @@
         </div>
       </div>
     </div>
-    <div class="tab-pane fade" id="historial">
-  <div class="container mt-4">
-    <h3 class="text-center mb-4">Historial de Partidos</h3>
-    <div id="lista-historial" class="row row-cols-1 row-cols-md-2 g-4"></div>
-  </div>
-</div>
-
   </div>
 </div>
 
@@ -218,50 +210,5 @@
     });
   });
 </script>
-
-<script>
-function mostrarHistorial() {
-  fetch("historial.json")
-    .then(res => res.json())
-    .then(data => {
-      const cont = document.getElementById("lista-historial");
-      cont.innerHTML = "";
-
-      data.forEach(partido => {
-        const tarjeta = document.createElement("div");
-        tarjeta.className = "col";
-
-        const equipoHTML = (eq, color) => `
-          <h5><span class="circle ${color}-circle"></span> ${eq.nombre}</h5>
-          <p>ATK: ${eq.atk.toFixed(2)} | DEF: ${eq.def.toFixed(2)} | FIFA: ${eq.fifa} | Goles: ${eq.goles}</p>
-          <ul class="list-group mb-2">
-            ${eq.jugadores.map(j => `<li class="list-group-item">${j}</li>`).join("")}
-          </ul>`;
-
-        tarjeta.innerHTML = `
-          <div class="card shadow-sm">
-            <div class="card-header text-center fw-bold">
-              ${new Date(partido.fecha).toLocaleDateString("es-ES")}
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">${equipoHTML(partido.equipo1, "azul")}</div>
-                <div class="col-md-6">${equipoHTML(partido.equipo2, "rojo")}</div>
-              </div>
-            </div>
-          </div>`;
-        cont.appendChild(tarjeta);
-      });
-    })
-    .catch(err => {
-      document.getElementById("lista-historial").innerHTML = `
-        <div class="alert alert-danger">Error al cargar historial: ${err.message}</div>`;
-    });
-}
-
-// Cargar historial al activar la pestaña
-document.querySelector('a[href="#historial"]').addEventListener("click", mostrarHistorial);
-</script>
-
 </body>
 </html>

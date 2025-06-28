@@ -1,0 +1,35 @@
+[
+  {
+    "fecha": "2025-06-27",
+    "equipo1": {
+      "nombre": "Equipo Azul",
+      "jugadores": [
+        "Damian ⭐⭐⭐⭐☆ (C)",
+        "Outman ⭐⭐⭐⭐☆ (C)",
+        "Visitor 3 (3) ⭐⭐⭐☆",
+        "Tobi ⭐⭐⭐☆",
+        "Vito ⭐⭐⭐⭐ (C)",
+        "Ale ⭐⭐☆"
+      ],
+      "atk": 3.47,
+      "def": 3.75,
+      "fifa": 434,
+      "goles": 7
+    },
+    "equipo2": {
+      "nombre": "Equipo Rojo",
+      "jugadores": [
+        "Harris ⭐⭐☆",
+        "Alex Jimenez ⭐⭐⭐⭐☆ (C)",
+        "Arnau ⭐⭐⭐⭐⭐ (C)",
+        "Fer ⭐⭐☆",
+        "Oriol (GK) ⭐⭐⭐",
+        "Andrea Maioli ⭐⭐⭐⭐☆ (C)"
+      ],
+      "atk": 3.46,
+      "def": 3.74,
+      "fifa": 431,
+      "goles": 6
+    }
+  }
+]
