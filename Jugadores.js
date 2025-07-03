@@ -46,7 +46,7 @@ const jugadores = [
   { nombre: "Trompia", ataque: 4.67, defensa: 4.40, puntualidad: 3 },
   { nombre: "Treppo", ataque: 3.83, defensa: 3.67, puntualidad: 3 },
   { nombre: "Lori", ataque: 3.57, defensa: 2.77, puntualidad: 3 },
-  { nombre: "Tobi", ataque: 2.52, defensa: 3.60, puntualidad: 3 },
+  { nombre: "Tobi (GK)", ataque: 2.26, defensa: 4.03, puntualidad: 3 },
   { nombre: "Dominic", ataque: 3.30, defensa: 3.0, puntualidad: 3 },
   { nombre: "Rolando", ataque: 2.4, defensa: 2.75, puntualidad: 3 },
   { nombre: "Tomas", ataque: 3.5, defensa: 3.2, puntualidad: 3 },
