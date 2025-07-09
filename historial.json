@@ -32,5 +32,39 @@
       "fifa": 431,
       "goles": 6
     }
+  },
+  {
+    "fecha": "2025-07-04",
+    "marcador": "5 - 7",
+    "equipo1": {
+      "nombre": "Equipo 1",
+      "jugadores": [
+        "Elias",
+        "Ale",
+        "Fer",
+        "Amadou",
+        "Tobi (GK)",
+        "Andrea Maioli"
+      ],
+      "atk": 2.7,
+      "def": 3.38,
+      "fifa": 397,
+      "goles": 5
+    },
+    "equipo2": {
+      "nombre": "Equipo 2",
+      "jugadores": [
+        "Gonzalo",
+        "Rolando",
+        "Treppo",
+        "Jon",
+        "Nicolo",
+        "Vito"
+      ],
+      "atk": 3.23,
+      "def": 3.37,
+      "fifa": 397,
+      "goles": 7
+    }
   }
 ]
