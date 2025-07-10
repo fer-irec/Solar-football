@@ -53,7 +53,8 @@ const jugadores = [
   { nombre: "Visitor 1 (2)", ataque: 2, defensa: 2, puntualidad: 2 },
   { nombre: "Visitor 2( 2.5)", ataque: 2.5, defensa: 2.5, puntualidad: 3},
   { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3, puntualidad: 3 },
-  { nombre: "Elias", ataque: 1.5, defensa: 1.5, puntualidad: 3 }
+  { nombre: "Elias", ataque: 1.5, defensa: 1.5, puntualidad: 3 },
+  { nombre: "Gonzalo (GK)", ataque: 0.5, defensa: 4, puntualidad: 3 }
 ];
 
 function calcularMedia(j) {
