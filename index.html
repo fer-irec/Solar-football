@@ -71,6 +71,8 @@
             <th class="sortable">Jugador</th>
             <th class="sortable">Ataque</th>
             <th class="sortable">Defensa</th>
+            <th class="sortable">Táctica</th>
+            <th class="sortable">Estamina</th>
             <th class="sortable">Puntualidad</th>
             <th class="sortable">Media</th>
             <th class="sortable">FIFA</th>
@@ -202,7 +204,7 @@
     // Activar ordenamiento visual inicial
     document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
       //const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
-      const columnas = ["nombre", "ataque", "defensa", "puntualidad", "media", "fifa"];
+      const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "puntualidad", "media", "fifa"];
       const columna = columnas[index];
       if (columna) {
         th.classList.add("sortable");
@@ -220,6 +222,11 @@
 </script>
 
 <script>
+function fmt2(x) {
+  if (x === undefined || x === null || Number.isNaN(x)) return "—";
+  return (typeof x === "number" ? x : parseFloat(x)).toFixed(2);
+}
+
 function mostrarHistorial() {
   fetch("historial.json")
     .then(res => res.json())
@@ -233,7 +240,7 @@ function mostrarHistorial() {
 
         const equipoHTML = (eq, color) => `
           <h5><span class="circle ${color}-circle"></span> ${eq.nombre}</h5>
-          <p>ATK: ${eq.atk.toFixed(2)} | DEF: ${eq.def.toFixed(2)} | FIFA: ${eq.fifa} | Goles: ${eq.goles}</p>
+          <p>ATK: ${fmt2(eq.atk)} | DEF: ${fmt2(eq.def)} | TACT: ${fmt2(eq.tact)} | STA: ${fmt2(eq.sta)} | FIFA: ${eq.fifa ?? '—'} | Goles: ${eq.goles ?? '—'}</p>
           <ul class="list-group mb-2">
             ${eq.jugadores.map(j => `<li class="list-group-item">${j}</li>`).join("")}
           </ul>`;

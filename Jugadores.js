@@ -1,64 +1,69 @@
 // Lista de jugadores (solo ataque y defensa)
 const jugadores = [
-  { nombre: "Ale", ataque: 2.60, defensa: 2.56, puntualidad: 3},
-  { nombre: "Fer", ataque: 3.39, defensa: 3.10, puntualidad: 3},
-  { nombre: "Jacob", ataque: 4.14, defensa: 3.60, puntualidad: 3 },
-  { nombre: "Min", ataque: 1.91, defensa: 1.90, puntualidad: 3 },
-  { nombre: "Damian", ataque: 4.63, defensa: 4.02, puntualidad: 3 },
-  { nombre: "Mario", ataque: 1.78, defensa: 2.29, puntualidad: 3 },
-  { nombre: "Mirko", ataque: 3.74, defensa: 4.07, puntualidad: 3 },
-  { nombre: "Queco (GK)", ataque: 1.55, defensa: 4.47, puntualidad: 3 },
-  { nombre: "Oriol (GK)", ataque: 1.34, defensa: 4.36, puntualidad: 3 },
-  { nombre: "Abel", ataque: 3.05, defensa: 2.95, puntualidad: 3 },
-  { nombre: "Arnau", ataque: 4.37, defensa: 3.86, puntualidad: 3 },
-  { nombre: "Nicolo", ataque: 3.45, defensa: 3.72, puntualidad: 3 },
-  { nombre: "Merino", ataque: 2.89, defensa: 3.62, puntualidad: 3 },
-  { nombre: "Liya", ataque: 3.58, defensa: 3.39, puntualidad: 3 },
-  { nombre: "Yuancai", ataque: 1.55, defensa: 1.37, puntualidad: 3 },
-  { nombre: "Jon", ataque: 2.72, defensa: 2.48, puntualidad: 3 },
-  { nombre: "Peña", ataque: 2.79, defensa: 2.81, puntualidad: 3 },
-  { nombre: "Manu", ataque: 4.48, defensa: 4.16, puntualidad: 3 },
-  { nombre: "Vito", ataque: 3.64, defensa: 4.43, puntualidad: 3 },
-  { nombre: "Alex Jimenez", ataque: 4.64, defensa: 4.47, puntualidad: 3 },
-  { nombre: "Andrea Maioli", ataque: 4.63, defensa: 4.53, puntualidad: 3 },
-  { nombre: "Outman", ataque: 4.45, defensa: 4.90, puntualidad: 3 },
-  { nombre: "Harris", ataque: 2.36, defensa: 2.16, puntualidad: 2 },
-  { nombre: "Sergio Ramos", ataque: 3.97, defensa: 3.53, puntualidad: 3 },
-  { nombre: "Tolga", ataque: 3.42, defensa: 2.84, puntualidad: 3 },
-  { nombre: "Amadou", ataque: 3.40, defensa: 3.10, puntualidad: 3 },
-  { nombre: "Steven", ataque: 3.04, defensa: 3.08, puntualidad: 3 },
-  { nombre: "Ricard", ataque: 2.26, defensa: 2.30, puntualidad: 3 },
-  { nombre: "David Rovira", ataque: 2.98, defensa: 2.96, puntualidad: 3 },
-  { nombre: "Gustavo Madrigal", ataque: 2.91, defensa: 2.96, puntualidad: 3 },
-  { nombre: "Diego", ataque: 1.98, defensa: 2.37, puntualidad: 3 },
-  { nombre: "Andrea Aroldi", ataque: 2.17, defensa: 2.01, puntualidad: 3 },
-  { nombre: "Vitor", ataque: 2.77, defensa: 2.77, puntualidad: 3 },
-  { nombre: "Mario Lecce", ataque: 3.37, defensa: 3.47, puntualidad: 3 },
-  { nombre: "Jeff", ataque: 3.87, defensa: 3.37, puntualidad: 3 },
-  { nombre: "Payno", ataque: 3.20, defensa: 2.90, puntualidad: 3 },
-  { nombre: "Kevin", ataque: 4.64, defensa: 4.27, puntualidad: 3 },
-  { nombre: "Fabien", ataque: 3.13, defensa: 3.13, puntualidad: 3 },
-  { nombre: "Romain", ataque: 4.52, defensa: 4.45, puntualidad: 3 },
-  { nombre: "Maykel", ataque: 3.10, defensa: 3.04, puntualidad: 3 },
-  { nombre: "Alex Lopez", ataque: 3.50, defensa: 3.35, puntualidad: 3 },
-  { nombre: "Buda", ataque: 3.58, defensa: 3.88, puntualidad: 3 },
-  { nombre: "Massi", ataque: 4.13, defensa: 4.23, puntualidad: 3 },
-  { nombre: "Trompia", ataque: 4.67, defensa: 4.40, puntualidad: 3 },
-  { nombre: "Treppo", ataque: 3.83, defensa: 3.67, puntualidad: 3 },
-  { nombre: "Lori", ataque: 3.57, defensa: 2.77, puntualidad: 3 },
-  { nombre: "Tobi (GK)", ataque: 2.26, defensa: 4.03, puntualidad: 3 },
-  { nombre: "Dominic", ataque: 3.30, defensa: 3.0, puntualidad: 3 },
-  { nombre: "Rolando", ataque: 2.4, defensa: 2.75, puntualidad: 3 },
-  { nombre: "Tomas", ataque: 3.5, defensa: 3.2, puntualidad: 3 },
-  { nombre: "Visitor 1 (2)", ataque: 2, defensa: 2, puntualidad: 2 },
-  { nombre: "Visitor 2( 2.5)", ataque: 2.5, defensa: 2.5, puntualidad: 3},
-  { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3, puntualidad: 3 },
-  { nombre: "Elias", ataque: 1.5, defensa: 1.5, puntualidad: 3 },
-  { nombre: "Marcelo (GK)", ataque: 0.5, defensa: 4, puntualidad: 3 }
+  { nombre: "Ale", ataque: 2.60, defensa: 2.53, tactica: 1.20, estamina: 2.00, puntualidad: 3},
+  { nombre: "Fer", ataque: 3.32, defensa: 2.93, tactica: 3.0, estamina: 1.80,puntualidad: 3},
+  { nombre: "Jacob", ataque: 4.11, defensa: 3.67, tactica: 3.5, estamina: 3.40,puntualidad: 3 },
+  { nombre: "Min", ataque: 1.89, defensa: 1.94, tactica: 1.50, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Damian", ataque: 4.63, defensa: 4.02, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Mario", ataque: 1.78, defensa: 2.29, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Mirko", ataque: 3.74, defensa: 4.07, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Queco (GK)", ataque: 1.55, defensa: 4.47, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Oriol (GK)", ataque: 1.34, defensa: 4.36, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Abel", ataque: 3.05, defensa: 2.95, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Arnau", ataque: 4.37, defensa: 3.86, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Nicolo", ataque: 3.45, defensa: 3.72, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Merino", ataque: 2.89, defensa: 3.62, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Liya", ataque: 3.58, defensa: 3.39, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Yuancai", ataque: 1.55, defensa: 1.37, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Jon", ataque: 2.72, defensa: 2.48, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Peña", ataque: 2.79, defensa: 2.81, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Manu", ataque: 4.48, defensa: 4.16, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Vito", ataque: 3.64, defensa: 4.43, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Alex Jimenez", ataque: 4.64, defensa: 4.47, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Andrea Maioli", ataque: 4.63, defensa: 4.53, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Outman", ataque: 4.45, defensa: 4.90, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Harris", ataque: 2.36, defensa: 2.16, tactica: 2.56, estamina: 2.56,puntualidad: 2 },
+  { nombre: "Sergio Ramos", ataque: 3.97, defensa: 3.53, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Tolga", ataque: 3.42, defensa: 2.84, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Amadou", ataque: 3.40, defensa: 3.10, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Steven", ataque: 3.04, defensa: 3.08, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Ricard", ataque: 2.26, defensa: 2.30, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "David Rovira", ataque: 2.98, defensa: 2.96, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Gustavo Madrigal", ataque: 2.91, defensa: 2.96, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Diego", ataque: 1.98, defensa: 2.37, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Andrea Aroldi", ataque: 2.17, defensa: 2.01, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Vitor", ataque: 2.77, defensa: 2.77, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Mario Lecce", ataque: 3.37, defensa: 3.47, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Jeff", ataque: 3.87, defensa: 3.37, tactica: 2.56, estamina: 2.56,untualidad: 3 },
+  { nombre: "Payno", ataque: 3.20, defensa: 2.90, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Kevin", ataque: 4.64, defensa: 4.27, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Fabien", ataque: 3.13, defensa: 3.13, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Romain", ataque: 4.52, defensa: 4.45, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Maykel", ataque: 3.10, defensa: 3.04, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Alex Lopez", ataque: 3.50, defensa: 3.35, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Buda", ataque: 3.58, defensa: 3.88, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Massi", ataque: 4.13, defensa: 4.23, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Trompia", ataque: 4.67, defensa: 4.40, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Treppo", ataque: 3.83, defensa: 3.67, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Lori", ataque: 3.57, defensa: 2.77, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Tobi (GK)", ataque: 2.26, defensa: 4.03, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Dominic", ataque: 3.30, defensa: 3.0, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Rolando", ataque: 2.4, defensa: 2.75, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Tomas", ataque: 3.5, defensa: 3.2, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Visitor 1 (2)", ataque: 2, defensa: 2, tactica: 2.56, estamina: 2.56,puntualidad: 2 },
+  { nombre: "Visitor 2( 2.5)", ataque: 2.5, defensa: 2.5, tactica: 2.56, estamina: 2.56,puntualidad: 3},
+  { nombre: "Visitor 3 (3)", ataque: 3, defensa: 3, tactica: 2.56, estamina: 2.56, puntualidad: 3 },
+  { nombre: "Elias", ataque: 1.5, defensa: 1.5, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+  { nombre: "Marcelo (GK)", ataque: 0.5, defensa: 4, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+   {nombre: "Jorge", ataque: 1.5, defensa: 1.5, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+   {nombre: "Enric Ll.", ataque: 1.5, defensa: 1.5, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+   {nombre: "Codony", ataque: 1.5, defensa: 1.5, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+   {nombre: "Magnus", ataque: 1.5, defensa: 1.5, tactica: 2.56, estamina: 2.56,puntualidad: 3 },
+   {nombre: "Jeremy", ataque: 2.5, defensa: 2.5, tactica: 2.5, estamina: 2.5,puntualidad: 3 }
 ];
 
 function calcularMedia(j) {
-  return (j.ataque + j.defensa) / 2;
+  return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2 );
 }
 
 function calcularFifa(j) {
@@ -155,26 +160,33 @@ function mostrarTabla() {
   if (!theadRow) return;
 
   // Asegura columnas sin duplicados
-  
   //theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
   //if (!theadRow.querySelector("th.fifa")) theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
   //if (!theadRow.querySelector("th.stars")) theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
 
   jugadoresOrdenados.forEach(j => {
-    const media = limitar((j.ataque + j.defensa) / 2).toFixed(2);
-    const fifa = Math.round(media * 20);
+    const mediaVal = limitar(calcularMedia(j));
+    const media = mediaVal.toFixed(2);
+    const fifa = Math.round(mediaVal * 20);
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
       <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
       <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
-      <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad}</span></td>
+      <td><span class="${colorClase(j.tactica)}">${j.tactica}</span></td>
+      <td><span class="${colorClase(j.estamina)}">${j.estamina}</span></td>
+      <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad ?? '-'}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
       <td class="stars">${estrellasHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
+}
+
+function fmt2(x) {
+  if (x === undefined || x === null || Number.isNaN(x)) return "—";
+  return (typeof x === "number" ? x : parseFloat(x)).toFixed(2);
 }
 
 function mostrarHistorial() {
@@ -190,7 +202,7 @@ function mostrarHistorial() {
 
         const equipoHTML = (eq, color) => `
           <h5><span class="circle ${color}-circle"></span> ${eq.nombre}</h5>
-          <p>ATK: ${eq.atk.toFixed(2)} | DEF: ${eq.def.toFixed(2)} | FIFA: ${eq.fifa} | Goles: ${eq.goles}</p>
+          <p>ATK: ${fmt2(eq.atk)} | DEF: ${fmt2(eq.def)} | TACT: ${fmt2(eq.tact)} | STA: ${fmt2(eq.sta)} | FIFA: ${eq.fifa ?? '—'} | Goles: ${eq.goles ?? '—'}</p>
           <ul class="list-group mb-2">
             ${eq.jugadores.map(j => `<li class="list-group-item">${j}</li>`).join("")}
           </ul>`;
@@ -199,7 +211,7 @@ function mostrarHistorial() {
           <div class="card shadow-sm">
             <div class="card-header text-center">
               <div class="fw-bold mb-1">${new Date(partido.fecha).toLocaleDateString("es-ES")}</div>
-              <div class="fs-4 fw-bold text-dark">${partido.marcador}</div>
+              <div class="fs-4 fw-bold text-dark">${partido.marcador ?? ''}</div>
             </div>
             <div class="card-body">
               <div class="row">
@@ -218,13 +230,23 @@ function mostrarHistorial() {
 }
 
 document.querySelector('a[href="#historial"]').addEventListener("click", mostrarHistorial);
+
+// ====== NUEVO: util para score ponderado ======
+function scorePonderado(a, b) {
+  const dAtk  = Math.abs(a.atk  - b.atk);
+  const dDef  = Math.abs(a.def  - b.def);
+  const dTact = Math.abs(a.tact - b.tact);
+  const dSta  = Math.abs(a.sta  - b.sta);
+  return 0.3*dAtk + 0.3*dDef + 0.2*dTact + 0.2*dSta;
+}
+
 function generarEquipos() {
   try {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
       .map(cb => jugadores[parseInt(cb.value)])
       .map(j => ({
         ...j,
-        media: (j.ataque + j.defensa) / 2,
+        media: calcularMedia(j),
         fifa: calcularFifa(j) // ← Aquí se añade correctamente la propiedad fifa
       }));
 
@@ -234,6 +256,7 @@ function generarEquipos() {
 
     let mejorScore = Infinity;
     let mejorTopDiff = Infinity;
+    let mejorFifaDiff = Infinity;
     let mejorEq1 = [], mejorEq2 = [];
 
     for (let i = 0; i < 1000; i++) {
@@ -244,18 +267,30 @@ function generarEquipos() {
       const stat = team => ({
         atk: team.reduce((s, x) => s + x.ataque, 0) / team.length,
         def: team.reduce((s, x) => s + x.defensa, 0) / team.length,
+        tact: team.reduce((s, x) => s + x.tactica, 0) / team.length,
+        sta: team.reduce((s, x) => s + x.estamina, 0) / team.length,
+        rating: team.reduce((s, x) => s + calcularMedia(x), 0) / team.length,
         fifa: team.reduce((s, x) => s + x.fifa, 0),
         top: team.filter(x => x.media > 4).length
       });
 
       const s1 = stat(eq1);
       const s2 = stat(eq2);
-      const diff = Math.abs(s1.atk - s2.atk) + Math.abs(s1.def - s2.def);
-      const topDiff = Math.abs(s1.top - s2.top);
 
-      if (diff < mejorScore || (diff === mejorScore && topDiff < mejorTopDiff)) {
-        mejorScore = diff;
+      // Score principal ponderado 30/30/20/20
+      const diffWeighted = scorePonderado(s1, s2);
+      const topDiff = Math.abs(s1.top - s2.top);
+      const fifaDiff = Math.abs(s1.fifa - s2.fifa);
+
+      // Elegimos el mejor por: score ponderado -> top players -> fifaDiff
+      const mejor = (diffWeighted < mejorScore) ||
+                    (diffWeighted === mejorScore && topDiff < mejorTopDiff) ||
+                    (diffWeighted === mejorScore && topDiff === mejorTopDiff && fifaDiff < mejorFifaDiff);
+
+      if (mejor) {
+        mejorScore = diffWeighted;
         mejorTopDiff = topDiff;
+        mejorFifaDiff = fifaDiff;
         mejorEq1 = eq1;
         mejorEq2 = eq2;
       }
@@ -270,25 +305,29 @@ function generarEquipos() {
     const s1 = {
       atk: (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2),
       def: (mejorEq1.reduce((s, j) => s + j.defensa, 0) / mejorEq1.length).toFixed(2),
+      tact: (mejorEq1.reduce((s, j) => s + j.tactica, 0) / mejorEq1.length).toFixed(2),
+      sta: (mejorEq1.reduce((s, j) => s + j.estamina, 0) / mejorEq1.length).toFixed(2),
       fifa: mejorEq1.reduce((s, j) => s + j.fifa, 0)
     };
     const s2 = {
       atk: (mejorEq2.reduce((s, j) => s + j.ataque, 0) / mejorEq2.length).toFixed(2),
       def: (mejorEq2.reduce((s, j) => s + j.defensa, 0) / mejorEq2.length).toFixed(2),
+      tact: (mejorEq2.reduce((s, j) => s + j.tactica, 0) / mejorEq2.length).toFixed(2),
+      sta: (mejorEq2.reduce((s, j) => s + j.estamina, 0) / mejorEq2.length).toFixed(2),
       fifa: mejorEq2.reduce((s, j) => s + j.fifa, 0)
     };
 
     cont.innerHTML = `
       <div class="col-md-6">
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-        <p>ATK: ${s1.atk} | DEF: ${s1.def} | FIFA: ${s1.fifa}</p>
+        <p>ATK: ${s1.atk} | DEF: ${s1.def} | TACT: ${s1.tact} | STA: ${s1.sta} | FIFA: ${s1.fifa}</p>
         <ul class="list-group">
           ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-        <p>ATK: ${s2.atk} | DEF: ${s2.def} | FIFA: ${s2.fifa}</p>
+        <p>ATK: ${s2.atk} | DEF: ${s2.def} | TACT: ${s2.tact} | STA: ${s2.sta} | FIFA: ${s2.fifa}</p>
         <ul class="list-group">
           ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
@@ -311,7 +350,7 @@ function generarEquiposTorneo() {
     .map(cb => jugadores[parseInt(cb.value)])
     .map(j => ({
       ...j,
-      media: (j.ataque + j.defensa) / 2,
+      media: calcularMedia(j),
       fifa: calcularFifa(j) // ← Añadido cálculo de FIFA individual
     }));
 
@@ -322,6 +361,7 @@ function generarEquiposTorneo() {
   const intentos = 2000;
   let mejorScore = Infinity;
   let mejorTopDiff = Infinity;
+  let mejorCompSpread = Infinity;
   let mejores = null;
 
   for (let i = 0; i < intentos; i++) {
@@ -332,17 +372,36 @@ function generarEquiposTorneo() {
     const stats = eqs.map(eq => ({
       atk: eq.reduce((s, j) => s + j.ataque, 0) / eq.length,
       def: eq.reduce((s, j) => s + j.defensa, 0) / eq.length,
+      tact: eq.reduce((s, j) => s + j.tactica, 0) / eq.length,
+      sta: eq.reduce((s, j) => s + j.estamina, 0) / eq.length,
+      rating: eq.reduce((s, j) => s + calcularMedia(j), 0) / eq.length,
       fifa: eq.reduce((s, j) => s + j.fifa, 0),
       top: eq.filter(j => j.media > 4).length
     }));
 
-    const atkDiff = Math.max(...stats.map(s => s.atk)) - Math.min(...stats.map(s => s.atk));
-    const defDiff = Math.max(...stats.map(s => s.def)) - Math.min(...stats.map(s => s.def));
-    const score = atkDiff + defDiff;
-    const topDiff = Math.max(...stats.map(s => s.top)) - Math.min(...stats.map(s => s.top));
+    // Score principal: rango (max-min) del rating ponderado entre los 4 equipos
+    const ratings = stats.map(s => s.rating);
+    const score = Math.max(...ratings) - Math.min(...ratings);
 
-    if (score < mejorScore || (score === mejorScore && topDiff < mejorTopDiff)) {
+    // Desempate 1: rango ponderado por componentes (reduce diferencias extremas en ATK/DEF/TACT/STA)
+    const spreadAtk  = Math.max(...stats.map(s => s.atk))  - Math.min(...stats.map(s => s.atk));
+    const spreadDef  = Math.max(...stats.map(s => s.def))  - Math.min(...stats.map(s => s.def));
+    const spreadTact = Math.max(...stats.map(s => s.tact)) - Math.min(...stats.map(s => s.tact));
+    const spreadSta  = Math.max(...stats.map(s => s.sta))  - Math.min(...stats.map(s => s.sta));
+    const compSpread = 0.3*spreadAtk + 0.3*spreadDef + 0.2*spreadTact + 0.2*spreadSta;
+
+    // Desempate 2: reparto de top players
+    const topCounts = stats.map(s => s.top);
+    const topDiff = Math.max(...topCounts) - Math.min(...topCounts);
+
+    const mejor =
+      (score < mejorScore) ||
+      (score === mejorScore && compSpread < mejorCompSpread) ||
+      (score === mejorScore && compSpread === mejorCompSpread && topDiff < mejorTopDiff);
+
+    if (mejor) {
       mejorScore = score;
+      mejorCompSpread = compSpread;
       mejorTopDiff = topDiff;
       mejores = { eqs, stats };
     }
@@ -361,7 +420,7 @@ function generarEquiposTorneo() {
     cont.innerHTML += `
       <div class="col-md-6 col-lg-3">
         <h5><span class="circle ${colores[i]}-circle"></span> Equipo ${colores[i].charAt(0).toUpperCase() + colores[i].slice(1)}</h5>
-        <p>ATK: ${s.atk.toFixed(2)} | DEF: ${s.def.toFixed(2)} | FIFA: ${s.fifa}</p>
+        <p>ATK: ${s.atk.toFixed(2)} | DEF: ${s.def.toFixed(2)} | TACT: ${s.tact.toFixed(2)} | STA: ${s.sta.toFixed(2)} | FIFA: ${s.fifa}</p>
         <ul class="list-group">
           ${eq.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
@@ -375,7 +434,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Ordenamiento de columnas de la tabla de jugadores
   //const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
-  const columnas = ["nombre", "ataque", "defensa", "puntualidad", "media", "fifa"];
+  const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "puntualidad", "media", "fifa"];
 
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
@@ -451,4 +510,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-
