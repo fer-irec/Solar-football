@@ -12,7 +12,7 @@ const jugadores = [
   { nombre: "Oriol (GK)", ataque: 1.34, defensa: 4.23, tactica: 3.90, estamina: 4.00, puntualidad: 3 },
   { nombre: "Abel", ataque: 3.05, defensa: 2.95, tactica: 3.10, estamina: 2.25, puntualidad: 3 },
   { nombre: "Arnau", ataque: 4.36, defensa: 3.81, tactica: 4.00, estamina: 3.75, puntualidad: 3 },
-  { nombre: "Niccolo", ataque: 3.39, defensa: 3.57, tactica: 3.00, estamina: 2.75, puntualidad: 3 },
+  { nombre: "Nicolo", ataque: 3.39, defensa: 3.57, tactica: 3.00, estamina: 2.75, puntualidad: 3 },
   { nombre: "Merino", ataque: 2.90, defensa: 3.63, tactica: 2.40, estamina: 3.25, puntualidad: 3 },
   { nombre: "Liya", ataque: 3.53, defensa: 3.23, tactica: 2.90, estamina: 3.25, puntualidad: 3 },
   { nombre: "Yuancai", ataque: 1.59, defensa: 1.33, tactica: 1.35, estamina: 1.10, puntualidad: 3 },
