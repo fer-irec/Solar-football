@@ -43,6 +43,25 @@
       font-weight: bold;
       opacity: 1;
     }
+
+    /* Ajuste para mostrar jugadores en 4 columnas */
+    #form-asistencia,
+    #form-torneo,
+    #form-manual-1,
+    #form-manual-2 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem 1rem;
+    }
+
+    /* Texto más grande y marcado para nombres de jugadores */
+    #form-asistencia .form-check-label,
+    #form-torneo .form-check-label,
+    #form-manual-1 .form-check-label,
+    #form-manual-2 .form-check-label {
+      font-size: 1.1rem;   /* ajusta a 1.2rem si lo quieres más grande */
+      font-weight: 500;
+    }
   </style>
 </head>
 <body class="bg-light">
@@ -89,7 +108,7 @@
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear Equipos para Partido</h3>
         <p class="text-center text-muted" id="contador-partido">Seleccionados: 0</p>
-        <form id="form-asistencia" class="mb-3 row row-cols-2"></form>
+        <form id="form-asistencia" class="mb-3 row row-cols-4"></form>
         <div class="text-center">
           <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
         </div>
@@ -102,7 +121,7 @@
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
         <p class="text-center text-muted" id="contador-torneo">Seleccionados: 0</p>
-        <form id="form-torneo" class="mb-3 row row-cols-2"></form>
+        <form id="form-torneo" class="mb-3 row row-cols-4"></form>
         <div class="text-center">
           <button id="generar-torneo" class="btn btn-primary mt-3" disabled>Generar Equipos Torneo</button>
         </div>
