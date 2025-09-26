@@ -1,4 +1,46 @@
-// Lista de jugadores (ATK/DEF/TACT/STA) – datos actualizados
+// ======= GOOGLE APPS SCRIPT (Sheets) =======
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxE_BnYsEkUln5rELqJI3KQSoPqyDXtqCOHX0XQDgtsms0Gk4g8MEVhuj0LvErwR47g4Q/exec";
+const asistenciaMap = new Map();
+
+// Carga { nombre: count, ... } desde la hoja "attendance"
+async function cargarAsistencias() {
+  try {
+    asistenciaMap.clear();
+    const res = await fetch(GAS_URL, { method: "GET" });
+    const data = await res.json(); // { "Ale":3, "Fer":5, ... }
+    Object.keys(data).forEach(n => asistenciaMap.set(n, data[n] || 0));
+  } catch (e) {
+    console.warn("No se pudo cargar asistencia:", e);
+  }
+}
+
+// Suma +1 de asistencia a todos los nombres dados
+async function incrementarAsistencia(nombres) {
+  try {
+    await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" }, // text/plain evita preflight CORS
+      body: JSON.stringify({ type: "incAttendance", names: nombres })
+    });
+  } catch (e) {
+    alert("Error al guardar asistencia: " + e.message);
+  }
+}
+
+// Guarda partido en hoja "matches"
+async function guardarPartido(partido) {
+  try {
+    await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ type: "saveMatch", match: partido })
+    });
+  } catch (e) {
+    alert("Error al guardar el partido: " + e.message);
+  }
+}
+
+// ====================== DATOS JUGADORES ======================
 const jugadores = [
   { nombre: "Ale", ataque: 2.64, defensa: 2.59, tactica: 1.97, estamina: 2.67, puntualidad: 3 },
   { nombre: "Fer", ataque: 3.39, defensa: 2.97, tactica: 3.17, estamina: 2.60, puntualidad: 3 },
@@ -67,16 +109,10 @@ const jugadores = [
   { nombre: "Lori", ataque: 3.55, defensa: 2.95, tactica: 3.37, estamina: 3.30, puntualidad: 3 }
 ];
 
-
-function calcularMedia(j) {
-  // Ponderaciones: ATK 0.3, DEF 0.3, TACT 0.2, STA 0.2
-  return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2);
-}
-
+// ====== util de medias/colores/estrellas ======
+function calcularMedia(j) { return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2); }
 function limitar(valor) { return Math.max(0, Math.min(5, valor)); }
-
 function calcularFifa(j) { return Math.round(limitar(calcularMedia(j)) * 20); }
-
 function colorClase(valor) {
   valor = parseFloat(valor);
   if (valor < 1.5) return "valor-rojo";
@@ -139,8 +175,6 @@ function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  const theadRow = document.querySelector("#tabla-jugadores thead tr");
-  if (!theadRow) return;
   jugadoresOrdenados.forEach(j => {
     const mediaVal = limitar(calcularMedia(j));
     const media = mediaVal.toFixed(2);
@@ -161,7 +195,7 @@ function mostrarTabla() {
   });
 }
 
-// ========== Historial ==========
+// ========== Historial (JSON local) ==========
 function fmt2(x){ if (x===undefined||x===null||Number.isNaN(x)) return "—"; return (typeof x==="number"?x:parseFloat(x)).toFixed(2); }
 function mostrarHistorial() {
   fetch("historial.json").then(res => res.json()).then(data => {
@@ -217,7 +251,7 @@ function teamScore(team) {
   return base + carryBonus - orphanPenalty - starPenalty;
 }
 
-// ===== (antiguo) spread ponderado por componentes (aún útil en torneo/manual)
+// Spread ponderado por componentes (útil torneo/manual)
 function scorePonderado(a, b) {
   const dAtk  = Math.abs(a.atk  - b.atk);
   const dDef  = Math.abs(a.def  - b.def);
@@ -226,32 +260,20 @@ function scorePonderado(a, b) {
   return 0.3*dAtk + 0.3*dDef + 0.2*dTact + 0.2*dSta;
 }
 
-// ========== NUEVO: helpers de restricciones para 2 equipos ==========
+// ===== helpers roles =====
 function esGK(j){ return /\(GK\)/i.test(j.nombre) || j.nombre.toLowerCase().includes("gk"); }
 function esStar(j){ return calcularMedia(j) >= STAR_CUTOFF; }
 function esLow(j){ return calcularMedia(j) <= LOW_CUTOFF; }
 function esCapitan(j){ return calcularMedia(j) > 4.0; }
-
-function conteoRol(team){
-  return { gk: team.filter(esGK).length, star: team.filter(esStar).length, low: team.filter(esLow).length, cap: team.filter(esCapitan).length };
-}
+function conteoRol(team){ return { gk: team.filter(esGK).length, star: team.filter(esStar).length, low: team.filter(esLow).length, cap: team.filter(esCapitan).length }; }
 
 function costeEquipos(A,B){
-  // varianza teamScore
   const sA = teamScore(A), sB = teamScore(B);
   const m = (sA + sB)/2;
   const varScore = ((sA-m)**2 + (sB-m)**2)/2;
 
-  // conteos
   const a = conteoRol(A), b = conteoRol(B);
-
-  // pesos (ajustables)
-  const P_STAR_DIFF = 3.0;
-  const P_LOW_DIFF  = 2.5;
-  const P_CAP_OVER  = 1.5;   // >2 capitanes
-  const P_LOW_MISS  = 4.0;   // hay lows en el pool pero un equipo se queda sin
-  const P_GK_SPLIT  = 6.0;   // con 2 GKs, forzar 1-1
-
+  const P_STAR_DIFF = 3.0, P_LOW_DIFF  = 2.5, P_CAP_OVER  = 1.5, P_LOW_MISS  = 4.0, P_GK_SPLIT  = 6.0;
   const starDiff = Math.abs(a.star - b.star);
   const lowDiff  = Math.abs(a.low  - b.low);
   const capOver  = Math.max(0, a.cap-2) + Math.max(0, b.cap-2);
@@ -278,7 +300,6 @@ function seedSnake(players){
   const gks = arr.filter(esGK);
   if (gks.length >= 2){
     A.push(gks[0]); B.push(gks[1]);
-    // quitar esos dos de arr
     let removed=0;
     for (let i=arr.length-1;i>=0 && removed<2;i--){
       if (esGK(arr[i])){ arr.splice(i,1); removed++; }
@@ -305,11 +326,9 @@ function generarEquipos() {
       throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
     }
 
-    // Semilla equilibrada
     let [bestA, bestB] = seedSnake(seleccionados);
     let bestCost = costeEquipos(bestA, bestB);
 
-    // Búsqueda local (acepta solo mejoras de coste)
     const ITERS = 4000;
     for (let k=0; k<ITERS; k++){
       const A = bestA.slice(), B = bestB.slice();
@@ -320,7 +339,6 @@ function generarEquipos() {
       if (cost < bestCost){ bestA = A; bestB = B; bestCost = cost; }
     }
 
-    // Estadísticas (FIFA promedio mostrado)
     const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
     const s1 = {
       atk: (sum(bestA, j => j.ataque) / bestA.length).toFixed(2),
@@ -354,6 +372,33 @@ function generarEquipos() {
           ${bestB.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${calcularMedia(j) > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>`;
+
+    // ---- NUEVO: botón guardar/confirmar asistencia ----
+    cont.insertAdjacentHTML("beforeend", `
+      <div class="mt-3 text-center">
+        <button id="btn-guardar-partido" class="btn btn-success">Guardar partido / Confirmar asistencia</button>
+      </div>
+    `);
+
+    document.getElementById("btn-guardar-partido").addEventListener("click", async () => {
+      const fecha = prompt("Fecha del partido (YYYY-MM-DD):", new Date().toISOString().slice(0,10)) || "";
+      const marcador = prompt("Marcador (ej. 6-5):", "") || "";
+      const nombresA = bestA.map(j => j.nombre);
+      const nombresB = bestB.map(j => j.nombre);
+
+      await guardarPartido({
+        fecha,
+        marcador,
+        equipo1: nombresA,
+        equipo2: nombresB,
+        stats: { s1, s2 }
+      });
+
+      await incrementarAsistencia([...nombresA, ...nombresB]);
+
+      alert("Partido guardado y asistencia confirmada ✅");
+    });
+
   } catch (error) {
     const cont = document.getElementById("resultado-equipos");
     cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
@@ -428,7 +473,7 @@ function generarEquiposTorneo() {
   });
 }
 
-// ========== MANUAL (pestaña) ==========
+// ========== MANUAL ==========
 function actualizarContadoresManual() {
   const c1 = document.querySelectorAll('.jugador-manual-1:checked').length;
   const c2 = document.querySelectorAll('.jugador-manual-2:checked').length;
@@ -501,7 +546,8 @@ function generarEquiposManual() {
 }
 
 // ========== Arranque ==========
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await cargarAsistencias();   // Carga contadores desde Sheets
   mostrarTabla();
 
   const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "puntualidad", "media", "fifa"];
@@ -574,6 +620,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Inicializar pestaña Manual (si existe en el HTML)
+  // Inicializar pestaña Manual
   initManualTab();
 });
