@@ -1,295 +1,252 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>SOLAR football</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
   <style>
-    .valor-rojo { color: #d93025; font-weight: bold; }
-    .valor-naranja { color: #f57c00; font-weight: bold; }
-    .valor-amarillo { color: #fbc02d; font-weight: bold; }
-    .valor-verde-claro { color: #7cb342; font-weight: bold; }
-    .valor-verde-oscuro { color: #72a8da; font-weight: bold; }
-    .fifa-stars { white-space: nowrap; display: inline-block; min-width: 80px; }
-    .fifa-stars i { color: gold; margin: 0 1px; }
+    /* Colores por rangos */
+    .valor-rojo { color:#d93025; font-weight:700; }
+    .valor-naranja { color:#f57c00; font-weight:700; }
+    .valor-amarillo { color:#fbc02d; font-weight:700; }
+    .valor-verde-claro { color:#7cb342; font-weight:700; }
+    .valor-verde-oscuro { color:#72a8da; font-weight:700; }
 
-    .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .white-circle { background-color: white; border: 1px solid #ccc; }
-    .blue-circle { background-color: blue; }
-    .red-circle { background-color: #d93025; }
-    .orange-circle { background-color: #f57c00; }
-    .yellow-circle { background-color: #fbc02d; }
-    .lightgreen-circle { background-color: #7cb342; }
-    .darkgreen-circle { background-color: #2e7d32; }
-    .azul-circle { background-color: #007bff; }
-    .blanco-circle { background-color: #f8f9fa; border: 1px solid #ccc; }
-    .rojo-circle { background-color: #dc3545; }
-    .verde-circle { background-color: #28a745; }
+    /* Estrellas */
+    .fifa-stars { white-space:nowrap; display:inline-block; min-width:80px; }
+    .fifa-stars i { margin:0 1px; color:gold; }
 
-    th.sortable::after { content: " ⇅"; font-weight: normal; opacity: 0.5; }
-    th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
-    th.orden-desc::after { content: " ↓"; font-weight: bold; opacity: 1; }
+    /* Bolitas color */
+    .circle{ width:15px;height:15px;border-radius:50%;display:inline-block;margin-right:5px;}
+    .white-circle{ background:#fff; border:1px solid #ccc;}
+    .blue-circle{ background:blue;}
+    .red-circle{ background:#d93025;}
+    .orange-circle{ background:#f57c00;}
+    .azul-circle{ background:#007bff;}
+    .rojo-circle{ background:#dc3545;}
+    .verde-circle{ background:#28a745;}
 
-    /* Bloques de selección de jugadores (Partido / Torneo) */
-    .player-block {
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 16px;
-      border: 2px solid transparent;
+    /* Indicadores de orden */
+    th.sortable::after {content:" ⇅"; opacity:.5;}
+    th.orden-asc::after {content:" ↑"; opacity:1; font-weight:700;}
+    th.orden-desc::after {content:" ↓"; opacity:1; font-weight:700;}
+
+    /* Bloques (Partido/Torneo) */
+    .player-block { border-radius:12px; padding:14px; margin-bottom:16px; border:2px solid transparent; }
+    .player-block h6{ margin:0 0 8px 0; font-weight:700; }
+    .player-block.habituales{ background:#eef5ff; border-color:#cfe2ff; }
+    .player-block.visitors{ background:#fff8e6; border-color:#ffe2a8; }
+    .player-block.hall{ background:#f3ecff; border-color:#dbc9ff; }
+
+    .player-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem 1rem; }
+    .player-grid .form-check-label{ font-size:1.1rem; font-weight:500;}
+
+    @media (max-width:768px){
+      .player-grid{ grid-template-columns:repeat(2,1fr); }
     }
-    .player-block h6 {
-      margin: 0 0 8px 0;
-      font-weight: 700;
-    }
-    .player-block.habituales { background:#eef5ff; border-color:#cfe2ff; }
-    .player-block.visitors   { background:#fff8e6; border-color:#ffe2a8; }
-    .player-block.hall       { background:#f3ecff; border-color:#dbc9ff; }
 
-    /* Grid de 4 columnas dentro de cada bloque */
-    .player-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: .5rem 1rem;
-    }
-    .player-grid .form-check-label { font-size: 1.1rem; font-weight: 500; }
-
-    @media (max-width: 768px) {
-      .player-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    /* Manual: recuadros */
+    #manual .equipo-box{ border-radius:12px; padding:16px; margin-bottom:20px; border:2px solid transparent; }
+    #manual .equipo-box.blue{ background:#eef5ff; border-color:#cfe2ff; }
+    #manual .equipo-box.red{ background:#fff0f0; border-color:#f4c2c2; }
+    #manual .equipo-box h5{ font-size:1.2rem; margin-bottom:10px; }
   </style>
 </head>
 <body class="bg-light">
-<div class="container py-4">
-  <div class="text-center mb-3">
-    <img src="logo-solarfc.jpg" alt="Logo Solar Football" class="img-fluid" style="max-height: 200px;">
-  </div>
-  <h1 class="text-center mb-2">SOLAR football</h1>
-  <p class="text-center text-muted" id="fecha-modificacion">Última actualización: <span></span></p>
-
-  <ul class="nav nav-tabs mb-4" id="tabs">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#jugadores">Jugadores</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#convocatoria">Partido</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historial">Historial</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#manual">Manual</a></li>
-  </ul>
-
-  <div class="tab-content">
-    <!-- Jugadores -->
-    <div class="tab-pane fade show active" id="jugadores">
-      <table id="tabla-jugadores" class="table table-bordered text-center">
-        <thead class="table-dark">
-          <tr>
-            <th class="sortable">Jugador</th>
-            <th class="sortable">Ataque</th>
-            <th class="sortable">Defensa</th>
-            <th class="sortable">Táctica</th>
-            <th class="sortable">Estamina</th>
-            <th class="sortable">Puntualidad</th>
-            <th class="sortable">Media</th>
-            <th class="sortable">FIFA</th>
-            <th>Stars</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <div class="container py-4">
+    <div class="text-center mb-3">
+      <img src="logo-solarfc.jpg" alt="Logo Solar Football" class="img-fluid" style="max-height:200px;">
     </div>
+    <h1 class="text-center mb-2">SOLAR football</h1>
+    <p class="text-center text-muted" id="fecha-modificacion">Última actualización: <span></span></p>
 
-    <!-- Partido -->
-    <div class="tab-pane fade" id="convocatoria">
-      <div class="container mt-4">
-        <h3 class="text-center mb-4">Crear Equipos para Partido</h3>
-        <p class="text-center text-muted" id="contador-partido">Seleccionados: 0</p>
-        <form id="form-asistencia" class="mb-3"></form>
-        <div class="text-center">
-          <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
-        </div>
-        <div id="resultado-equipos" class="row mt-4 mb-4"></div>
+    <ul class="nav nav-tabs mb-4" id="tabs">
+      <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#jugadores">Jugadores</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#convocatoria">Partido</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#manual">Manual</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a></li>
+      <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historial">Historial</a></li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Jugadores -->
+      <div class="tab-pane fade show active" id="jugadores">
+        <table id="tabla-jugadores" class="table table-bordered text-center">
+          <thead class="table-dark">
+            <tr>
+              <th class="sortable">Jugador</th>
+              <th class="sortable">Ataque</th>
+              <th class="sortable">Defensa</th>
+              <th class="sortable">Táctica</th>
+              <th class="sortable">Estamina</th>
+              <th class="sortable">Puntualidad</th>
+              <th class="sortable">Media</th>
+              <th class="sortable">FIFA</th>
+              <th>Stars</th>
+              <th>Asist.</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-    </div>
 
-    <!-- Torneo -->
-    <div class="tab-pane fade" id="torneo">
-      <div class="container mt-4">
-        <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
-        <p class="text-center text-muted" id="contador-torneo">Seleccionados: 0</p>
-        <form id="form-torneo" class="mb-3"></form>
-        <div class="text-center">
-          <button id="generar-torneo" class="btn btn-primary mt-3" disabled>Generar Equipos Torneo</button>
+      <!-- Partido -->
+      <div class="tab-pane fade" id="convocatoria">
+        <div class="container mt-4">
+          <h3 class="text-center mb-4">Crear Equipos para Partido</h3>
+          <p class="text-center text-muted" id="contador-partido">Seleccionados: 0</p>
+          <form id="form-asistencia" class="mb-3"></form>
+          <div class="text-center">
+            <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
+          </div>
+          <div id="resultado-equipos" class="row mt-4 mb-4"></div>
         </div>
-        <div id="resultado-torneo" class="row mt-4 mb-4"></div>
       </div>
-    </div>
 
-    <!-- Manual -->
-    <div class="tab-pane fade" id="manual">
-      <div class="container mt-4">
-        <h3 class="text-center mb-4">Configurar equipos manualmente</h3>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="equipo-box" style="background:#eef5ff;border:2px solid #cfe2ff;">
-              <h5><span class="circle azul-circle"></span> Equipo 1</h5>
-              <p class="text-muted" id="contador-manual-1">Seleccionados: 0</p>
-              <form id="form-manual-1" class="mb-3"></form>
+      <!-- Torneo -->
+      <div class="tab-pane fade" id="torneo">
+        <div class="container mt-4">
+          <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
+          <p class="text-center text-muted" id="contador-torneo">Seleccionados: 0</p>
+          <form id="form-torneo" class="mb-3"></form>
+          <div class="text-center">
+            <button id="generar-torneo" class="btn btn-primary mt-3" disabled>Generar Equipos Torneo</button>
+          </div>
+          <div id="resultado-torneo" class="row mt-4 mb-4"></div>
+        </div>
+      </div>
+
+      <!-- Manual -->
+      <div class="tab-pane fade" id="manual">
+        <div class="container mt-4">
+          <h3 class="text-center mb-4">Configurar equipos manualmente</h3>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="equipo-box blue">
+                <h5><span class="circle azul-circle"></span> Equipo 1</h5>
+                <p class="text-muted" id="contador-manual-1">Seleccionados: 0</p>
+                <form id="form-manual-1" class="mb-3"></form>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="equipo-box red">
+                <h5><span class="circle rojo-circle"></span> Equipo 2</h5>
+                <p class="text-muted" id="contador-manual-2">Seleccionados: 0</p>
+                <form id="form-manual-2" class="mb-3"></form>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="equipo-box" style="background:#ffe2e6;border:2px solid #f5a6a6;">
-              <h5><span class="circle rojo-circle"></span> Equipo 2</h5>
-              <p class="text-muted" id="contador-manual-2">Seleccionados: 0</p>
-              <form id="form-manual-2" class="mb-3"></form>
+          <div class="text-center">
+            <button id="generar-manual" class="btn btn-primary mt-2" disabled>Generar tabla de puntuaciones</button>
+            <div class="small text-muted mt-2">Selecciona el mismo número de jugadores en ambos equipos (recomendado 5 vs 5).</div>
+          </div>
+          <div id="resultado-manual" class="row mt-4 mb-4"></div>
+        </div>
+      </div>
+
+      <!-- Consejos -->
+      <div class="tab-pane fade" id="consejos">
+        <div class="container mt-4">
+          <h3 class="text-center mb-4">Consejos para jugar en Solar FC</h3>
+          <div class="ratio ratio-16x9">
+            <video controls>
+              <source src="SolarFC_tip.mp4" type="video/mp4" />
+              Tu navegador no soporta la reproducción de video.
+            </video>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fotos -->
+      <div class="tab-pane fade" id="fotos">
+        <div class="container mt-4">
+          <h3 class="text-center mb-4">Ganadores 5º torneo</h3>
+          <div class="row justify-content-center">
+            <div class="col-md-6 mb-4">
+              <img src="winner-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Ganador 5º Torneo" />
+              <p class="text-center mt-2">GANADORES</p>
+            </div>
+            <div class="col-md-6 mb-4">
+              <img src="players-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Jugadores 5º Torneo" />
+              <p class="text-center mt-2">JUGADORES</p>
             </div>
           </div>
         </div>
-        <div class="text-center">
-          <button class="btn btn-primary mt-3" id="generar-manual">Generar tabla de puntuaciones</button>
-        </div>
-        <div id="resultado-manual" class="row mt-4 mb-4"></div>
       </div>
-    </div>
 
-    <!-- Consejos -->
-    <div class="tab-pane fade" id="consejos">
-      <div class="container mt-4">
-        <h3 class="text-center mb-4">Consejos para jugar en Solar FC</h3>
-        <div class="ratio ratio-16x9">
-          <video controls>
-            <source src="SolarFC_tip.mp4" type="video/mp4">
-            Tu navegador no soporta la reproducción de video.
-          </video>
+      <!-- Historial (Sigue usando historial.json; si quieres Firestore, te lo preparo luego) -->
+      <div class="tab-pane fade" id="historial">
+        <div class="container mt-4">
+          <h3 class="text-center mb-4">Historial de Partidos</h3>
+          <div id="lista-historial" class="row row-cols-1 row-cols-md-2 g-4"></div>
         </div>
-      </div>
-    </div>
-
-    <!-- Fotos -->
-    <div class="tab-pane fade" id="fotos">
-      <div class="container mt-4">
-        <h3 class="text-center mb-4">Ganadores 5º torneo</h3>
-        <div class="row justify-content-center">
-          <div class="col-md-6 mb-4">
-            <img src="winner-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Ganador 5º Torneo">
-            <p class="text-center mt-2">GANADORES</p>
-          </div>
-          <div class="col-md-6 mb-4">
-            <img src="players-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Jugadores 5º Torneo">
-            <p class="text-center mt-2">JUGADORES</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Historial -->
-    <div class="tab-pane fade" id="historial">
-      <div class="container mt-4">
-        <h3 class="text-center mb-4">Historial de Partidos</h3>
-        <div id="lista-historial" class="row row-cols-1 row-cols-md-2 g-4"></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js"></script>
+  <!-- Modal: Confirmar asistencia y resultado -->
+  <div class="modal fade" id="modalAsistencia" tabindex="-1" aria-labelledby="modalAsistenciaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalAsistenciaLabel">Confirmar asistencia y resultado</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="form-asistencia-post">
+            <div class="row g-3 mb-2">
+              <div class="col-md-4">
+                <label class="form-label">Fecha del partido</label>
+                <input type="date" id="partido-fecha" class="form-control" />
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Marcador (ej. 5-3)</label>
+                <input type="text" id="partido-marcador" class="form-control" placeholder="Ej: 4-2" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Equipo 1</h6>
+                <div id="asist-eq1" class="row row-cols-1 row-cols-md-2 g-2"></div>
+              </div>
+              <div class="col-md-6">
+                <h6>Equipo 2</h6>
+                <div id="asist-eq2" class="row row-cols-1 row-cols-md-2 g-2"></div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <div class="me-auto small text-muted">Desmarca quien finalmente no asistió.</div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-primary" id="btn-guardar-asistencia">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Fecha
-    var fecha = new Date(document.lastModified);
-    var fechaSpan = document.querySelector('#fecha-modificacion span');
-    if (fechaSpan) {
-      fechaSpan.textContent = fecha.toLocaleDateString('es-ES', {
-        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-    }
+  <!-- Bootstrap bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    // --- util: separa jugadores en 3 bloques ---
-    function splitEnBloques(lista) {
-      var res = { habituales: [], visitors: [], hall: [] };
-      var vistoVisitor = false;
-      for (var i = 0; i < lista.length; i++) {
-        var j = lista[i];
-        var esVisitor = /^Visitor\b/i.test(j.nombre);
-        if (esVisitor) {
-          vistoVisitor = true;
-          res.visitors.push(j);
-        } else if (!vistoVisitor) {
-          res.habituales.push(j);
-        } else {
-          res.hall.push(j);
-        }
-      }
-      return res;
-    }
-
-    function renderBloque(contenedor, titulo, claseBloque, data, nameCls, idPrefix) {
-      var html = ''
-        + '<div class="player-block ' + claseBloque + '">'
-        +   '<h6>' + titulo + '</h6>'
-        +   '<div class="player-grid">';
-      for (var i = 0; i < data.length; i++) {
-        var j = data[i];
-        var idx = jugadores.indexOf(j);
-        html += ''
-          + '<div class="form-check">'
-          +   '<input class="form-check-input ' + nameCls + '" type="checkbox" id="' + idPrefix + idx + '" value="' + idx + '">'
-          +   '<label class="form-check-label" for="' + idPrefix + idx + '">' + j.nombre + '</label>'
-          + '</div>';
-      }
-      html += '</div></div>';
-      contenedor.insertAdjacentHTML('beforeend', html);
-    }
-
-    // Partido
-    var formAsistencia = document.getElementById('form-asistencia');
-    var contadorPartido = document.getElementById('contador-partido');
-    var botonPartido = document.getElementById('generar-equipos');
-    if (formAsistencia && contadorPartido) {
-      formAsistencia.innerHTML = '';
-      var bloquesP = splitEnBloques(jugadores);
-      renderBloque(formAsistencia, 'Habituales', 'habituales', bloquesP.habituales, 'jugador-checkbox', 'jugador');
-      renderBloque(formAsistencia, 'Visitors', 'visitors', bloquesP.visitors, 'jugador-checkbox', 'jugador');
-      renderBloque(formAsistencia, 'Hall of Fame', 'hall', bloquesP.hall, 'jugador-checkbox', 'jugador');
-      Array.prototype.forEach.call(document.querySelectorAll('.jugador-checkbox'), function (cb) {
-        cb.addEventListener('change', function () {
-          var seleccionados = document.querySelectorAll('.jugador-checkbox:checked').length;
-          contadorPartido.textContent = 'Seleccionados: ' + seleccionados;
-          if (botonPartido) botonPartido.disabled = !(seleccionados >= 10 && seleccionados <= 12);
+  <!-- Fecha de última modificación -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var fecha = new Date(document.lastModified);
+      var el = document.querySelector('#fecha-modificacion span');
+      if (el) {
+        el.textContent = fecha.toLocaleDateString('es-ES', {
+          year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
-      });
-    }
+      }
+    });
+  </script>
 
-    // Torneo
-    var formTorneo = document.getElementById('form-torneo');
-    var contadorTorneo = document.getElementById('contador-torneo');
-    var botonTorneo = document.getElementById('generar-torneo');
-    if (formTorneo && contadorTorneo) {
-      formTorneo.innerHTML = '';
-      var bloquesT = splitEnBloques(jugadores);
-      renderBloque(formTorneo, 'Habituales', 'habituales', bloquesT.habituales, 'jugador-torneo-checkbox', 'jugadorTorneo');
-      renderBloque(formTorneo, 'Visitors', 'visitors', bloquesT.visitors, 'jugador-torneo-checkbox', 'jugadorTorneo');
-      renderBloque(formTorneo, 'Hall of Fame', 'hall', bloquesT.hall, 'jugador-torneo-checkbox', 'jugadorTorneo');
-      Array.prototype.forEach.call(document.querySelectorAll('.jugador-torneo-checkbox'), function (cb) {
-        cb.addEventListener('change', function () {
-          var seleccionados = document.querySelectorAll('.jugador-torneo-checkbox:checked').length;
-          contadorTorneo.textContent = 'Seleccionados: ' + seleccionados;
-          if (botonTorneo) botonTorneo.disabled = !(seleccionados >= 20 && seleccionados <= 24);
-        });
-      });
-    }
-
-    // Historial
-    var tabHist = document.querySelector('a[href="#historial"]');
-    if (tabHist) {
-      tabHist.addEventListener('click', function () {
-        if (typeof mostrarHistorial === 'function') mostrarHistorial();
-      });
-    }
-  });
-</script>
+  <!-- App (ES Module con Firebase v9 modular) -->
+  <script type="module" src="Jugadores.js"></script>
 </body>
 </html>
