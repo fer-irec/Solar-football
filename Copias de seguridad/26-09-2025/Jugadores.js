@@ -63,18 +63,19 @@ const jugadores = [
   { nombre: "Oriol", ataque: 3.80, defensa: 4.20, tactica: 3.80, estamina: 3.80, puntualidad: 3 }
 ];
 
+
+
+
 function calcularMedia(j) {
-  // Ponderaciones: ATK 0.3, DEF 0.3, TACT 0.2, STA 0.2
-  return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2);
+  return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2 );
+}
+
+function calcularFifa(j) {
+  return Math.round(calcularMedia(j) * 20);
 }
 
 function limitar(valor) {
   return Math.max(0, Math.min(5, valor));
-}
-
-function calcularFifa(j) {
-  // Escala 0–5 -> 0–100
-  return Math.round(limitar(calcularMedia(j)) * 20);
 }
 
 function colorClase(valor) {
@@ -119,6 +120,7 @@ function generarEstrellasFIFA(puntuacion) {
 // ===============================
 // Ordenamiento de tabla
 // ===============================
+
 let jugadoresOriginal = [...jugadores];
 let jugadoresOrdenados = [...jugadores];
 let ordenActual = { columna: null, estado: 0 }; // 0: original, 1: desc, 2: asc
@@ -152,6 +154,7 @@ function ordenarPor(columna) {
 // ===============================
 // Mostrar tabla
 // ===============================
+
 function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
@@ -159,6 +162,11 @@ function mostrarTabla() {
 
   const theadRow = document.querySelector("#tabla-jugadores thead tr");
   if (!theadRow) return;
+
+  // Asegura columnas sin duplicados
+  //theadRow.querySelectorAll("th.fifa, th.stars").forEach(th => th.remove());
+  //if (!theadRow.querySelector("th.fifa")) theadRow.insertAdjacentHTML("beforeend", "<th class='fifa'>FIFA</th>");
+  //if (!theadRow.querySelector("th.stars")) theadRow.insertAdjacentHTML("beforeend", "<th class='stars'>Stars</th>");
 
   jugadoresOrdenados.forEach(j => {
     const mediaVal = limitar(calcularMedia(j));
@@ -180,9 +188,6 @@ function mostrarTabla() {
   });
 }
 
-// ===============================
-// Historial
-// ===============================
 function fmt2(x) {
   if (x === undefined || x === null || Number.isNaN(x)) return "—";
   return (typeof x === "number" ? x : parseFloat(x)).toFixed(2);
@@ -227,41 +232,10 @@ function mostrarHistorial() {
         <div class="alert alert-danger">Error al cargar historial: ${err.message}</div>`;
     });
 }
+
 document.querySelector('a[href="#historial"]').addEventListener("click", mostrarHistorial);
 
-// ====== Algoritmo "estrella + flojos" (escala 0–5) ======
-const ALPHA = 3.0;   // bono de arrastre de estrella
-const GAMMA = 0.75;  // castigo por flojos sin estrella
-const DELTA = 0.5;   // rendimientos decrecientes con demasiadas estrellas
-const STAR_CUTOFF = 3.75; // equivalente a 7.5/10
-const LOW_CUTOFF  = 2.00; // equivalente a 4/10
-
-function teamScore(team) {
-  const ratings = team.map(p => calcularMedia(p)); // 0–5
-  const base = ratings.reduce((a,b)=>a+b, 0);
-
-  const stars = team.filter(p => calcularMedia(p) >= STAR_CUTOFF);
-  const lows  = team.filter(p => calcularMedia(p) <= LOW_CUTOFF);
-  const nStar = stars.length, nLow = lows.length;
-
-  const lowDepth = lows.length
-    ? lows.reduce((a,p)=> a + Math.max(0, LOW_CUTOFF - calcularMedia(p)), 0) / lows.length
-    : 0;
-
-  const pLow = team.length > 1 ? (nLow / (team.length - 1)) : 0;
-
-  const carryBonus = stars.reduce((sum, s) => {
-    const starExcess = Math.max(0, calcularMedia(s) - STAR_CUTOFF);
-    return sum + ALPHA * starExcess * pLow * lowDepth;
-  }, 0);
-
-  const orphanPenalty = GAMMA * Math.max(0, nLow - 2*nStar); // máx 2 flojos por estrella
-  const starPenalty   = DELTA * Math.max(0, nStar - 2);      // >2 estrellas en equipos cortos
-
-  return base + carryBonus - orphanPenalty - starPenalty;
-}
-
-// ====== Diferencia ponderada por componentes (ATK/DEF/TACT/STA) ======
+// ====== NUEVO: util para score ponderado ======
 function scorePonderado(a, b) {
   const dAtk  = Math.abs(a.atk  - b.atk);
   const dDef  = Math.abs(a.def  - b.def);
@@ -270,7 +244,6 @@ function scorePonderado(a, b) {
   return 0.3*dAtk + 0.3*dDef + 0.2*dTact + 0.2*dSta;
 }
 
-// ====== Generar 2 equipos (FIFA mostrado = PROMEDIO) ======
 function generarEquipos() {
   try {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
@@ -278,101 +251,89 @@ function generarEquipos() {
       .map(j => ({
         ...j,
         media: calcularMedia(j),
-        fifa: calcularFifa(j)
+        fifa: calcularFifa(j) // ← Aquí se añade correctamente la propiedad fifa
       }));
 
     if (seleccionados.length < 10 || seleccionados.length > 12) {
       throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
     }
 
-    const intentos = 1500;
-    let mejorVar = Infinity;
-    let mejor = { eq1: [], eq2: [] };
+    let mejorScore = Infinity;
+    let mejorTopDiff = Infinity;
+    let mejorFifaDiff = Infinity;
+    let mejorEq1 = [], mejorEq2 = [];
 
-    for (let i = 0; i < intentos; i++) {
+    for (let i = 0; i < 1000; i++) {
       const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
-      const mitad = Math.floor(seleccionados.length / 2);
-      let A = mezcla.slice(0, mitad);
-      let B = mezcla.slice(mitad);
+      const eq1 = mezcla.slice(0, Math.floor(seleccionados.length / 2));
+      const eq2 = mezcla.slice(Math.floor(seleccionados.length / 2));
 
-      // Búsqueda local: intercambios que bajen la varianza de teamScore
-      const itersLocal = 1000;
-      const varianzaScore = (a, b) => {
-        const sA = teamScore(a);
-        const sB = teamScore(b);
-        const m = (sA + sB) / 2;
-        return ((sA - m) ** 2 + (sB - m) ** 2) / 2;
-      };
+      const stat = team => ({
+        atk: team.reduce((s, x) => s + x.ataque, 0) / team.length,
+        def: team.reduce((s, x) => s + x.defensa, 0) / team.length,
+        tact: team.reduce((s, x) => s + x.tactica, 0) / team.length,
+        sta: team.reduce((s, x) => s + x.estamina, 0) / team.length,
+        rating: team.reduce((s, x) => s + calcularMedia(x), 0) / team.length,
+        fifa: team.reduce((s, x) => s + x.fifa, 0),
+        top: team.filter(x => x.media > 4).length
+      });
 
-      let bestVar = varianzaScore(A, B);
-      for (let k = 0; k < itersLocal; k++) {
-        const ia = Math.floor(Math.random() * A.length);
-        const ib = Math.floor(Math.random() * B.length);
-        const candA = A.slice(), candB = B.slice();
-        [candA[ia], candB[ib]] = [candB[ib], candA[ia]];
-        const v = varianzaScore(candA, candB);
-        if (v < bestVar) {
-          A = candA; B = candB; bestVar = v;
-        }
-      }
+      const s1 = stat(eq1);
+      const s2 = stat(eq2);
 
-      // Desempates: spread por componentes y diferencia de FIFA promedio
-      const avg = (arr, f) => arr.reduce((s, x) => s + f(x), 0) / arr.length;
-      const compSpread = scorePonderado(
-        { atk: avg(A, j=>j.ataque), def: avg(A, j=>j.defensa), tact: avg(A, j=>j.tactica), sta: avg(A, j=>j.estamina) },
-        { atk: avg(B, j=>j.ataque), def: avg(B, j=>j.defensa), tact: avg(B, j=>j.tactica), sta: avg(B, j=>j.estamina) }
-      );
-      const fifaAvgDiff = Math.abs(
-        (A.reduce((s, j) => s + j.fifa, 0) / A.length) -
-        (B.reduce((s, j) => s + j.fifa, 0) / B.length)
-      );
+      // Score principal ponderado 30/30/20/20
+      const diffWeighted = scorePonderado(s1, s2);
+      const topDiff = Math.abs(s1.top - s2.top);
+      const fifaDiff = Math.abs(s1.fifa - s2.fifa);
 
-      const mejorCandidato =
-        (bestVar < mejorVar) ||
-        (bestVar === mejorVar && compSpread < (mejor.compSpread ?? Infinity)) ||
-        (bestVar === mejorVar && compSpread === (mejor.compSpread ?? Infinity) && fifaAvgDiff < (mejor.fifaAvgDiff ?? Infinity));
+      // Elegimos el mejor por: score ponderado -> top players -> fifaDiff
+      const mejor = (diffWeighted < mejorScore) ||
+                    (diffWeighted === mejorScore && topDiff < mejorTopDiff) ||
+                    (diffWeighted === mejorScore && topDiff === mejorTopDiff && fifaDiff < mejorFifaDiff);
 
-      if (mejorCandidato) {
-        mejorVar = bestVar;
-        mejor = { eq1: A, eq2: B, compSpread, fifaAvgDiff };
+      if (mejor) {
+        mejorScore = diffWeighted;
+        mejorTopDiff = topDiff;
+        mejorFifaDiff = fifaDiff;
+        mejorEq1 = eq1;
+        mejorEq2 = eq2;
       }
     }
 
     const cont = document.getElementById("resultado-equipos");
-    if (!mejor.eq1.length || !mejor.eq2.length || !cont) {
+    if (!mejorEq1.length || !mejorEq2.length || !cont) {
       cont.innerHTML = `<div class="alert alert-danger">No se pudieron formar equipos equilibrados.</div>`;
       return;
     }
 
-    const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
     const s1 = {
-      atk: (sum(mejor.eq1, j => j.ataque) / mejor.eq1.length).toFixed(2),
-      def: (sum(mejor.eq1, j => j.defensa) / mejor.eq1.length).toFixed(2),
-      tact: (sum(mejor.eq1, j => j.tactica) / mejor.eq1.length).toFixed(2),
-      sta: (sum(mejor.eq1, j => j.estamina) / mejor.eq1.length).toFixed(2),
-      fifaAvg: Math.round(sum(mejor.eq1, j => j.fifa) / mejor.eq1.length) // PROMEDIO
+      atk: (mejorEq1.reduce((s, j) => s + j.ataque, 0) / mejorEq1.length).toFixed(2),
+      def: (mejorEq1.reduce((s, j) => s + j.defensa, 0) / mejorEq1.length).toFixed(2),
+      tact: (mejorEq1.reduce((s, j) => s + j.tactica, 0) / mejorEq1.length).toFixed(2),
+      sta: (mejorEq1.reduce((s, j) => s + j.estamina, 0) / mejorEq1.length).toFixed(2),
+      fifa: mejorEq1.reduce((s, j) => s + j.fifa, 0)
     };
     const s2 = {
-      atk: (sum(mejor.eq2, j => j.ataque) / mejor.eq2.length).toFixed(2),
-      def: (sum(mejor.eq2, j => j.defensa) / mejor.eq2.length).toFixed(2),
-      tact: (sum(mejor.eq2, j => j.tactica) / mejor.eq2.length).toFixed(2),
-      sta: (sum(mejor.eq2, j => j.estamina) / mejor.eq2.length).toFixed(2),
-      fifaAvg: Math.round(sum(mejor.eq2, j => j.fifa) / mejor.eq2.length) // PROMEDIO
+      atk: (mejorEq2.reduce((s, j) => s + j.ataque, 0) / mejorEq2.length).toFixed(2),
+      def: (mejorEq2.reduce((s, j) => s + j.defensa, 0) / mejorEq2.length).toFixed(2),
+      tact: (mejorEq2.reduce((s, j) => s + j.tactica, 0) / mejorEq2.length).toFixed(2),
+      sta: (mejorEq2.reduce((s, j) => s + j.estamina, 0) / mejorEq2.length).toFixed(2),
+      fifa: mejorEq2.reduce((s, j) => s + j.fifa, 0)
     };
 
     cont.innerHTML = `
       <div class="col-md-6">
         <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-        <p>ATK: ${s1.atk} | DEF: ${s1.def} | TACT: ${s1.tact} | STA: ${s1.sta} | FIFA: ${s1.fifaAvg}</p>
+        <p>ATK: ${s1.atk} | DEF: ${s1.def} | TACT: ${s1.tact} | STA: ${s1.sta} | FIFA: ${s1.fifa}</p>
         <ul class="list-group">
-          ${mejor.eq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${calcularMedia(j) > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${mejorEq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>
       <div class="col-md-6">
         <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-        <p>ATK: ${s2.atk} | DEF: ${s2.def} | TACT: ${s2.tact} | STA: ${s2.sta} | FIFA: ${s2.fifaAvg}</p>
+        <p>ATK: ${s2.atk} | DEF: ${s2.def} | TACT: ${s2.tact} | STA: ${s2.sta} | FIFA: ${s2.fifa}</p>
         <ul class="list-group">
-          ${mejor.eq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${calcularMedia(j) > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+          ${mejorEq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
         </ul>
       </div>`;
   } catch (error) {
@@ -381,14 +342,20 @@ function generarEquipos() {
   }
 }
 
-// ====== Generar 4 equipos para torneo (FIFA mostrado = PROMEDIO) ======
+
+
+// Lista de jugadores (asegúrate de incluir esta línea en el archivo o importar desde otro script)
+// const jugadores = [...]; // Tu lista completa de jugadores con ataque, defensa, fifa
+
+// ... (resto del código intacto) ...
+
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[parseInt(cb.value)])
     .map(j => ({
       ...j,
       media: calcularMedia(j),
-      fifa: calcularFifa(j) // cálculo individual FIFA
+      fifa: calcularFifa(j) // ← Añadido cálculo de FIFA individual
     }));
 
   if (seleccionados.length < 20 || seleccionados.length > 24) {
@@ -412,19 +379,22 @@ function generarEquiposTorneo() {
       tact: eq.reduce((s, j) => s + j.tactica, 0) / eq.length,
       sta: eq.reduce((s, j) => s + j.estamina, 0) / eq.length,
       rating: eq.reduce((s, j) => s + calcularMedia(j), 0) / eq.length,
-      fifa: Math.round(eq.reduce((s, j) => s + j.fifa, 0) / eq.length), // PROMEDIO FIFA
+      fifa: eq.reduce((s, j) => s + j.fifa, 0),
       top: eq.filter(j => j.media > 4).length
     }));
 
+    // Score principal: rango (max-min) del rating ponderado entre los 4 equipos
     const ratings = stats.map(s => s.rating);
     const score = Math.max(...ratings) - Math.min(...ratings);
 
+    // Desempate 1: rango ponderado por componentes (reduce diferencias extremas en ATK/DEF/TACT/STA)
     const spreadAtk  = Math.max(...stats.map(s => s.atk))  - Math.min(...stats.map(s => s.atk));
     const spreadDef  = Math.max(...stats.map(s => s.def))  - Math.min(...stats.map(s => s.def));
     const spreadTact = Math.max(...stats.map(s => s.tact)) - Math.min(...stats.map(s => s.tact));
     const spreadSta  = Math.max(...stats.map(s => s.sta))  - Math.min(...stats.map(s => s.sta));
     const compSpread = 0.3*spreadAtk + 0.3*spreadDef + 0.2*spreadTact + 0.2*spreadSta;
 
+    // Desempate 2: reparto de top players
     const topCounts = stats.map(s => s.top);
     const topDiff = Math.max(...topCounts) - Math.min(...topCounts);
 
@@ -462,133 +432,14 @@ function generarEquiposTorneo() {
   });
 }
 
-// ===============================
-// MANUAL: pestaña para configurar equipos a mano
-// ===============================
-function actualizarContadoresManual() {
-  const c1 = document.querySelectorAll('.jugador-manual-1:checked').length;
-  const c2 = document.querySelectorAll('.jugador-manual-2:checked').length;
-  const btn = document.getElementById('generar-manual');
-  const t1 = document.getElementById('contador-manual-1');
-  const t2 = document.getElementById('contador-manual-2');
-  if (t1) t1.textContent = `Seleccionados: ${c1}`;
-  if (t2) t2.textContent = `Seleccionados: ${c2}`;
-  // Habilitar si tienen el mismo número y >= 3 (recomendado 5)
-  if (btn) btn.disabled = !(c1 === c2 && c1 >= 3);
-}
 
-function initManualTab() {
-  const form1 = document.getElementById("form-manual-1");
-  const form2 = document.getElementById("form-manual-2");
-  if (!form1 || !form2) return;
-
-  form1.innerHTML = "";
-  form2.innerHTML = "";
-
-  jugadores.forEach((j, i) => {
-    const id1 = `manual1_${i}`;
-    const id2 = `manual2_${i}`;
-
-    form1.insertAdjacentHTML("beforeend", `
-      <div class="form-check col-md-6">
-        <input class="form-check-input jugador-manual-1" type="checkbox" id="${id1}" data-peer="${id2}" value="${i}">
-        <label class="form-check-label" for="${id1}">${j.nombre}</label>
-      </div>`);
-
-    form2.insertAdjacentHTML("beforeend", `
-      <div class="form-check col-md-6">
-        <input class="form-check-input jugador-manual-2" type="checkbox" id="${id2}" data-peer="${id1}" value="${i}">
-        <label class="form-check-label" for="${id2}">${j.nombre}</label>
-      </div>`);
-  });
-
-  // Exclusión mutua: un jugador no puede estar en ambos equipos
-  const wires = (selector) => document.querySelectorAll(selector).forEach(cb => {
-    cb.addEventListener("change", (e) => {
-      const peerId = e.target.getAttribute("data-peer");
-      const peer = document.getElementById(peerId);
-      if (!peer) return;
-      if (e.target.checked) {
-        peer.checked = false;
-        peer.disabled = true;
-      } else {
-        peer.disabled = false;
-      }
-      actualizarContadoresManual();
-    });
-  });
-
-  wires(".jugador-manual-1");
-  wires(".jugador-manual-2");
-  actualizarContadoresManual();
-
-  const btn = document.getElementById("generar-manual");
-  if (btn) btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    generarEquiposManual();
-  });
-}
-
-function generarEquiposManual() {
-  const selIdx1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked")).map(cb => parseInt(cb.value));
-  const selIdx2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked")).map(cb => parseInt(cb.value));
-
-  if (selIdx1.length !== selIdx2.length || selIdx1.length < 3) {
-    alert("Selecciona el mismo número de jugadores en ambos equipos (mínimo 3; recomendado 5).");
-    return;
-  }
-
-  const eq1 = selIdx1.map(i => ({ ...jugadores[i], media: calcularMedia(jugadores[i]), fifa: calcularFifa(jugadores[i]) }));
-  const eq2 = selIdx2.map(i => ({ ...jugadores[i], media: calcularMedia(jugadores[i]), fifa: calcularFifa(jugadores[i]) }));
-
-  // Stats
-  const avg = (arr, f) => (arr.reduce((s, x) => s + f(x), 0) / arr.length);
-  const s1 = {
-    atk: avg(eq1, j=>j.ataque).toFixed(2),
-    def: avg(eq1, j=>j.defensa).toFixed(2),
-    tact: avg(eq1, j=>j.tactica).toFixed(2),
-    sta: avg(eq1, j=>j.estamina).toFixed(2),
-    fifaAvg: Math.round(avg(eq1, j=>j.fifa)),
-    teamScore: teamScore(eq1).toFixed(2)
-  };
-  const s2 = {
-    atk: avg(eq2, j=>j.ataque).toFixed(2),
-    def: avg(eq2, j=>j.defensa).toFixed(2),
-    tact: avg(eq2, j=>j.tactica).toFixed(2),
-    sta: avg(eq2, j=>j.estamina).toFixed(2),
-    fifaAvg: Math.round(avg(eq2, j=>j.fifa)),
-    teamScore: teamScore(eq2).toFixed(2)
-  };
-
-  const cont = document.getElementById("resultado-manual");
-  if (!cont) return;
-
-  cont.innerHTML = `
-    <div class="col-md-6">
-      <h5><span class="circle white-circle"></span><span class="circle blue-circle"></span> Equipo 1</h5>
-      <p>ATK: ${s1.atk} | DEF: ${s1.def} | TACT: ${s1.tact} | STA: ${s1.sta} | FIFA: ${s1.fifaAvg} | <strong>Score:</strong> ${s1.teamScore}</p>
-      <ul class="list-group">
-        ${eq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
-      </ul>
-    </div>
-    <div class="col-md-6">
-      <h5><span class="circle red-circle"></span><span class="circle orange-circle"></span> Equipo 2</h5>
-      <p>ATK: ${s2.atk} | DEF: ${s2.def} | TACT: ${s2.tact} | STA: ${s2.sta} | FIFA: ${s2.fifaAvg} | <strong>Score:</strong> ${s2.teamScore}</p>
-      <ul class="list-group">
-        ${eq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${j.media > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
-      </ul>
-    </div>
-  `;
-}
-
-// ===============================
-// Arranque / Listeners
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
   mostrarTabla();
 
   // Ordenamiento de columnas de la tabla de jugadores
+  //const columnas = ["nombre", "ataque", "defensa", "media", "fifa"];
   const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "puntualidad", "media", "fifa"];
+
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
     if (columna) {
@@ -596,6 +447,8 @@ document.addEventListener("DOMContentLoaded", () => {
       th.style.cursor = "pointer";
       th.addEventListener("click", () => {
         ordenarPor(columna);
+
+        // Actualizar indicadores visuales de orden
         document.querySelectorAll("#tabla-jugadores thead th").forEach(th =>
           th.classList.remove("orden-asc", "orden-desc")
         );
@@ -605,40 +458,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Botones principales
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", () => {
-    try { generarEquiposTorneo(); }
-    catch (err) {
+    try {
+      generarEquiposTorneo();
+    } catch (err) {
       const cont = document.getElementById("resultado-torneo");
       if (cont) cont.innerHTML = `<div class="alert alert-danger">Error inesperado: ${err.message}</div>`;
     }
   });
 
-  // Validaciones dinámicas (partido)
-  const checkboxes = document.querySelectorAll(".jugador-checkbox");
-  const botonGenerar = document.getElementById("generar-equipos");
-  checkboxes.forEach(cb => {
-    cb.addEventListener("change", () => {
-      const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
-      const aviso = document.getElementById("aviso-seleccion") || (() => {
-        const div = document.createElement("div");
-        div.id = "aviso-seleccion";
-        div.className = "text-center text-danger mb-2";
-        document.getElementById("form-asistencia").before(div);
-        return div;
-      })();
-      if (seleccionados < 10 || seleccionados > 12) {
-        if (botonGenerar) botonGenerar.disabled = true;
-        aviso.textContent = "Selecciona entre 10 y 12 jugadores para poder generar equipos.";
-      } else {
-        if (botonGenerar) botonGenerar.disabled = false;
-        aviso.textContent = "";
-      }
-    });
-  });
-
-  // Validaciones dinámicas (torneo)
   const checkboxesTorneo = document.querySelectorAll(".jugador-torneo-checkbox");
   const botonTorneo = document.getElementById("generar-torneo");
   checkboxesTorneo.forEach(cb => {
@@ -651,16 +480,37 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("form-torneo").before(div);
         return div;
       })();
+
       if (seleccionados < 20 || seleccionados > 24) {
-        if (botonTorneo) botonTorneo.disabled = true;
+        botonTorneo.disabled = true;
         aviso.textContent = "Selecciona entre 20 y 24 jugadores para poder generar 4 equipos.";
       } else {
-        if (botonTorneo) botonTorneo.disabled = false;
+        botonTorneo.disabled = false;
         aviso.textContent = "";
       }
     });
   });
 
-  // Inicializar pestaña Manual (si existe en el HTML)
-  initManualTab();
+  const checkboxes = document.querySelectorAll(".jugador-checkbox");
+  const botonGenerar = document.getElementById("generar-equipos");
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", () => {
+      const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
+      const aviso = document.getElementById("aviso-seleccion") || (() => {
+        const div = document.createElement("div");
+        div.id = "aviso-seleccion";
+        div.className = "text-center text-danger mb-2";
+        document.getElementById("form-asistencia").before(div);
+        return div;
+      })();
+
+      if (seleccionados < 10 || seleccionados > 12) {
+        botonGenerar.disabled = true;
+        aviso.textContent = "Selecciona entre 10 y 12 jugadores para poder generar equipos.";
+      } else {
+        botonGenerar.disabled = false;
+        aviso.textContent = "";
+      }
+    });
+  });
 });
