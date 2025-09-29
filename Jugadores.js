@@ -1,28 +1,12 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
-// ======= GOOGLE APPS SCRIPT (Sheets) =======
 const GAS_BASE = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
-const GAS_JUGADORES_URL = GAS_BASE;              // jugadores
+const GAS_JUGADORES_URL = GAS_BASE;                // jugadores
 const GAS_MATCHES_URL   = GAS_BASE + "?type=matches"; // historial de partidos
 
-const asistenciaMap = new Map();
-
-// ========== Asistencias ==========
-async function cargarAsistencias() {
-  try {
-    asistenciaMap.clear();
-    const res = await fetch(GAS_URL, { method: "GET" });
-    const data = await res.json();
-    if (data && !Array.isArray(data)) {
-      Object.keys(data).forEach(n => asistenciaMap.set(n, data[n] || 0));
-    }
-  } catch (e) {
-    console.warn("No se pudo cargar asistencia:", e);
-  }
-}
-
+// ========== Guardar asistencia y partidos ==========
 async function incrementarAsistencia(nombres) {
   try {
-    await fetch(GAS_URL, {
+    await fetch(GAS_BASE, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ type: "incAttendance", names: nombres })
@@ -34,7 +18,7 @@ async function incrementarAsistencia(nombres) {
 
 async function guardarPartido(partido) {
   try {
-    await fetch(GAS_URL, {
+    await fetch(GAS_BASE, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ type: "saveMatch", match: partido })
@@ -323,7 +307,7 @@ async function publicarResultado() {
 // ========== Historial ==========
 async function mostrarHistorial() {
   try {
-    const res = await fetch(`${GAS_URL}?type=matches`);
+    const res = await fetch(GAS_MATCHES_URL);
     const partidos = await res.json();
     const cont = document.getElementById("lista-historial");
     if (!cont) return;
@@ -363,7 +347,6 @@ async function mostrarHistorial() {
 
 // ========== Arranque ==========
 document.addEventListener("DOMContentLoaded", async () => {
-  await cargarAsistencias();
   await cargarJugadores();
   await mostrarHistorial();
 
