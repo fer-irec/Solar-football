@@ -32,22 +32,16 @@
     th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
     th.orden-desc::after { content: " ↓"; font-weight: bold; opacity: 1; }
 
-    /* Bloques de selección de jugadores (Partido / Torneo) */
     .player-block {
       border-radius: 12px;
       padding: 14px;
       margin-bottom: 16px;
       border: 2px solid transparent;
     }
-    .player-block h6 {
-      margin: 0 0 8px 0;
-      font-weight: 700;
-    }
     .player-block.habituales { background:#eef5ff; border-color:#cfe2ff; }
     .player-block.visitors   { background:#fff8e6; border-color:#ffe2a8; }
     .player-block.hall       { background:#f3ecff; border-color:#dbc9ff; }
 
-    /* Grid de 4 columnas dentro de cada bloque */
     .player-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -55,8 +49,11 @@
     }
     .player-grid .form-check-label { font-size: 1.1rem; font-weight: 500; }
 
-    @media (max-width: 768px) {
-      .player-grid { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .equipo-box {
+      border-radius: 14px;
+      padding: 16px;
     }
   </style>
 </head>
@@ -79,7 +76,6 @@
   </ul>
 
   <div class="tab-content">
-    <!-- Jugadores -->
     <div class="tab-pane fade show active" id="jugadores">
       <table id="tabla-jugadores" class="table table-bordered text-center">
         <thead class="table-dark">
@@ -99,7 +95,7 @@
       </table>
     </div>
 
-    <!-- Partido -->
+    <!-- (Resto de pestañas: Partido, Torneo, Manual, etc. se mantienen igual que ahora) -->
     <div class="tab-pane fade" id="convocatoria">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear Equipos para Partido</h3>
@@ -112,7 +108,6 @@
       </div>
     </div>
 
-    <!-- Torneo -->
     <div class="tab-pane fade" id="torneo">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
@@ -125,7 +120,6 @@
       </div>
     </div>
 
-    <!-- Manual -->
     <div class="tab-pane fade" id="manual">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Configurar equipos manualmente</h3>
@@ -194,99 +188,15 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js"></script>
+<script src="index.js"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Fecha
     var fecha = new Date(document.lastModified);
     var fechaSpan = document.querySelector('#fecha-modificacion span');
     if (fechaSpan) {
       fechaSpan.textContent = fecha.toLocaleDateString('es-ES', {
         year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-    }
-
-    // --- util: separa jugadores en 3 bloques ---
-    function splitEnBloques(lista) {
-      var res = { habituales: [], visitors: [], hall: [] };
-      var vistoVisitor = false;
-      for (var i = 0; i < lista.length; i++) {
-        var j = lista[i];
-        var esVisitor = /^Visitor\b/i.test(j.nombre);
-        if (esVisitor) {
-          vistoVisitor = true;
-          res.visitors.push(j);
-        } else if (!vistoVisitor) {
-          res.habituales.push(j);
-        } else {
-          res.hall.push(j);
-        }
-      }
-      return res;
-    }
-
-    function renderBloque(contenedor, titulo, claseBloque, data, nameCls, idPrefix) {
-      var html = ''
-        + '<div class="player-block ' + claseBloque + '">'
-        +   '<h6>' + titulo + '</h6>'
-        +   '<div class="player-grid">';
-      for (var i = 0; i < data.length; i++) {
-        var j = data[i];
-        var idx = jugadores.indexOf(j);
-        html += ''
-          + '<div class="form-check">'
-          +   '<input class="form-check-input ' + nameCls + '" type="checkbox" id="' + idPrefix + idx + '" value="' + idx + '">'
-          +   '<label class="form-check-label" for="' + idPrefix + idx + '">' + j.nombre + '</label>'
-          + '</div>';
-      }
-      html += '</div></div>';
-      contenedor.insertAdjacentHTML('beforeend', html);
-    }
-
-    // Partido
-    var formAsistencia = document.getElementById('form-asistencia');
-    var contadorPartido = document.getElementById('contador-partido');
-    var botonPartido = document.getElementById('generar-equipos');
-    if (formAsistencia && contadorPartido) {
-      formAsistencia.innerHTML = '';
-      var bloquesP = splitEnBloques(jugadores);
-      renderBloque(formAsistencia, 'Habituales', 'habituales', bloquesP.habituales, 'jugador-checkbox', 'jugador');
-      renderBloque(formAsistencia, 'Visitors', 'visitors', bloquesP.visitors, 'jugador-checkbox', 'jugador');
-      renderBloque(formAsistencia, 'Hall of Fame', 'hall', bloquesP.hall, 'jugador-checkbox', 'jugador');
-      Array.prototype.forEach.call(document.querySelectorAll('.jugador-checkbox'), function (cb) {
-        cb.addEventListener('change', function () {
-          var seleccionados = document.querySelectorAll('.jugador-checkbox:checked').length;
-          contadorPartido.textContent = 'Seleccionados: ' + seleccionados;
-          if (botonPartido) botonPartido.disabled = !(seleccionados >= 10 && seleccionados <= 12);
-        });
-      });
-    }
-
-    // Torneo
-    var formTorneo = document.getElementById('form-torneo');
-    var contadorTorneo = document.getElementById('contador-torneo');
-    var botonTorneo = document.getElementById('generar-torneo');
-    if (formTorneo && contadorTorneo) {
-      formTorneo.innerHTML = '';
-      var bloquesT = splitEnBloques(jugadores);
-      renderBloque(formTorneo, 'Habituales', 'habituales', bloquesT.habituales, 'jugador-torneo-checkbox', 'jugadorTorneo');
-      renderBloque(formTorneo, 'Visitors', 'visitors', bloquesT.visitors, 'jugador-torneo-checkbox', 'jugadorTorneo');
-      renderBloque(formTorneo, 'Hall of Fame', 'hall', bloquesT.hall, 'jugador-torneo-checkbox', 'jugadorTorneo');
-      Array.prototype.forEach.call(document.querySelectorAll('.jugador-torneo-checkbox'), function (cb) {
-        cb.addEventListener('change', function () {
-          var seleccionados = document.querySelectorAll('.jugador-torneo-checkbox:checked').length;
-          contadorTorneo.textContent = 'Seleccionados: ' + seleccionados;
-          if (botonTorneo) botonTorneo.disabled = !(seleccionados >= 20 && seleccionados <= 24);
-        });
-      });
-    }
-
-    // Historial
-    var tabHist = document.querySelector('a[href="#historial"]');
-    if (tabHist) {
-      tabHist.addEventListener('click', function () {
-        if (typeof mostrarHistorial === 'function') mostrarHistorial();
       });
     }
   });
