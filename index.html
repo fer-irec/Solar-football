@@ -16,8 +16,6 @@
     .fifa-stars i { color: gold; margin: 0 1px; }
 
     .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .azul-circle { background-color: #007bff; }
-    .rojo-circle { background-color: #dc3545; }
 
     th.sortable::after { content: " ⇅"; font-weight: normal; opacity: 0.5; }
     th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
@@ -62,6 +60,8 @@
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#manual">Manual</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#asistencia">Asistencia y Resultado</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historial">Historial</a></li>
   </ul>
 
@@ -118,14 +118,14 @@
         <h3 class="text-center mb-4">Configurar equipos manualmente</h3>
         <div class="row">
           <div class="col-md-6">
-            <div class="equipo-box bg-primary-subtle">
+            <div class="equipo-box" style="background:#eef5ff;border:2px solid #cfe2ff;">
               <h5><span class="circle azul-circle"></span> Equipo 1</h5>
               <p class="text-muted" id="contador-manual-1">Seleccionados: 0</p>
               <form id="form-manual-1" class="mb-3"></form>
             </div>
           </div>
           <div class="col-md-6">
-            <div class="equipo-box bg-danger-subtle">
+            <div class="equipo-box" style="background:#ffe2e6;border:2px solid #f5a6a6;">
               <h5><span class="circle rojo-circle"></span> Equipo 2</h5>
               <p class="text-muted" id="contador-manual-2">Seleccionados: 0</p>
               <form id="form-manual-2" class="mb-3"></form>
@@ -142,31 +142,51 @@
     <!-- Asistencia y Resultado -->
     <div class="tab-pane fade" id="asistencia">
       <div class="container mt-4">
-        <h3 class="text-center mb-4">Registrar Asistencia y Resultado</h3>
-        <div class="row">
+        <h3 class="text-center mb-4">Publicar Asistencia y Resultado</h3>
+        <label>Fecha: <input type="date" id="match-date" class="form-control mb-2"></label>
+        <div class="row mb-3">
           <div class="col-md-6">
-            <div class="equipo-box bg-primary-subtle">
-              <h5><span class="circle azul-circle"></span> Equipo 1</h5>
-              <form id="form-ar-1" class="row"></form>
-              <div class="input-group mb-3">
-                <span class="input-group-text">Goles</span>
-                <input type="number" id="goles1" class="form-control" min="0" value="0">
-              </div>
-            </div>
+            <label>Goles Equipo 1</label>
+            <input type="number" id="goles1" class="form-control" min="0" value="0">
           </div>
           <div class="col-md-6">
-            <div class="equipo-box bg-danger-subtle">
-              <h5><span class="circle rojo-circle"></span> Equipo 2</h5>
-              <form id="form-ar-2" class="row"></form>
-              <div class="input-group mb-3">
-                <span class="input-group-text">Goles</span>
-                <input type="number" id="goles2" class="form-control" min="0" value="0">
-              </div>
-            </div>
+            <label>Goles Equipo 2</label>
+            <input type="number" id="goles2" class="form-control" min="0" value="0">
           </div>
         </div>
-        <div class="text-center">
-          <button class="btn btn-success mt-3" id="btn-publicar">Publicar</button>
+        <form id="form-asistencia-res"></form>
+        <div class="text-center mt-3">
+          <button class="btn btn-success" id="publicar-resultado">Publicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consejos -->
+    <div class="tab-pane fade" id="consejos">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Consejos para jugar en Solar FC</h3>
+        <div class="ratio ratio-16x9">
+          <video controls>
+            <source src="SolarFC_tip.mp4" type="video/mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fotos -->
+    <div class="tab-pane fade" id="fotos">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Ganadores 5º torneo</h3>
+        <div class="row justify-content-center">
+          <div class="col-md-6 mb-4">
+            <img src="winner-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Ganador 5º Torneo">
+            <p class="text-center mt-2">GANADORES</p>
+          </div>
+          <div class="col-md-6 mb-4">
+            <img src="players-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Jugadores 5º Torneo">
+            <p class="text-center mt-2">JUGADORES</p>
+          </div>
         </div>
       </div>
     </div>
@@ -181,6 +201,7 @@
   </div>
 </div>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="Jugadores.js"></script>
 
