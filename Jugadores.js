@@ -1,6 +1,8 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
-const GAS_JUGADORES_URL = GAS_URL; // mismo endpoint sirve jugadores + matches
+// ======= GOOGLE APPS SCRIPT (Sheets) =======
+const GAS_BASE = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
+const GAS_JUGADORES_URL = GAS_BASE;              // jugadores
+const GAS_MATCHES_URL   = GAS_BASE + "?type=matches"; // historial de partidos
 
 const asistenciaMap = new Map();
 
