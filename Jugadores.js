@@ -344,6 +344,79 @@ async function mostrarHistorial() {
     console.error("Error cargando historial:", err);
   }
 }
+// ========== Algoritmo de equipos ==========
+function generarEquipos() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
+    .map(cb => jugadores[cb.value]);
+
+  if (!(seleccionados.length >= 10 && seleccionados.length <= 12)) {
+    alert("Selecciona entre 10 y 12 jugadores para generar equipos.");
+    return;
+  }
+
+  // Aquí va tu algoritmo de equilibrio de equipos
+  // por ejemplo dividir en dos equipos equilibrados:
+  const mitad = Math.ceil(seleccionados.length / 2);
+  const equipo1 = seleccionados.slice(0, mitad);
+  const equipo2 = seleccionados.slice(mitad);
+
+  mostrarEquipos([equipo1, equipo2], "resultado-partido");
+}
+
+function generarEquiposTorneo() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
+    .map(cb => jugadores[cb.value]);
+
+  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
+    alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
+    return;
+  }
+
+  // dividir en 4 equipos
+  const equipos = [];
+  const tam = Math.ceil(seleccionados.length / 4);
+  for (let i = 0; i < 4; i++) {
+    equipos.push(seleccionados.slice(i*tam, (i+1)*tam));
+  }
+
+  mostrarEquipos(equipos, "resultado-torneo");
+}
+
+function mostrarEquipos(equipos, contenedorId) {
+  const cont = document.getElementById(contenedorId);
+  if (!cont) return;
+  cont.innerHTML = "";
+
+  equipos.forEach((equipo, idx) => {
+    let totalAtk=0, totalDef=0, totalTac=0, totalSta=0;
+    equipo.forEach(j => {
+      totalAtk += j.ataque;
+      totalDef += j.defensa;
+      totalTac += j.tactica;
+      totalSta += j.estamina;
+    });
+    const mediaAtk = (totalAtk / equipo.length).toFixed(2);
+    const mediaDef = (totalDef / equipo.length).toFixed(2);
+    const mediaTac = (totalTac / equipo.length).toFixed(2);
+    const mediaSta = (totalSta / equipo.length).toFixed(2);
+    const fifa = Math.round(((+mediaAtk*0.3 + +mediaDef*0.3 + +mediaTac*0.2 + +mediaSta*0.2)) * 20);
+
+    const capitan = equipo.reduce((max, j) =>
+      calcularFifa(j) > calcularFifa(max) ? j : max, equipo[0]);
+
+    let html = `
+      <div class="equipo">
+        <h4>Equipo ${idx+1}</h4>
+        <p>ATK: ${mediaAtk} | DEF: ${mediaDef} | TACT: ${mediaTac} | STA: ${mediaSta} | FIFA: ${fifa}</p>
+        <ul>
+          ${equipo.map(j =>
+            `<li>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</li>`
+          ).join("")}
+        </ul>
+      </div>`;
+    cont.insertAdjacentHTML("beforeend", html);
+  });
+}
 
 // ========== Arranque ==========
 document.addEventListener("DOMContentLoaded", async () => {
