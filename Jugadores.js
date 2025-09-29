@@ -1,5 +1,5 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxE_BnYsEkUln5rELqJI3KQSoPqyDXtqCOHX0XQDgtsms0Gk4g8MEVhuj0LvErwR47g4Q/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
 const GAS_JUGADORES_URL = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
 
 const asistenciaMap = new Map();
