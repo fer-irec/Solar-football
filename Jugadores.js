@@ -183,6 +183,23 @@ function renderFormularios() {
   formTorneo.innerHTML += crearBloque("Habituales", "habituales", habituales, "jugador-torneo");
   formTorneo.innerHTML += crearBloque("Visitors", "visitors", visitors, "jugador-torneo");
   formTorneo.innerHTML += crearBloque("Hall of Fame", "hall", hall, "jugador-torneo");
+
+  // === Contadores y validación ===
+  function actualizarContadorPartido() {
+    const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
+    document.getElementById("contador-partido").textContent = `Seleccionados: ${seleccionados}`;
+    document.getElementById("generar-equipos").disabled = !(seleccionados >= 10 && seleccionados <= 12);
+  }
+  document.querySelectorAll(".jugador-checkbox").forEach(cb => cb.addEventListener("change", actualizarContadorPartido));
+  actualizarContadorPartido();
+
+  function actualizarContadorTorneo() {
+    const seleccionados = document.querySelectorAll(".jugador-torneo-checkbox:checked").length;
+    document.getElementById("contador-torneo").textContent = `Seleccionados: ${seleccionados}`;
+    document.getElementById("generar-torneo").disabled = !(seleccionados >= 20 && seleccionados <= 24);
+  }
+  document.querySelectorAll(".jugador-torneo-checkbox").forEach(cb => cb.addEventListener("change", actualizarContadorTorneo));
+  actualizarContadorTorneo();
 }
 
 // ========== Render de checkboxes en Manual ==========
@@ -234,7 +251,7 @@ function initManualTab() {
 // ====================================================
 // Aquí se mantienen TODAS TUS FUNCIONES ya existentes:
 // - mostrarHistorial()
-// - teamScore, costeEquipos, seedSnake, generarEquipos()
+// - Algoritmos de equipos (teamScore, costeEquipos, seedSnake, generarEquipos…)
 // - generarEquiposTorneo()
 // - actualizarContadoresManual(), generarEquiposManual()
 // ====================================================
