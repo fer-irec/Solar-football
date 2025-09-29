@@ -12,17 +12,40 @@
     .valor-amarillo { color: #fbc02d; font-weight: bold; }
     .valor-verde-claro { color: #7cb342; font-weight: bold; }
     .valor-verde-oscuro { color: #72a8da; font-weight: bold; }
+    .fifa-stars { white-space: nowrap; display: inline-block; min-width: 80px; }
     .fifa-stars i { color: gold; margin: 0 1px; }
 
-    .player-block { border-radius: 12px; padding: 14px; margin-bottom: 16px; border: 2px solid transparent; }
+    .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .azul-circle { background-color: #007bff; }
+    .rojo-circle { background-color: #dc3545; }
+
+    th.sortable::after { content: " ⇅"; font-weight: normal; opacity: 0.5; }
+    th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
+    th.orden-desc::after { content: " ↓"; font-weight: bold; opacity: 1; }
+
+    .player-block {
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      border: 2px solid transparent;
+    }
     .player-block.habituales { background:#eef5ff; border-color:#cfe2ff; }
     .player-block.visitors   { background:#fff8e6; border-color:#ffe2a8; }
     .player-block.hall       { background:#f3ecff; border-color:#dbc9ff; }
 
-    .player-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem 1rem; }
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .5rem 1rem;
+    }
+    .player-grid .form-check-label { font-size: 1.1rem; font-weight: 500; }
+
     @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
 
-    .equipo-box { border-radius: 14px; padding: 16px; }
+    .equipo-box {
+      border-radius: 14px;
+      padding: 16px;
+    }
   </style>
 </head>
 <body class="bg-light">
@@ -39,8 +62,6 @@
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#manual">Manual</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#asistencia">Asistencia y Resultado</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a></li>
     <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historial">Historial</a></li>
   </ul>
 
