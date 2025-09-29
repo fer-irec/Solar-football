@@ -1,7 +1,6 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxE_BnYsEkUln5rELqJI3KQSoPqyDXtqCOHX0XQDgtsms0Gk4g8MEVhuj0LvErwR47g4Q/exec";
-const GAS_JUGADORES_URL = "https://script.google.com/macros/s/AKfycbx3_a1mc0ynUDjSPDJK7LooPKsXNZ1NGniYs3zTkrrXy4OUAFU74y5MBQetuTot3kV2/exec"; 
-// 👆 reemplaza con la URL de tu Apps Script que devuelve la hoja "Lista jugadores"
+const GAS_JUGADORES_URL = "https://script.google.com/macros/s/AKfycbx3_a1mc0ynUDjSPDJK7LooPKsXNZ1NGniYs3zTkrrXy4OUAFU74y5MBQetuTot3kV2/exec";
 
 const asistenciaMap = new Map();
 
@@ -41,7 +40,7 @@ async function guardarPartido(partido) {
   }
 }
 
-// ====================== DATOS JUGADORES (dinámico desde Sheets) ====================== https://script.google.com/macros/s/AKfycbx3_a1mc0ynUDjSPDJK7LooPKsXNZ1NGniYs3zTkrrXy4OUAFU74y5MBQetuTot3kV2/exec
+// ====================== DATOS JUGADORES (dinámico desde Sheets) ======================
 let jugadores = [];
 let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
@@ -53,8 +52,10 @@ async function cargarJugadores() {
     jugadores = jugadores.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
+    
     mostrarTabla();
     initManualTab();
+    renderFormularios(); // 👈 ahora genera los bloques para Partido y Torneo
   } catch (err) {
     console.error("Error cargando jugadores:", err);
   }
@@ -145,16 +146,53 @@ function mostrarTabla() {
   });
 }
 
+// ========== Render de checkboxes en Partido y Torneo ==========
+function renderFormularios() {
+  const formPartido = document.getElementById("form-asistencia");
+  const formTorneo = document.getElementById("form-torneo");
+  if (!formPartido || !formTorneo) return;
+
+  formPartido.innerHTML = "";
+  formTorneo.innerHTML = "";
+
+  function crearBloque(titulo, clase, lista, tipoCheckbox) {
+    if (!lista.length) return "";
+    let html = `<div class="player-block ${clase}"><h5>${titulo}</h5><div class="player-grid">`;
+    lista.forEach((j, i) => {
+      const id = `${tipoCheckbox}_${i}_${clase}`;
+      html += `
+        <div class="form-check">
+          <input class="form-check-input ${tipoCheckbox}-checkbox" type="checkbox" id="${id}" value="${jugadores.indexOf(j)}">
+          <label class="form-check-label" for="${id}">${j.nombre}</label>
+        </div>`;
+    });
+    html += "</div></div>";
+    return html;
+  }
+
+  // Crear bloques en base al campo "grupo" que ahora ya viene del Sheets
+  const habituales = jugadores.filter(j => j.grupo === "habitual");
+  const visitors   = jugadores.filter(j => j.grupo === "visitor");
+  const hall       = jugadores.filter(j => j.grupo === "hall");
+
+  // Partido
+  formPartido.innerHTML += crearBloque("Habituales", "habituales", habituales, "jugador");
+  formPartido.innerHTML += crearBloque("Visitors", "visitors", visitors, "jugador");
+  formPartido.innerHTML += crearBloque("Hall of Fame", "hall", hall, "jugador");
+
+  // Torneo
+  formTorneo.innerHTML += crearBloque("Habituales", "habituales", habituales, "jugador-torneo");
+  formTorneo.innerHTML += crearBloque("Visitors", "visitors", visitors, "jugador-torneo");
+  formTorneo.innerHTML += crearBloque("Hall of Fame", "hall", hall, "jugador-torneo");
+}
+
+
 // ====================================================
-// Aquí mantienes TODAS TUS FUNCIONES ya escritas:
+// Aquí se mantienen TODAS TUS FUNCIONES ya existentes:
 // - mostrarHistorial()
-// - teamScore()
-// - scorePonderado()
-// - esGK, esStar, esLow, esCapitan, conteoRol()
-// - costeEquipos(), seedSnake(), generarEquipos()
+// - Algoritmo equipos (teamScore, costeEquipos, seedSnake, generarEquipos…)
 // - generarEquiposTorneo()
 // - initManualTab(), generarEquiposManual()
-// (no las repito aquí porque no cambian nada 😉)
 // ====================================================
 
 // ========== Arranque ==========
