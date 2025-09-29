@@ -48,14 +48,14 @@ let jugadoresOrdenados = [];
 async function cargarJugadores() {
   try {
     const res = await fetch(GAS_JUGADORES_URL);
-    jugadores = await res.json(); 
+    jugadores = await res.json();
     jugadores = jugadores.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
-    
+
     mostrarTabla();
-    initManualTab();
-    renderFormularios(); // 👈 ahora genera los bloques para Partido y Torneo
+    renderFormularios(); // Partido + Torneo
+    initManualTab();     // Manual
   } catch (err) {
     console.error("Error cargando jugadores:", err);
   }
@@ -133,10 +133,10 @@ function mostrarTabla() {
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
-      <td><span class="${colorClase(j.ataque)}">${j.ataque}</span></td>
-      <td><span class="${colorClase(j.defensa)}">${j.defensa}</span></td>
-      <td><span class="${colorClase(j.tactica)}">${j.tactica}</span></td>
-      <td><span class="${colorClase(j.estamina)}">${j.estamina}</span></td>
+      <td><span class="${colorClase(j.ataque)}">${j.ataque.toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.defensa)}">${j.defensa.toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.tactica)}">${j.tactica.toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.estamina)}">${j.estamina.toFixed(2)}</span></td>
       <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad ?? '-'}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
@@ -155,14 +155,14 @@ function renderFormularios() {
   formPartido.innerHTML = "";
   formTorneo.innerHTML = "";
 
-  function crearBloque(titulo, clase, lista, tipoCheckbox) {
+  function crearBloque(titulo, clase, lista, tipo) {
     if (!lista.length) return "";
     let html = `<div class="player-block ${clase}"><h5>${titulo}</h5><div class="player-grid">`;
     lista.forEach((j, i) => {
-      const id = `${tipoCheckbox}_${i}_${clase}`;
+      const id = `${tipo}_${i}_${clase}`;
       html += `
         <div class="form-check">
-          <input class="form-check-input ${tipoCheckbox}-checkbox" type="checkbox" id="${id}" value="${jugadores.indexOf(j)}">
+          <input class="form-check-input ${tipo}-checkbox" type="checkbox" id="${id}" value="${jugadores.indexOf(j)}">
           <label class="form-check-label" for="${id}">${j.nombre}</label>
         </div>`;
     });
@@ -170,7 +170,6 @@ function renderFormularios() {
     return html;
   }
 
-  // Crear bloques en base al campo "grupo" que ahora ya viene del Sheets
   const habituales = jugadores.filter(j => j.grupo === "habitual");
   const visitors   = jugadores.filter(j => j.grupo === "visitor");
   const hall       = jugadores.filter(j => j.grupo === "hall");
@@ -186,13 +185,58 @@ function renderFormularios() {
   formTorneo.innerHTML += crearBloque("Hall of Fame", "hall", hall, "jugador-torneo");
 }
 
+// ========== Render de checkboxes en Manual ==========
+function initManualTab() {
+  const form1 = document.getElementById("form-manual-1");
+  const form2 = document.getElementById("form-manual-2");
+  if (!form1 || !form2 || !jugadores.length) return;
+
+  form1.innerHTML = "";
+  form2.innerHTML = "";
+
+  function crearBloque(titulo, clase, lista, equipo) {
+    if (!lista.length) return "";
+    let html = `<div class="player-block ${clase}"><h5>${titulo}</h5><div class="player-grid">`;
+    lista.forEach((j, i) => {
+      const id = `${equipo}_${i}_${clase}`;
+      html += `
+        <div class="form-check">
+          <input class="form-check-input jugador-manual-${equipo}" type="checkbox" id="${id}" value="${jugadores.indexOf(j)}">
+          <label class="form-check-label" for="${id}">${j.nombre}</label>
+        </div>`;
+    });
+    html += "</div></div>";
+    return html;
+  }
+
+  const habituales = jugadores.filter(j => j.grupo === "habitual");
+  const visitors   = jugadores.filter(j => j.grupo === "visitor");
+  const hall       = jugadores.filter(j => j.grupo === "hall");
+
+  form1.innerHTML += crearBloque("Habituales", "habituales", habituales, "1");
+  form1.innerHTML += crearBloque("Visitors", "visitors", visitors, "1");
+  form1.innerHTML += crearBloque("Hall of Fame", "hall", hall, "1");
+
+  form2.innerHTML += crearBloque("Habituales", "habituales", habituales, "2");
+  form2.innerHTML += crearBloque("Visitors", "visitors", visitors, "2");
+  form2.innerHTML += crearBloque("Hall of Fame", "hall", hall, "2");
+
+  actualizarContadoresManual();
+
+  document.querySelectorAll('.jugador-manual-1, .jugador-manual-2').forEach(cb => {
+    cb.addEventListener("change", () => actualizarContadoresManual());
+  });
+
+  const btn = document.getElementById("generar-manual");
+  if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); generarEquiposManual(); });
+}
 
 // ====================================================
 // Aquí se mantienen TODAS TUS FUNCIONES ya existentes:
 // - mostrarHistorial()
-// - Algoritmo equipos (teamScore, costeEquipos, seedSnake, generarEquipos…)
+// - teamScore, costeEquipos, seedSnake, generarEquipos()
 // - generarEquiposTorneo()
-// - initManualTab(), generarEquiposManual()
+// - actualizarContadoresManual(), generarEquiposManual()
 // ====================================================
 
 // ========== Arranque ==========
@@ -223,6 +267,4 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (cont) cont.innerHTML = `<div class="alert alert-danger">Error inesperado: ${err.message}</div>`;
     }
   });
-
-  initManualTab();
 });
