@@ -1,6 +1,6 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxE_BnYsEkUln5rELqJI3KQSoPqyDXtqCOHX0XQDgtsms0Gk4g8MEVhuj0LvErwR47g4Q/exec";
-const GAS_JUGADORES_URL = "https://script.google.com/macros/s/TU_ID_DE_WEBAPP_JUGADORES/exec"; 
+const GAS_JUGADORES_URL = "https://script.google.com/macros/s/AKfycbx3_a1mc0ynUDjSPDJK7LooPKsXNZ1NGniYs3zTkrrXy4OUAFU74y5MBQetuTot3kV2/exec"; 
 // 👆 reemplaza con la URL de tu Apps Script que devuelve la hoja "Lista jugadores"
 
 const asistenciaMap = new Map();
@@ -41,7 +41,7 @@ async function guardarPartido(partido) {
   }
 }
 
-// ====================== DATOS JUGADORES (dinámico desde Sheets) ======================
+// ====================== DATOS JUGADORES (dinámico desde Sheets) ====================== https://script.google.com/macros/s/AKfycbx3_a1mc0ynUDjSPDJK7LooPKsXNZ1NGniYs3zTkrrXy4OUAFU74y5MBQetuTot3kV2/exec
 let jugadores = [];
 let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
