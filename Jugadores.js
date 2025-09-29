@@ -16,30 +16,6 @@ async function cargarAsistencias() {
   }
 }
 
-async function incrementarAsistencia(nombres) {
-  try {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ type: "incAttendance", names: nombres })
-    });
-  } catch (e) {
-    alert("Error al guardar asistencia: " + e.message);
-  }
-}
-
-async function guardarPartido(partido) {
-  try {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ type: "saveMatch", match: partido })
-    });
-  } catch (e) {
-    alert("Error al guardar el partido: " + e.message);
-  }
-}
-
 // ====================== DATOS JUGADORES (dinámico desde Sheets) ======================
 let jugadores = [];
 let jugadoresOriginal = [];
@@ -248,13 +224,92 @@ function initManualTab() {
   if (btn) btn.addEventListener("click", (e) => { e.preventDefault(); generarEquiposManual(); });
 }
 
-// ====================================================
-// Aquí se mantienen TODAS TUS FUNCIONES ya existentes:
-// - mostrarHistorial()
-// - Algoritmos de equipos (teamScore, costeEquipos, seedSnake, generarEquipos…)
-// - generarEquiposTorneo()
-// - actualizarContadoresManual(), generarEquiposManual()
-// ====================================================
+// ========== Funciones Manual ==========
+function actualizarContadoresManual() {
+  const seleccionados1 = document.querySelectorAll(".jugador-manual-1:checked").length;
+  const seleccionados2 = document.querySelectorAll(".jugador-manual-2:checked").length;
+  document.getElementById("contador-manual-1").textContent = `Seleccionados: ${seleccionados1}`;
+  document.getElementById("contador-manual-2").textContent = `Seleccionados: ${seleccionados2}`;
+}
+
+function generarEquiposManual() {
+  const sel1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked")).map(cb => jugadores[cb.value]);
+  const sel2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked")).map(cb => jugadores[cb.value]);
+
+  const cont = document.getElementById("resultado-manual");
+  cont.innerHTML = "";
+
+  function equipoHTML(nombre, lista) {
+    const total = lista.reduce((acc, j) => acc + calcularMedia(j), 0).toFixed(2);
+    let html = `<div class="col-md-6"><div class="card"><div class="card-header">${nombre}</div><ul class="list-group list-group-flush">`;
+    lista.forEach(j => {
+      html += `<li class="list-group-item">${j.nombre} (${calcularMedia(j).toFixed(2)})</li>`;
+    });
+    html += `</ul><div class="card-footer">Puntuación total: ${total}</div></div></div>`;
+    return html;
+  }
+
+  cont.innerHTML = equipoHTML("Equipo 1", sel1) + equipoHTML("Equipo 2", sel2);
+}
+
+// ========== Generar equipos desde Partido ==========
+function generarEquipos() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked")).map(cb => jugadores[cb.value]);
+  if (seleccionados.length < 10 || seleccionados.length > 12) {
+    alert("Debes seleccionar entre 10 y 12 jugadores.");
+    return;
+  }
+
+  // Dividir equilibradamente (simple: snake draft)
+  seleccionados.sort(() => Math.random() - 0.5); // aleatorio
+  const equipo1 = [], equipo2 = [];
+  seleccionados.forEach((j, i) => (i % 2 === 0 ? equipo1 : equipo2).push(j));
+
+  const cont = document.getElementById("resultado-equipos");
+  cont.innerHTML = equipoHTML("Equipo Azul", equipo1) + equipoHTML("Equipo Rojo", equipo2);
+
+  function equipoHTML(nombre, lista) {
+    const total = lista.reduce((acc, j) => acc + calcularMedia(j), 0).toFixed(2);
+    let html = `<div class="col-md-6"><div class="card"><div class="card-header">${nombre}</div><ul class="list-group list-group-flush">`;
+    lista.forEach(j => {
+      html += `<li class="list-group-item">${j.nombre} (${calcularMedia(j).toFixed(2)})</li>`;
+    });
+    html += `</ul><div class="card-footer">Puntuación total: ${total}</div></div></div>`;
+    return html;
+  }
+}
+
+// ========== Generar equipos desde Torneo ==========
+function generarEquiposTorneo() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked")).map(cb => jugadores[cb.value]);
+  if (seleccionados.length < 20 || seleccionados.length > 24) {
+    alert("Debes seleccionar entre 20 y 24 jugadores.");
+    return;
+  }
+
+  // Mezclar jugadores
+  seleccionados.sort(() => Math.random() - 0.5);
+
+  // Dividir en 4 equipos equilibrados
+  const equipos = [[], [], [], []];
+  seleccionados.forEach((j, i) => equipos[i % 4].push(j));
+
+  const cont = document.getElementById("resultado-torneo");
+  cont.innerHTML = "";
+  equipos.forEach((eq, idx) => {
+    cont.innerHTML += equipoHTML(`Equipo ${idx + 1}`, eq);
+  });
+
+  function equipoHTML(nombre, lista) {
+    const total = lista.reduce((acc, j) => acc + calcularMedia(j), 0).toFixed(2);
+    let html = `<div class="col-md-6 col-lg-3"><div class="card"><div class="card-header">${nombre}</div><ul class="list-group list-group-flush">`;
+    lista.forEach(j => {
+      html += `<li class="list-group-item">${j.nombre} (${calcularMedia(j).toFixed(2)})</li>`;
+    });
+    html += `</ul><div class="card-footer">Puntuación total: ${total}</div></div></div>`;
+    return html;
+  }
+}
 
 // ========== Arranque ==========
 document.addEventListener("DOMContentLoaded", async () => {
@@ -277,11 +332,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
-  document.getElementById("generar-torneo")?.addEventListener("click", () => {
-    try { generarEquiposTorneo(); }
-    catch (err) {
-      const cont = document.getElementById("resultado-torneo");
-      if (cont) cont.innerHTML = `<div class="alert alert-danger">Error inesperado: ${err.message}</div>`;
-    }
-  });
+  document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
 });
