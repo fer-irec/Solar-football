@@ -102,6 +102,46 @@ function generarEstrellasFIFA(puntuacion) {
   return `<span class="fifa-stars">${estrellas}</span>`;
 }
 
+// ====== Algoritmo "estrella + flojos" (equilibrio equipos) ======
+const ALPHA = 3.0;
+const GAMMA = 0.75;
+const DELTA = 0.5;
+const STAR_CUTOFF = 3.75;
+const LOW_CUTOFF  = 2.00;
+
+function teamScore(team) {
+  const ratings = team.map(p => calcularMedia(p));
+  const base = ratings.reduce((a,b)=>a+b, 0);
+
+  const stars = team.filter(p => calcularMedia(p) >= STAR_CUTOFF);
+  const lows  = team.filter(p => calcularMedia(p) <= LOW_CUTOFF);
+  const nStar = stars.length, nLow = lows.length;
+
+  const lowDepth = lows.length
+    ? lows.reduce((a,p)=> a + Math.max(0, LOW_CUTOFF - calcularMedia(p)), 0) / lows.length
+    : 0;
+
+  const pLow = team.length > 1 ? (nLow / (team.length - 1)) : 0;
+
+  const carryBonus = stars.reduce((sum, s) => {
+    const starExcess = Math.max(0, calcularMedia(s) - STAR_CUTOFF);
+    return sum + ALPHA * starExcess * pLow * lowDepth;
+  }, 0);
+
+  const orphanPenalty = GAMMA * Math.max(0, nLow - 2*nStar);
+  const starPenalty   = DELTA * Math.max(0, nStar - 2);
+
+  return base + carryBonus - orphanPenalty - starPenalty;
+}
+
+function scorePonderado(a, b) {
+  const dAtk  = Math.abs(a.atk  - b.atk);
+  const dDef  = Math.abs(a.def  - b.def);
+  const dTact = Math.abs(a.tact - b.tact);
+  const dSta  = Math.abs(a.sta  - b.sta);
+  return 0.3*dAtk + 0.3*dDef + 0.2*dTact + 0.2*dSta;
+}
+
 // ========== Ordenación de tabla ==========
 let ordenActual = { columna: null, estado: 0 };
 function ordenarPor(columna) {
@@ -207,26 +247,119 @@ function actualizarContadorTorneo() {
 
 // ========== Algoritmo de equipos ==========
 function generarEquipos() {
-  const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
-    .map(cb => jugadores[cb.value]);
+  try {
+    const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
+      .map(cb => jugadores[parseInt(cb.value)])
+      .map(j => ({
+        ...j,
+        media: calcularMedia(j),
+        fifa: calcularFifa(j)
+      }));
 
-  if (!(seleccionados.length >= 10 && seleccionados.length <= 12)) {
-    alert("Selecciona entre 10 y 12 jugadores para generar equipos.");
-    return;
+    if (seleccionados.length < 10 || seleccionados.length > 12) {
+      throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
+    }
+
+    const intentos = 1500;
+    let mejorVar = Infinity;
+    let mejor = { eq1: [], eq2: [] };
+
+    for (let i = 0; i < intentos; i++) {
+      const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
+      const mitad = Math.floor(seleccionados.length / 2);
+      let A = mezcla.slice(0, mitad);
+      let B = mezcla.slice(mitad);
+
+      const itersLocal = 1000;
+      const varianzaScore = (a, b) => {
+        const sA = teamScore(a);
+        const sB = teamScore(b);
+        const m = (sA + sB) / 2;
+        return ((sA - m) ** 2 + (sB - m) ** 2) / 2;
+      };
+
+      let bestVar = varianzaScore(A, B);
+      for (let k = 0; k < itersLocal; k++) {
+        const ia = Math.floor(Math.random() * A.length);
+        const ib = Math.floor(Math.random() * B.length);
+        const candA = A.slice(), candB = B.slice();
+        [candA[ia], candB[ib]] = [candB[ib], candA[ia]];
+        const v = varianzaScore(candA, candB);
+        if (v < bestVar) {
+          A = candA; B = candB; bestVar = v;
+        }
+      }
+
+      const avg = (arr, f) => arr.reduce((s, x) => s + f(x), 0) / arr.length;
+      const compSpread = scorePonderado(
+        { atk: avg(A, j=>j.ataque), def: avg(A, j=>j.defensa), tact: avg(A, j=>j.tactica), sta: avg(A, j=>j.estamina) },
+        { atk: avg(B, j=>j.ataque), def: avg(B, j=>j.defensa), tact: avg(B, j=>j.tactica), sta: avg(B, j=>j.estamina) }
+      );
+      const fifaAvgDiff = Math.abs(
+        (A.reduce((s, j) => s + j.fifa, 0) / A.length) -
+        (B.reduce((s, j) => s + j.fifa, 0) / B.length)
+      );
+
+      const mejorCandidato =
+        (bestVar < mejorVar) ||
+        (bestVar === mejorVar && compSpread < (mejor.compSpread ?? Infinity)) ||
+        (bestVar === mejorVar && compSpread === (mejor.compSpread ?? Infinity) && fifaAvgDiff < (mejor.fifaAvgDiff ?? Infinity));
+
+      if (mejorCandidato) {
+        mejorVar = bestVar;
+        mejor = { eq1: A, eq2: B, compSpread, fifaAvgDiff };
+      }
+    }
+
+    const cont = document.getElementById("resultado-equipos");
+    if (!mejor.eq1.length || !mejor.eq2.length || !cont) {
+      cont.innerHTML = `<div class="alert alert-danger">No se pudieron formar equipos equilibrados.</div>`;
+      return;
+    }
+
+    const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+    const s1 = {
+      atk: (sum(mejor.eq1, j => j.ataque) / mejor.eq1.length).toFixed(2),
+      def: (sum(mejor.eq1, j => j.defensa) / mejor.eq1.length).toFixed(2),
+      tact: (sum(mejor.eq1, j => j.tactica) / mejor.eq1.length).toFixed(2),
+      sta: (sum(mejor.eq1, j => j.estamina) / mejor.eq1.length).toFixed(2),
+      fifaAvg: Math.round(sum(mejor.eq1, j => j.fifa) / mejor.eq1.length)
+    };
+    const s2 = {
+      atk: (sum(mejor.eq2, j => j.ataque) / mejor.eq2.length).toFixed(2),
+      def: (sum(mejor.eq2, j => j.defensa) / mejor.eq2.length).toFixed(2),
+      tact: (sum(mejor.eq2, j => j.tactica) / mejor.eq2.length).toFixed(2),
+      sta: (sum(mejor.eq2, j => j.estamina) / mejor.eq2.length).toFixed(2),
+      fifaAvg: Math.round(sum(mejor.eq2, j => j.fifa) / mejor.eq2.length)
+    };
+
+    cont.innerHTML = `
+      <div class="col-md-6">
+        <h5><span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1</h5>
+        <p>ATK: ${s1.atk} | DEF: ${s1.def} | TACT: ${s1.tact} | STA: ${s1.sta} | FIFA: ${s1.fifaAvg}</p>
+        <ul class="list-group">
+          ${mejor.eq1.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${calcularMedia(j) > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+        </ul>
+      </div>
+      <div class="col-md-6">
+        <h5><span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2</h5>
+        <p>ATK: ${s2.atk} | DEF: ${s2.def} | TACT: ${s2.tact} | STA: ${s2.sta} | FIFA: ${s2.fifaAvg}</p>
+        <ul class="list-group">
+          ${mejor.eq2.map(j => `<li class="list-group-item">${j.nombre} ${generarEstrellasFIFA(j.fifa)}${calcularMedia(j) > 4 ? ' <strong>(C)</strong>' : ''}</li>`).join("")}
+        </ul>
+      </div>`;
+  } catch (error) {
+    const cont = document.getElementById("resultado-equipos");
+    cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
   }
-
-  const mitad = Math.ceil(seleccionados.length / 2);
-  const equipo1 = seleccionados.slice(0, mitad);
-  const equipo2 = seleccionados.slice(mitad);
-
-  mostrarEquipos([equipo1, equipo2], "resultado-equipos", "partido");
 }
 
+// ========== Torneo (se mantiene igual, pero podemos mejorar luego) ==========
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[cb.value]);
 
-  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
+  if (!(seleccionados.length >= 20 && seleccionados <= 24)) {
     alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
     return;
   }
@@ -240,7 +373,6 @@ function generarEquiposTorneo() {
   mostrarEquipos(equipos, "resultado-torneo", "torneo");
 }
 
-// ========== Mostrar equipos con estilos ==========
 // ========== Mostrar equipos con estilos ==========
 function mostrarEquipos(equipos, contenedorId, modo="torneo") {
   const colores = ["azul-circle", "blanco-circle", "rojo-circle", "verde-circle"];
@@ -289,7 +421,6 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     cont.insertAdjacentHTML("beforeend", html);
   });
 }
-
 
 // ========== Render Manual ==========
 function initManualTab() {
