@@ -4,27 +4,84 @@ const GAS_JUGADORES_URL = GAS_URL; // mismo endpoint sirve jugadores + matches
 
 const asistenciaMap = new Map();
 
-/* -------------------- HELPER ROBUSTO PARA POST A GAS -------------------- */
-/* Envía el JSON dentro de un campo urlencoded "payload=" para que
-   doPost(e) lo reciba SIEMPRE (e.postData.contents o e.parameter.payload) */
-async function gasPost(payload) {
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-    body: "payload=" + encodeURIComponent(JSON.stringify(payload))
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(text || ("HTTP " + res.status));
-  return text;
+/* ===========================================================
+   HELPERS DE RED / PUBLICACIÓN ROBUSTA (timeout + reintentos)
+   =========================================================== */
+const NET_TIMEOUT_MS = 12000;
+const NET_RETRIES = 2;
+
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+// GET con timeout
+async function getJSON(url){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort("timeout"), NET_TIMEOUT_MS);
+  try{
+    const res = await fetch(url, { method:"GET", signal: ctrl.signal });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(t);
+  }
 }
 
-// ========== Asistencias ==========
+// POST “text/plain” con timeout + verificación
+async function postPlain(payload){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort("timeout"), NET_TIMEOUT_MS);
+  try{
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    const text = await res.text();
+    if(!res.ok) throw new Error(`HTTP ${res.status}: ${text || "sin cuerpo"}`);
+    return text; // devolvemos texto para validar “Asistencia actualizada”, “Partido guardado…”, etc.
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// wrapper con reintentos
+async function postWithRetry(payload, expectTextIncludes){
+  let lastErr;
+  for(let i=0;i<=NET_RETRIES;i++){
+    try{
+      const txt = await postPlain(payload);
+      if(expectTextIncludes && !txt.toLowerCase().includes(expectTextIncludes.toLowerCase())){
+        throw new Error(`Respuesta inesperada: "${txt}"`);
+      }
+      return txt;
+    }catch(err){
+      lastErr = err;
+      if(i < NET_RETRIES) await sleep(600);
+    }
+  }
+  throw lastErr;
+}
+
+// ========= util fecha (yyyy-mm-dd -> dd/MM/yyyy) =========
+function toDMY(dateStr){
+  // recibe "", null o "yyyy-mm-dd" del input date
+  if(!dateStr) {
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth()+1).padStart(2, "0");
+    const yy = d.getFullYear();
+    return `${dd}/${mm}/${yy}`;
+  }
+  const [y,m,d] = dateStr.split("-");
+  if(!y || !m || !d) return dateStr; // por si ya viene “dd/MM/yyyy”
+  return `${d.padStart(2,"0")}/${m.padStart(2,"0")}/${y}`;
+}
+
+/* ======================= Asistencias ======================= */
 async function cargarAsistencias() {
   try {
     asistenciaMap.clear();
-    const res = await fetch(GAS_URL, { method: "GET" });
-    const data = await res.json();
-    // Si el endpoint devuelve jugadores (array) no mapeamos nada.
+    const data = await getJSON(GAS_URL);
     if (data && !Array.isArray(data)) {
       Object.keys(data).forEach(n => asistenciaMap.set(n, data[n] || 0));
     }
@@ -33,11 +90,13 @@ async function cargarAsistencias() {
   }
 }
 
-// >>> Reemplazadas para usar gasPost <<<
 async function incrementarAsistencia(nombres) {
   try {
-    const msg = await gasPost({ type: "incAttendance", names: nombres });
-    console.log("GAS/incAttendance:", msg);
+    const resp = await postWithRetry(
+      { type: "incAttendance", names: nombres },
+      "asistencia actualizada"
+    );
+    // opcional: console.log(resp);
   } catch (e) {
     alert("Error al guardar asistencia: " + e.message);
     throw e;
@@ -46,62 +105,40 @@ async function incrementarAsistencia(nombres) {
 
 async function guardarPartido(partido) {
   try {
-    const msg = await gasPost({ type: "saveMatch", match: partido });
-    console.log("GAS/saveMatch:", msg);
+    const resp = await postWithRetry(
+      { type: "saveMatch", match: partido },
+      "partido guardado"
+    );
+    // opcional: console.log(resp);
   } catch (e) {
     alert("Error al guardar el partido: " + e.message);
     throw e;
   }
 }
 
-// ====================== DATOS JUGADORES ======================
+/* ====================== DATOS JUGADORES ====================== */
 let jugadores = [];
 let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
 
-function depurarJugadores(list) {
-  const INVALID = new Set(["habituales", "visitors", "hall", "hall of fame"]);
-  return (Array.isArray(list) ? list : [])
-    .filter(j => {
-      const n = (j && j.nombre ? String(j.nombre) : "").trim();
-      if (!n) return false;
-      const low = n.toLowerCase();
-      if (/^-+$/.test(low)) return false;      // líneas de guiones
-      if (INVALID.has(low)) return false;      // títulos EXACTOS
-      return true;
-    })
-    .map(j => {
-      // salvaguarda: si no trae grupo y empieza por "Visitor", márcalo como visitor
-      if (!j.grupo && /^visitor\b/i.test(String(j.nombre))) j.grupo = "visitor";
-      return j;
-    });
-}
-
-
 async function cargarJugadores() {
   try {
     const res = await fetch(GAS_JUGADORES_URL);
-    let data = await res.json();
-
-    // 👇 limpieza + salvaguarda de grupo para "Visitor ..."
-    data = depurarJugadores(data);
-
-    jugadores = data.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
+    jugadores = await res.json();
+    jugadores = jugadores.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
 
     mostrarTabla();
-    renderFormularios();
-    initManualTab();
-    renderAsistenciaRes();
+    renderFormularios();     // Partido + Torneo
+    initManualTab();         // Manual
+    renderAsistenciaRes();   // Asistencia y Resultado
   } catch (err) {
     console.error("Error cargando jugadores:", err);
   }
 }
 
-
-
-// ====== util de medias/colores/estrellas ======
+/* ====== util de medias/colores/estrellas ====== */
 function calcularMedia(j) { return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2); }
 function limitar(valor) { return Math.max(0, Math.min(5, valor)); }
 function calcularFifa(j) { return Math.round(limitar(calcularMedia(j)) * 20); }
@@ -139,7 +176,7 @@ function generarEstrellasFIFA(puntuacion) {
   return `<span class="fifa-stars">${estrellas}</span>`;
 }
 
-// ========== Ordenación de tabla ==========
+/* ========== Ordenación de tabla ========== */
 let ordenActual = { columna: null, estado: 0 };
 function ordenarPor(columna) {
   if (ordenActual.columna !== columna) { ordenActual = { columna, estado: 1 }; }
@@ -161,7 +198,7 @@ function ordenarPor(columna) {
   mostrarTabla();
 }
 
-// ========== Mostrar tabla ==========
+/* ========== Mostrar tabla ========== */
 function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
@@ -186,14 +223,14 @@ function mostrarTabla() {
   });
 }
 
-// ========== Render de checkboxes en Partido y Torneo ==========
+/* ========== Render de checkboxes en Partido y Torneo ========== */
 function renderFormularios() {
   const formPartido = document.getElementById("form-asistencia");
-  const formTorneo = document.getElementById("form-torneo");
+  const formTorneo  = document.getElementById("form-torneo");
   if (!formPartido || !formTorneo) return;
 
   formPartido.innerHTML = "";
-  formTorneo.innerHTML = "";
+  formTorneo.innerHTML  = "";
 
   function crearBloque(titulo, clase, lista, tipo) {
     if (!lista.length) return "";
@@ -218,9 +255,9 @@ function renderFormularios() {
   formPartido.innerHTML += crearBloque("Visitors", "visitors", visitors, "jugador");
   formPartido.innerHTML += crearBloque("Hall of Fame", "hall", hall, "jugador");
 
-  formTorneo.innerHTML += crearBloque("Habituales", "habituales", habituales, "jugador-torneo");
-  formTorneo.innerHTML += crearBloque("Visitors", "visitors", visitors, "jugador-torneo");
-  formTorneo.innerHTML += crearBloque("Hall of Fame", "hall", hall, "jugador-torneo");
+  formTorneo.innerHTML  += crearBloque("Habituales", "habituales", habituales, "jugador-torneo");
+  formTorneo.innerHTML  += crearBloque("Visitors", "visitors", visitors, "jugador-torneo");
+  formTorneo.innerHTML  += crearBloque("Hall of Fame", "hall", hall, "jugador-torneo");
 
   document.querySelectorAll(".jugador-checkbox").forEach(cb => {
     cb.addEventListener("change", actualizarContadorPartido);
@@ -230,7 +267,7 @@ function renderFormularios() {
   });
 }
 
-// ========== Contadores ==========
+/* ========== Contadores ========== */
 function actualizarContadorPartido() {
   const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
   document.getElementById("contador-partido").textContent = `Seleccionados: ${seleccionados}`;
@@ -244,7 +281,7 @@ function actualizarContadorTorneo() {
   if (btn) btn.disabled = !(seleccionados >= 20 && seleccionados <= 24);
 }
 
-// ========== Mostrar equipos (Partido/Torneo/Manual) ==========
+/* ========== Mostrar equipos (Partido/Torneo/Manual) ========== */
 function mostrarEquipos(equipos, contenedorId, modo="torneo") {
   const colores = ["azul-circle", "blanco-circle", "rojo-circle", "verde-circle"];
   const nombresColores = ["Azul", "Blanco", "Rojo", "Verde"];
@@ -256,7 +293,6 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
   equipos.forEach((equipo, idx) => {
     if (!equipo || !equipo.length) return;
 
-    // métricas promedio del equipo
     const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
     const atk  = (sum(equipo, j => j.ataque)  / equipo.length).toFixed(2);
     const def  = (sum(equipo, j => j.defensa) / equipo.length).toFixed(2);
@@ -264,14 +300,12 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     const sta  = (sum(equipo, j => j.estamina) / equipo.length).toFixed(2);
     const fifaAvg = Math.round(sum(equipo, j => calcularFifa(j)) / equipo.length);
 
-    // capitán = mayor FIFA
     const capitan = equipo.reduce((best, p) => (calcularFifa(p) > calcularFifa(best) ? p : best), equipo[0]);
 
     let titulo = "";
     if (modo === "torneo") {
       titulo = `<span class="circle ${colores[idx % colores.length]}"></span> Equipo ${nombresColores[idx % nombresColores.length]}`;
     } else {
-      // partido o manual
       if (idx === 0) {
         titulo = `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`;
       } else {
@@ -297,7 +331,7 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
   });
 }
 
-// ========== MANUAL ==========
+/* ========================= MANUAL ========================= */
 function initManualTab() {
   const form1 = document.getElementById("form-manual-1");
   const form2 = document.getElementById("form-manual-2");
@@ -372,7 +406,7 @@ function generarEquiposManual() {
   mostrarEquipos([eq1, eq2], "resultado-manual", "partido");
 }
 
-// ========== Asistencia y Resultado ==========
+/* ========== Asistencia y Resultado ========== */
 function renderAsistenciaRes() {
   const cont = document.getElementById("form-asistencia-res");
   if (!cont) return;
@@ -429,13 +463,15 @@ function renderAsistenciaRes() {
     });
   });
 
-  document.getElementById("publicar-resultado")?.addEventListener("click", e => {
-    e.preventDefault(); publicarResultado();
+  document.getElementById("publicar-resultado")?.addEventListener("click", async e => {
+    e.preventDefault();
+    await publicarResultado();
   });
 }
 
 async function publicarResultado() {
-  const fecha = document.getElementById("match-date").value || new Date().toISOString().slice(0,10);
+  const fechaInput = document.getElementById("match-date").value;
+  const fecha = toDMY(fechaInput); // GAS guarda dd/MM/yyyy
   const goles1 = document.getElementById("goles1").value;
   const goles2 = document.getElementById("goles2").value;
   const equipo1 = Array.from(document.querySelectorAll(".asistencia-azul:checked")).map(cb => cb.value);
@@ -446,22 +482,20 @@ async function publicarResultado() {
     return;
   }
 
-  try {
-    await guardarPartido({ fecha, goles1, goles2, equipo1, equipo2 });
-    await incrementarAsistencia([...equipo1, ...equipo2]);
-    alert("Resultado publicado ✅");
-    mostrarHistorial();
-  } catch (e) {
-    // Los helpers ya muestran alert; aquí sólo evitamos doble mensaje de éxito.
-    console.error(e);
-  }
+  // 1) Guardar partido (si falla, detener)
+  await guardarPartido({ fecha, goles1, goles2, equipo1, equipo2 });
+
+  // 2) Incrementar asistencia (si falla, avisamos)
+  await incrementarAsistencia([...equipo1, ...equipo2]);
+
+  alert("Resultado publicado ✅");
+  mostrarHistorial();
 }
 
-// ========== Historial ==========
+/* ========== Historial ========== */
 async function mostrarHistorial() {
   try {
-    const res = await fetch(`${GAS_URL}?type=matches`);
-    const partidos = await res.json();
+    const partidos = await getJSON(`${GAS_URL}?type=matches`);
     const cont = document.getElementById("lista-historial");
     if (!cont) return;
 
@@ -502,7 +536,6 @@ async function mostrarHistorial() {
    ALGORTIMO EQUILIBRADO PARA PARTIDO (2 EQUIPOS)
    Pesos: ATK 30%, DEF 30%, TACT 20%, STA 20%
    =========================================================== */
-// Parámetros
 const ALPHA = 3.0;      // bono de arrastre de estrella
 const GAMMA = 0.75;     // castigo por flojos sin estrella
 const DELTA = 0.5;      // penalización por demasiadas estrellas
@@ -609,7 +642,7 @@ function generarEquipos() {
       return;
     }
 
-    // Presentación con el mismo estilo que el Torneo/Manual
+    // Presentación
     mostrarEquipos([mejor.eq1, mejor.eq2], "resultado-equipos", "partido");
   } catch (error) {
     const cont = document.getElementById("resultado-equipos");
@@ -620,15 +653,12 @@ function generarEquipos() {
 /* ===========================================================
    TORNEO (4 EQUIPOS) – semilla snake + optimización
    =========================================================== */
-
-// Helpers para balancear 4 equipos
 function std(arr) {
   if (!arr.length) return 0;
   const m = arr.reduce((s,x)=>s+x,0)/arr.length;
   const v = arr.reduce((s,x)=> s + (x-m)*(x-m), 0) / arr.length;
   return Math.sqrt(v);
 }
-
 function calcTeamStats(team){
   if (!team.length) {
     return { atk:0, def:0, tact:0, sta:0, fifaAvg:0, score:0, gk:0 };
@@ -639,7 +669,7 @@ function calcTeamStats(team){
   const tact = sum(p=>p.tactica) / team.length;
   const sta  = sum(p=>p.estamina)/ team.length;
   const fifaAvg = Math.round(sum(p=>calcularFifa(p)) / team.length);
-  const score   = teamScore(team) / team.length;  // normalizamos por tamaño
+  const score   = teamScore(team) / team.length;
   const gk      = team.some(p => /GK/i.test(p.nombre)) ? 1 : 0;
 
   return {
@@ -648,22 +678,17 @@ function calcTeamStats(team){
     fifaAvg, score, gk
   };
 }
-
 function desiredSizes(total, k=4){
   const base = Math.floor(total / k);
   const extra = total % k;
-  // p.ej. 22 -> [6,6,5,5]
   return Array.from({length:k}, (_,i)=> base + (i < extra ? 1 : 0));
 }
-
-// Primer reparto: snake 1→4, 4→1 por media
 function seedSnake(players, k, targetSizes){
   const sorted = [...players].sort((a,b)=> calcularMedia(b) - calcularMedia(a));
   const teams = Array.from({length:k}, ()=>[]);
   let dir = 1, i = 0;
 
   for (const p of sorted){
-    // busca el siguiente equipo con hueco
     let guard = 0;
     while (teams[i].length >= targetSizes[i] && guard < 2*k) {
       i += dir;
@@ -672,46 +697,33 @@ function seedSnake(players, k, targetSizes){
       guard++;
     }
     teams[i].push(p);
-
-    // avanza serpiente
     i += dir;
     if (i === k) { i = k-1; dir = -1; }
     if (i < 0)   { i = 0;   dir =  1; }
   }
   return teams;
 }
-
-// Función costo multi-criterio
 function costeEquipos(equipos, targetSizes, totalGK){
-  // penalty por tamaños (alto para respetarlos)
   let sizePen = 0;
   for (let i=0;i<equipos.length;i++){
     const diff = Math.abs(equipos[i].length - targetSizes[i]);
     sizePen += diff * diff * 3;
   }
-
   const stats = equipos.map(calcTeamStats);
-
-  const varScore = std(stats.map(s=>s.score)); // objetivo principal
+  const varScore = std(stats.map(s=>s.score));
   const compStd  = 0.3*std(stats.map(s=>s.atk))
                  + 0.3*std(stats.map(s=>s.def))
                  + 0.2*std(stats.map(s=>s.tact))
                  + 0.2*std(stats.map(s=>s.sta));
-  const fifaStd  = std(stats.map(s=>s.fifaAvg)); // 0..100
+  const fifaStd  = std(stats.map(s=>s.fifaAvg));
 
-  // GK: si hay suficientes globalmente, penaliza equipos sin GK
   let gkPen = 0;
   if (totalGK >= equipos.length) {
     gkPen = equipos.reduce((acc,t)=> acc + (calcTeamStats(t).gk ? 0 : 1), 0) * 0.5;
   }
-
-  // Pesos del objetivo
   const wVar=1.0, wComp=0.55, wFifa=0.02, wSize=10, wGK=0.35;
-
   return wVar*varScore + wComp*compStd + wFifa*fifaStd + wSize*sizePen + wGK*gkPen;
 }
-
-// Optimización (annealing + swaps/moves)
 function optimizeEquipos(seed, targetSizes, iters=4800){
   let teams = seed.map(t=>t.slice());
   const totalGK = seed.flat().filter(p => /GK/i.test(p.nombre)).length;
@@ -729,21 +741,18 @@ function optimizeEquipos(seed, targetSizes, iters=4800){
     let j = Math.floor(Math.random()*teams.length);
     if (i === j) j = (j+1) % teams.length;
 
-    // ¿conviene mover 1-->1 (swap) o 1-->0 (move) para respetar tamaños?
     const moveIJ = (teams[i].length > targetSizes[i]) && (teams[j].length < targetSizes[j]);
     const moveJI = (teams[j].length > targetSizes[j]) && (teams[i].length < targetSizes[i]);
 
     const cand = teams.map(t=>t.slice());
 
     if (moveIJ || moveJI) {
-      // mover 1 jugador del que sobra al que falta
       const from = moveIJ ? i : j;
       const to   = moveIJ ? j : i;
       const pick = Math.floor(Math.random()*cand[from].length);
       const p = cand[from].splice(pick,1)[0];
       cand[to].push(p);
     } else {
-      // swap 1x1
       const ia = Math.floor(Math.random()*cand[i].length);
       const ib = Math.floor(Math.random()*cand[j].length);
       const tmp = cand[i][ia];
@@ -765,30 +774,22 @@ function optimizeEquipos(seed, targetSizes, iters=4800){
   }
   return best;
 }
-
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[Number(cb.value)]);
 
-  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
+  if (!(seleccionados.length >= 20 && seleccionados <= 24)) {
     alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
     return;
   }
 
-  // tamaños objetivo (p.ej. 22 -> [6,6,5,5])
   const target = desiredSizes(seleccionados.length, 4);
-
-  // Semilla: snake por media
   const seed = seedSnake(seleccionados, 4, target);
-
-  // Optimización (swaps/movimientos) con función de coste multi-criterio
   const equipos = optimizeEquipos(seed, target, 4800);
-
-  // Mostrar con el estilo habitual
   mostrarEquipos(equipos, "resultado-torneo", "torneo");
 }
 
-// ========== Arranque ==========
+/* ========== Arranque ========== */
 document.addEventListener("DOMContentLoaded", async () => {
   await cargarAsistencias();
   await cargarJugadores();
