@@ -59,11 +59,23 @@ let jugadores = [];
 let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
 
+function depurarJugadores(list) {
+  const esNombreInvalido = (n) =>
+    !n || !String(n).trim() ||
+    /^(-{2,}|SEPARADOR|HABITUALES?|VISITORS?|HALL)/i.test(String(n).trim());
+  return (Array.isArray(list) ? list : []).filter(j => j && !esNombreInvalido(j.nombre));
+}
+
+
 async function cargarJugadores() {
   try {
     const res = await fetch(GAS_JUGADORES_URL);
-    jugadores = await res.json();
-    jugadores = jugadores.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
+    let data = await res.json();
+
+    // ← limpieza extra en cliente
+    data = depurarJugadores(data);
+
+    jugadores = data.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
 
@@ -75,6 +87,7 @@ async function cargarJugadores() {
     console.error("Error cargando jugadores:", err);
   }
 }
+
 
 // ====== util de medias/colores/estrellas ======
 function calcularMedia(j) { return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2); }
