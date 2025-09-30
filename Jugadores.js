@@ -136,10 +136,10 @@ function mostrarTabla() {
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
-      <td><span class="${colorClase(j.ataque)}">${j.ataque.toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.defensa)}">${j.defensa.toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.tactica)}">${j.tactica.toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.estamina)}">${j.estamina.toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.ataque)}">${Number(j.ataque).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.defensa)}">${Number(j.defensa).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.tactica)}">${Number(j.tactica).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.estamina)}">${Number(j.estamina).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad ?? '-'}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
@@ -197,15 +197,70 @@ function renderFormularios() {
 function actualizarContadorPartido() {
   const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
   document.getElementById("contador-partido").textContent = `Seleccionados: ${seleccionados}`;
-  document.getElementById("generar-equipos").disabled = !(seleccionados >= 10 && seleccionados <= 12);
+  const btn = document.getElementById("generar-equipos");
+  if (btn) btn.disabled = !(seleccionados >= 10 && seleccionados <= 12);
 }
 function actualizarContadorTorneo() {
   const seleccionados = document.querySelectorAll(".jugador-torneo-checkbox:checked").length;
   document.getElementById("contador-torneo").textContent = `Seleccionados: ${seleccionados}`;
-  document.getElementById("generar-torneo").disabled = !(seleccionados >= 20 && seleccionados <= 24);
+  const btn = document.getElementById("generar-torneo");
+  if (btn) btn.disabled = !(seleccionados >= 20 && seleccionados <= 24);
 }
 
-// ========== Manual ==========
+// ========== Mostrar equipos (Partido/Torneo/Manual) ==========
+function mostrarEquipos(equipos, contenedorId, modo="torneo") {
+  const colores = ["azul-circle", "blanco-circle", "rojo-circle", "verde-circle"];
+  const nombresColores = ["Azul", "Blanco", "Rojo", "Verde"];
+
+  const cont = document.getElementById(contenedorId);
+  if (!cont) return;
+  cont.innerHTML = "";
+
+  equipos.forEach((equipo, idx) => {
+    if (!equipo || !equipo.length) return;
+
+    // métricas promedio del equipo
+    const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+    const atk  = (sum(equipo, j => j.ataque)  / equipo.length).toFixed(2);
+    const def  = (sum(equipo, j => j.defensa) / equipo.length).toFixed(2);
+    const tact = (sum(equipo, j => j.tactica) / equipo.length).toFixed(2);
+    const sta  = (sum(equipo, j => j.estamina) / equipo.length).toFixed(2);
+    const fifaAvg = Math.round(sum(equipo, j => calcularFifa(j)) / equipo.length);
+
+    // capitán = mayor FIFA
+    const capitan = equipo.reduce((best, p) => (calcularFifa(p) > calcularFifa(best) ? p : best), equipo[0]);
+
+    let titulo = "";
+    if (modo === "torneo") {
+      titulo = `<span class="circle ${colores[idx % colores.length]}"></span> Equipo ${nombresColores[idx % nombresColores.length]}`;
+    } else {
+      // partido/manual
+      if (idx === 0) {
+        titulo = `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`;
+      } else {
+        titulo = `<span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2`;
+      }
+    }
+
+    const lista = equipo.map(j =>
+      `<li class="list-group-item d-flex justify-content-between align-items-center">
+         <span>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</span>
+         ${generarEstrellasFIFA(calcularFifa(j))}
+       </li>`).join("");
+
+    const card = `
+      <div class="col-md-6 mb-3">
+        <div class="equipo-box">
+          <h4>${titulo}</h4>
+          <p>ATK: ${atk} | DEF: ${def} | TACT: ${tact} | STA: ${sta} | FIFA: ${fifaAvg}</p>
+          <ul class="list-group">${lista}</ul>
+        </div>
+      </div>`;
+    cont.insertAdjacentHTML("beforeend", card);
+  });
+}
+
+// ========== MANUAL ==========
 function initManualTab() {
   const form1 = document.getElementById("form-manual-1");
   const form2 = document.getElementById("form-manual-2");
@@ -249,7 +304,10 @@ function initManualTab() {
     });
   });
   document.getElementById("generar-manual")?.addEventListener("click", e => {
-    e.preventDefault(); generarEquiposManual();
+    e.preventDefault(); 
+    const eq1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked")).map(cb => jugadores[cb.value]);
+    const eq2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked")).map(cb => jugadores[cb.value]);
+    mostrarEquipos([eq1, eq2], "resultado-manual", "partido");
   });
 }
 
@@ -279,10 +337,10 @@ function generarEquiposManual() {
 
 // ========== Asistencia y Resultado ==========
 function renderAsistenciaRes() {
-  const formRes = document.getElementById("form-asistencia-res");
-  if (!formRes) return;
+  const cont = document.getElementById("form-asistencia-res");
+  if (!cont) return;
 
-  formRes.innerHTML = `
+  cont.innerHTML = `
     <div class="row">
       <div class="col-md-6">
         <div class="equipo-box" style="background:#eef5ff;border:2px solid #cfe2ff;">
@@ -296,8 +354,7 @@ function renderAsistenciaRes() {
           <form id="form-asistencia-rojo" class="mb-3"></form>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
 
   const formAzul = document.getElementById("form-asistencia-azul");
   const formRojo = document.getElementById("form-asistencia-rojo");
@@ -319,7 +376,7 @@ function renderAsistenciaRes() {
       </div>`);
   });
 
-  // sincronizar
+  // sincronizar (no puede estar en los dos equipos)
   document.querySelectorAll(".asistencia-azul").forEach(cb => {
     cb.addEventListener("change", e => {
       if (e.target.checked) {
@@ -398,6 +455,145 @@ async function mostrarHistorial() {
   } catch (err) {
     console.error("Error cargando historial:", err);
   }
+}
+
+/* ===========================================================
+   ALGORTIMO EQUILIBRADO PARA PARTIDO (2 EQUIPOS)
+   Pesos: ATK 30%, DEF 30%, TACT 20%, STA 20%
+   =========================================================== */
+// Parámetros
+const ALPHA = 3.0;      // bono de arrastre de estrella
+const GAMMA = 0.75;     // castigo por flojos sin estrella
+const DELTA = 0.5;      // penalización por demasiadas estrellas
+const STAR_CUTOFF = 3.75; // >= 3.75 (en escala 0-5) es estrella
+const LOW_CUTOFF  = 2.00; // <= 2.0 (en escala 0-5) es flojo
+
+function teamScore(team) {
+  const ratings = team.map(p => calcularMedia(p)); // 0–5
+  const base = ratings.reduce((a,b)=>a+b, 0);
+
+  const stars = team.filter(p => calcularMedia(p) >= STAR_CUTOFF);
+  const lows  = team.filter(p => calcularMedia(p) <= LOW_CUTOFF);
+  const nStar = stars.length, nLow = lows.length;
+
+  const lowDepth = lows.length
+    ? lows.reduce((a,p)=> a + Math.max(0, LOW_CUTOFF - calcularMedia(p)), 0) / lows.length
+    : 0;
+
+  const pLow = team.length > 1 ? (nLow / (team.length - 1)) : 0;
+
+  const carryBonus = stars.reduce((sum, s) => {
+    const starExcess = Math.max(0, calcularMedia(s) - STAR_CUTOFF);
+    return sum + ALPHA * starExcess * pLow * lowDepth;
+  }, 0);
+
+  const orphanPenalty = GAMMA * Math.max(0, nLow - 2*nStar); // máx 2 flojos por estrella
+  const starPenalty   = DELTA * Math.max(0, nStar - 2);      // >2 estrellas penaliza
+
+  return base + carryBonus - orphanPenalty - starPenalty;
+}
+
+function scorePonderado(a, b) {
+  const dAtk  = Math.abs(a.atk  - b.atk);
+  const dDef  = Math.abs(a.def  - b.def);
+  const dTact = Math.abs(a.tact - b.tact);
+  const dSta  = Math.abs(a.sta  - b.sta);
+  return 0.3*dAtk + 0.3*dDef + 0.2*dTact + 0.2*dSta;
+}
+
+function generarEquipos() {
+  try {
+    const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
+      .map(cb => jugadores[Number(cb.value)])
+      .map(j => ({ ...j, media: calcularMedia(j), fifa: calcularFifa(j) }));
+
+    if (seleccionados.length < 10 || seleccionados.length > 12) {
+      throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
+    }
+
+    const intentos = 1500;
+    let mejorVar = Infinity;
+    let mejor = { eq1: [], eq2: [] };
+
+    const varianzaScore = (a, b) => {
+      const sA = teamScore(a);
+      const sB = teamScore(b);
+      const m = (sA + sB) / 2;
+      return ((sA - m) ** 2 + (sB - m) ** 2) / 2;
+    };
+
+    for (let i = 0; i < intentos; i++) {
+      const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
+      const mitad = Math.floor(seleccionados.length / 2);
+      let A = mezcla.slice(0, mitad);
+      let B = mezcla.slice(mitad);
+
+      // búsqueda local
+      let bestVar = varianzaScore(A, B);
+      const itersLocal = 1000;
+      for (let k = 0; k < itersLocal; k++) {
+        const ia = Math.floor(Math.random() * A.length);
+        const ib = Math.floor(Math.random() * B.length);
+        const candA = A.slice(), candB = B.slice();
+        [candA[ia], candB[ib]] = [candB[ib], candA[ia]];
+        const v = varianzaScore(candA, candB);
+        if (v < bestVar) { A = candA; B = candB; bestVar = v; }
+      }
+
+      // desempates por componentes y fifa promedio
+      const avg = (arr, f) => arr.reduce((s, x) => s + f(x), 0) / arr.length;
+      const compSpread = scorePonderado(
+        { atk: avg(A, j=>j.ataque), def: avg(A, j=>j.defensa), tact: avg(A, j=>j.tactica), sta: avg(A, j=>j.estamina) },
+        { atk: avg(B, j=>j.ataque), def: avg(B, j=>j.defensa), tact: avg(B, j=>j.tactica), sta: avg(B, j=>j.estamina) }
+      );
+      const fifaAvgDiff = Math.abs(
+        (A.reduce((s, j) => s + j.fifa, 0) / A.length) -
+        (B.reduce((s, j) => s + j.fifa, 0) / B.length)
+      );
+
+      const mejorCandidato =
+        (bestVar < mejorVar) ||
+        (bestVar === mejorVar && compSpread < (mejor.compSpread ?? Infinity)) ||
+        (bestVar === mejorVar && compSpread === (mejor.compSpread ?? Infinity) && fifaAvgDiff < (mejor.fifaAvgDiff ?? Infinity));
+
+      if (mejorCandidato) {
+        mejorVar = bestVar;
+        mejor = { eq1: A, eq2: B, compSpread, fifaAvgDiff };
+      }
+    }
+
+    const cont = document.getElementById("resultado-equipos");
+    if (!mejor.eq1.length || !mejor.eq2.length || !cont) {
+      cont.innerHTML = `<div class="alert alert-danger">No se pudieron formar equipos equilibrados.</div>`;
+      return;
+    }
+
+    // Presentación con el mismo estilo que el Torneo/Manual
+    mostrarEquipos([mejor.eq1, mejor.eq2], "resultado-equipos", "partido");
+  } catch (error) {
+    const cont = document.getElementById("resultado-equipos");
+    if (cont) cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+  }
+}
+
+// ========== Torneo (4 equipos) ==========
+function generarEquiposTorneo() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
+    .map(cb => jugadores[Number(cb.value)]);
+
+  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
+    alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
+    return;
+  }
+
+  // división simple en 4 grupos (puedes mejorar con otro heurístico si quieres)
+  const equipos = [];
+  const tam = Math.ceil(seleccionados.length / 4);
+  for (let i = 0; i < 4; i++) {
+    equipos.push(seleccionados.slice(i*tam, (i+1)*tam));
+  }
+
+  mostrarEquipos(equipos, "resultado-torneo", "torneo");
 }
 
 // ========== Arranque ==========

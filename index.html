@@ -15,15 +15,8 @@
     .fifa-stars { white-space: nowrap; display: inline-block; min-width: 80px; }
     .fifa-stars i { color: gold; margin: 0 1px; }
 
-    /* ====== Círculos de colores ====== */
-    .circle {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 5px;
-      vertical-align: middle;
-    }
+    /* Círculos de colores */
+    .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
     .azul-circle { background-color: #007bff; }
     .rojo-circle { background-color: #dc3545; }
     .verde-circle { background-color: #28a745; }
@@ -34,37 +27,17 @@
     th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
     th.orden-desc::after { content: " ↓"; font-weight: bold; opacity: 1; }
 
-    .player-block {
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 16px;
-      border: 2px solid transparent;
-    }
+    .player-block { border-radius: 12px; padding: 14px; margin-bottom: 16px; border: 2px solid transparent; }
     .player-block.habituales { background:#eef5ff; border-color:#cfe2ff; }
     .player-block.visitors   { background:#fff8e6; border-color:#ffe2a8; }
     .player-block.hall       { background:#f3ecff; border-color:#dbc9ff; }
 
-    .player-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: .5rem 1rem;
-    }
-    .player-grid .form-check-label { font-size: 1.1rem; font-weight: 500; }
+    .player-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem 1rem; }
+    .player-grid .form-check-label { font-size: 1.05rem; font-weight: 500; }
     @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
 
-    .equipo-box {
-      border-radius: 14px;
-      padding: 16px;
-      background: #f9f9f9;
-      border: 2px solid #ddd;
-      margin-bottom: 1rem;
-    }
-    .equipo-box h4, .equipo-box h5 {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 600;
-    }
+    .equipo-box { border-radius: 14px; padding: 16px; background: #f9f9f9; border: 2px solid #ddd; margin-bottom: 1rem; }
+    .equipo-box h4, .equipo-box h5 { display: flex; align-items: center; gap: 6px; font-weight: 600; }
   </style>
 </head>
 <body class="bg-light">
@@ -164,7 +137,8 @@
     <div class="tab-pane fade" id="asistencia">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Publicar Asistencia y Resultado</h3>
-        <form id="form-asistencia-res" class="mb-3"></form>
+        <!-- Importante: contenedor DIV (no form) para que el JS pinte las dos columnas -->
+        <div id="form-asistencia-res" class="mb-3"></div>
         <div class="row mb-3">
           <div class="col-md-6">
             <label for="match-date" class="form-label">Fecha</label>
