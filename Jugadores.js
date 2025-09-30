@@ -1,5 +1,5 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxW_7dViK9N91M3-6yWamNYGt9j2jJodr_MK54b2CdMuHZFu7JQKa5m8Qe0JavudXEJkg/exec";
 const GAS_JUGADORES_URL = GAS_URL; // mismo endpoint sirve jugadores + matches
 
 const asistenciaMap = new Map();
