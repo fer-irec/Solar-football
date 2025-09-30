@@ -1,12 +1,26 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
-const GAS_BASE = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
-const GAS_JUGADORES_URL = GAS_BASE;                // jugadores
-const GAS_MATCHES_URL   = GAS_BASE + "?type=matches"; // historial de partidos
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzLe6zSbAf-FP7GBZaDwyRimMjf6Rb6f0gCPWmd8QnF5BCkGIANirYBisEMJHwhe2C5Sw/exec";
+const GAS_JUGADORES_URL = GAS_URL; // mismo endpoint sirve jugadores + matches
 
-// ========== Guardar asistencia y partidos ==========
+const asistenciaMap = new Map();
+
+// ========== Asistencias ==========
+async function cargarAsistencias() {
+  try {
+    asistenciaMap.clear();
+    const res = await fetch(GAS_URL, { method: "GET" });
+    const data = await res.json();
+    if (data && !Array.isArray(data)) {
+      Object.keys(data).forEach(n => asistenciaMap.set(n, data[n] || 0));
+    }
+  } catch (e) {
+    console.warn("No se pudo cargar asistencia:", e);
+  }
+}
+
 async function incrementarAsistencia(nombres) {
   try {
-    await fetch(GAS_BASE, {
+    await fetch(GAS_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ type: "incAttendance", names: nombres })
@@ -18,7 +32,7 @@ async function incrementarAsistencia(nombres) {
 
 async function guardarPartido(partido) {
   try {
-    await fetch(GAS_BASE, {
+    await fetch(GAS_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: JSON.stringify({ type: "saveMatch", match: partido })
@@ -248,6 +262,87 @@ function actualizarContadoresManual() {
   document.getElementById("contador-manual-2").textContent = `Seleccionados: ${s2}`;
 }
 
+// ========== Algoritmos de generación ==========
+function generarEquipos() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
+    .map(cb => jugadores[cb.value]);
+  if (!(seleccionados.length >= 10 && seleccionados <= 12)) {
+    alert("Selecciona entre 10 y 12 jugadores para generar equipos.");
+    return;
+  }
+  const mitad = Math.ceil(seleccionados.length / 2);
+  const equipo1 = seleccionados.slice(0, mitad);
+  const equipo2 = seleccionados.slice(mitad);
+  mostrarEquipos([equipo1, equipo2], "resultado-equipos");
+}
+
+function generarEquiposTorneo() {
+  const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
+    .map(cb => jugadores[cb.value]);
+  if (!(seleccionados.length >= 20 && seleccionados <= 24)) {
+    alert("Selecciona entre 20 y 24 jugadores para torneo.");
+    return;
+  }
+  const equipos = [];
+  const tam = Math.ceil(seleccionados.length / 4);
+  for (let i = 0; i < 4; i++) equipos.push(seleccionados.slice(i*tam, (i+1)*tam));
+  mostrarEquipos(equipos, "resultado-torneo");
+}
+
+function generarEquiposManual() {
+  const equipo1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked"))
+    .map(cb => jugadores[cb.value]);
+  const equipo2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked"))
+    .map(cb => jugadores[cb.value]);
+  if (!equipo1.length || !equipo2.length) {
+    alert("Selecciona jugadores en ambos equipos.");
+    return;
+  }
+  mostrarEquipos([equipo1, equipo2], "resultado-manual");
+}
+
+function mostrarEquipos(equipos, contenedorId) {
+  const cont = document.getElementById(contenedorId);
+  if (!cont) return;
+  cont.innerHTML = "";
+
+  equipos.forEach((equipo, idx) => {
+    let totalAtk=0, totalDef=0, totalTac=0, totalSta=0;
+    equipo.forEach(j => {
+      totalAtk += j.ataque;
+      totalDef += j.defensa;
+      totalTac += j.tactica;
+      totalSta += j.estamina;
+    });
+    const mediaAtk = (totalAtk / equipo.length).toFixed(2);
+    const mediaDef = (totalDef / equipo.length).toFixed(2);
+    const mediaTac = (totalTac / equipo.length).toFixed(2);
+    const mediaSta = (totalSta / equipo.length).toFixed(2);
+    const fifa = Math.round(((+mediaAtk*0.3 + +mediaDef*0.3 + +mediaTac*0.2 + +mediaSta*0.2)) * 20);
+
+    const capitan = equipo.reduce((max, j) =>
+      calcularFifa(j) > calcularFifa(max) ? j : max, equipo[0]);
+
+    let html = `
+      <div class="col-md-6">
+        <div class="card mb-3 shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">Equipo ${idx+1}</h5>
+            <p class="text-muted">
+              ATK: ${mediaAtk} | DEF: ${mediaDef} | TACT: ${mediaTac} | STA: ${mediaSta} | FIFA: ${fifa}
+            </p>
+            <ul class="list-unstyled">
+              ${equipo.map(j =>
+                `<li>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</li>`
+              ).join("")}
+            </ul>
+          </div>
+        </div>
+      </div>`;
+    cont.insertAdjacentHTML("beforeend", html);
+  });
+}
+
 // ========== Asistencia y Resultado ==========
 function renderAsistenciaRes() {
   const formRes = document.getElementById("form-asistencia-res");
@@ -307,7 +402,7 @@ async function publicarResultado() {
 // ========== Historial ==========
 async function mostrarHistorial() {
   try {
-    const res = await fetch(GAS_MATCHES_URL);
+    const res = await fetch(`${GAS_URL}?type=matches`);
     const partidos = await res.json();
     const cont = document.getElementById("lista-historial");
     if (!cont) return;
@@ -344,82 +439,10 @@ async function mostrarHistorial() {
     console.error("Error cargando historial:", err);
   }
 }
-// ========== Algoritmo de equipos ==========
-function generarEquipos() {
-  const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
-    .map(cb => jugadores[cb.value]);
-
-  if (!(seleccionados.length >= 10 && seleccionados.length <= 12)) {
-    alert("Selecciona entre 10 y 12 jugadores para generar equipos.");
-    return;
-  }
-
-  // Aquí va tu algoritmo de equilibrio de equipos
-  // por ejemplo dividir en dos equipos equilibrados:
-  const mitad = Math.ceil(seleccionados.length / 2);
-  const equipo1 = seleccionados.slice(0, mitad);
-  const equipo2 = seleccionados.slice(mitad);
-
-  mostrarEquipos([equipo1, equipo2], "resultado-partido");
-}
-
-function generarEquiposTorneo() {
-  const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
-    .map(cb => jugadores[cb.value]);
-
-  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
-    alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
-    return;
-  }
-
-  // dividir en 4 equipos
-  const equipos = [];
-  const tam = Math.ceil(seleccionados.length / 4);
-  for (let i = 0; i < 4; i++) {
-    equipos.push(seleccionados.slice(i*tam, (i+1)*tam));
-  }
-
-  mostrarEquipos(equipos, "resultado-torneo");
-}
-
-function mostrarEquipos(equipos, contenedorId) {
-  const cont = document.getElementById(contenedorId);
-  if (!cont) return;
-  cont.innerHTML = "";
-
-  equipos.forEach((equipo, idx) => {
-    let totalAtk=0, totalDef=0, totalTac=0, totalSta=0;
-    equipo.forEach(j => {
-      totalAtk += j.ataque;
-      totalDef += j.defensa;
-      totalTac += j.tactica;
-      totalSta += j.estamina;
-    });
-    const mediaAtk = (totalAtk / equipo.length).toFixed(2);
-    const mediaDef = (totalDef / equipo.length).toFixed(2);
-    const mediaTac = (totalTac / equipo.length).toFixed(2);
-    const mediaSta = (totalSta / equipo.length).toFixed(2);
-    const fifa = Math.round(((+mediaAtk*0.3 + +mediaDef*0.3 + +mediaTac*0.2 + +mediaSta*0.2)) * 20);
-
-    const capitan = equipo.reduce((max, j) =>
-      calcularFifa(j) > calcularFifa(max) ? j : max, equipo[0]);
-
-    let html = `
-      <div class="equipo">
-        <h4>Equipo ${idx+1}</h4>
-        <p>ATK: ${mediaAtk} | DEF: ${mediaDef} | TACT: ${mediaTac} | STA: ${mediaSta} | FIFA: ${fifa}</p>
-        <ul>
-          ${equipo.map(j =>
-            `<li>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</li>`
-          ).join("")}
-        </ul>
-      </div>`;
-    cont.insertAdjacentHTML("beforeend", html);
-  });
-}
 
 // ========== Arranque ==========
 document.addEventListener("DOMContentLoaded", async () => {
+  await cargarAsistencias();
   await cargarJugadores();
   await mostrarHistorial();
 

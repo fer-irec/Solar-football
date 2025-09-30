@@ -16,6 +16,8 @@
     .fifa-stars i { color: gold; margin: 0 1px; }
 
     .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .azul-circle { background-color: #007bff; }
+    .rojo-circle { background-color: #dc3545; }
 
     th.sortable::after { content: " ⇅"; font-weight: normal; opacity: 0.5; }
     th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
@@ -37,7 +39,6 @@
       gap: .5rem 1rem;
     }
     .player-grid .form-check-label { font-size: 1.1rem; font-weight: 500; }
-
     @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
 
     .equipo-box {
@@ -143,20 +144,23 @@
     <div class="tab-pane fade" id="asistencia">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Publicar Asistencia y Resultado</h3>
-        <label>Fecha: <input type="date" id="match-date" class="form-control mb-2"></label>
+        <form id="form-asistencia-res" class="mb-3"></form>
         <div class="row mb-3">
           <div class="col-md-6">
-            <label>Goles Equipo 1</label>
-            <input type="number" id="goles1" class="form-control" min="0" value="0">
+            <label for="match-date" class="form-label">Fecha</label>
+            <input type="date" id="match-date" class="form-control">
           </div>
-          <div class="col-md-6">
-            <label>Goles Equipo 2</label>
-            <input type="number" id="goles2" class="form-control" min="0" value="0">
+          <div class="col-md-3">
+            <label for="goles1" class="form-label">Goles Equipo 1</label>
+            <input type="number" id="goles1" class="form-control" min="0">
+          </div>
+          <div class="col-md-3">
+            <label for="goles2" class="form-label">Goles Equipo 2</label>
+            <input type="number" id="goles2" class="form-control" min="0">
           </div>
         </div>
-        <form id="form-asistencia-res"></form>
-        <div class="text-center mt-3">
-          <button class="btn btn-success" id="publicar-resultado">Publicar</button>
+        <div class="text-center">
+          <button id="publicar-resultado" class="btn btn-success mt-3">Publicar</button>
         </div>
       </div>
     </div>
