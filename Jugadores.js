@@ -209,74 +209,262 @@ function actualizarContadorTorneo() {
 function generarEquipos() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
     .map(cb => jugadores[cb.value]);
-  mostrarEquipos(seleccionados, "resultado-equipos", 2);
+
+  if (!(seleccionados.length >= 10 && seleccionados.length <= 12)) {
+    alert("Selecciona entre 10 y 12 jugadores para generar equipos.");
+    return;
+  }
+
+  const mitad = Math.ceil(seleccionados.length / 2);
+  const equipo1 = seleccionados.slice(0, mitad);
+  const equipo2 = seleccionados.slice(mitad);
+
+  mostrarEquipos([equipo1, equipo2], "resultado-equipos", "partido");
 }
 
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[cb.value]);
-  mostrarEquipos(seleccionados, "resultado-torneo", 4);
+
+  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
+    alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
+    return;
+  }
+
+  const equipos = [];
+  const tam = Math.ceil(seleccionados.length / 4);
+  for (let i = 0; i < 4; i++) {
+    equipos.push(seleccionados.slice(i*tam, (i+1)*tam));
+  }
+
+  mostrarEquipos(equipos, "resultado-torneo", "torneo");
 }
 
-function mostrarEquipos(seleccionados, contenedorId, numEquipos) {
+// ========== Mostrar equipos con estilos ==========
+function mostrarEquipos(equipos, contenedorId, modo="torneo") {
+  const colores = ["azul-circle", "blanco-circle", "rojo-circle", "verde-circle"];
+  const nombresColores = ["Azul", "Blanco", "Rojo", "Verde"];
   const cont = document.getElementById(contenedorId);
   if (!cont) return;
   cont.innerHTML = "";
 
-  if (seleccionados.length === 0) {
-    cont.innerHTML = `<p class="text-muted">No hay jugadores seleccionados.</p>`;
-    return;
-  }
-
-  const mezclados = seleccionados.sort(() => Math.random() - 0.5);
-  const equipos = Array.from({ length: numEquipos }, () => []);
-  mezclados.forEach((j, i) => { equipos[i % numEquipos].push(j); });
-
-  const colores = ["azul", "rojo", "verde", "amarillo"];
-
-  equipos.forEach((eq, idx) => {
-    if (!eq.length) return;
-    const atk = (eq.reduce((s, j) => s + j.ataque, 0) / eq.length).toFixed(2);
-    const def = (eq.reduce((s, j) => s + j.defensa, 0) / eq.length).toFixed(2);
-    const tact = (eq.reduce((s, j) => s + j.tactica, 0) / eq.length).toFixed(2);
-    const sta = (eq.reduce((s, j) => s + j.estamina, 0) / eq.length).toFixed(2);
-    const fifa = Math.round(eq.reduce((s, j) => s + calcularFifa(j), 0) / eq.length);
-    const cap = eq.reduce((a, b) => (calcularFifa(a) > calcularFifa(b) ? a : b));
-
-    let jugadoresHTML = "";
-    eq.forEach(j => {
-      const estrella = calcularFifa(j);
-      jugadoresHTML += `<p>${j.nombre} ${generarEstrellasFIFA(estrella)}${j === cap ? " <strong>(C)</strong>" : ""}</p>`;
+  equipos.forEach((equipo, idx) => {
+    let totalAtk=0, totalDef=0, totalTac=0, totalSta=0;
+    equipo.forEach(j => {
+      totalAtk += j.ataque;
+      totalDef += j.defensa;
+      totalTac += j.tactica;
+      totalSta += j.estamina;
     });
+    const mediaAtk = (totalAtk / equipo.length).toFixed(2);
+    const mediaDef = (totalDef / equipo.length).toFixed(2);
+    const fifa = Math.round(((+mediaAtk*0.3 + +mediaDef*0.3 + totalTac/equipo.length*0.2 + totalSta/equipo.length*0.2)) * 20);
 
-    const html = `
-      <div class="equipo-box ${colores[idx % colores.length]}">
-        <h5>Equipo ${idx + 1}</h5>
-        <p><strong>ATK:</strong> ${atk} | <strong>DEF:</strong> ${def} | <strong>TACT:</strong> ${tact} | <strong>STA:</strong> ${sta} | <strong>FIFA:</strong> ${fifa}</p>
-        ${jugadoresHTML}
+    const capitan = equipo.reduce((max, j) =>
+      calcularFifa(j) > calcularFifa(max) ? j : max, equipo[0]);
+
+    let titulo = "";
+    if (modo === "torneo") {
+      titulo = `<span class="circle ${colores[idx]}"></span> Equipo ${nombresColores[idx]}`;
+    } else { // partido
+      if (idx === 0) titulo = `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`;
+      else titulo = `<span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2`;
+    }
+
+    let html = `
+      <div class="col-md-6 mb-3">
+        <div class="equipo-box" style="background:#f9f9f9;border:2px solid #ddd;">
+          <h4>${titulo}</h4>
+          <p>ATK: ${mediaAtk} | DEF: ${mediaDef} | FIFA: ${fifa}</p>
+          <ul>
+            ${equipo.map(j =>
+              `<li>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</li>`
+            ).join("")}
+          </ul>
+        </div>
       </div>`;
     cont.insertAdjacentHTML("beforeend", html);
   });
 }
 
 // ========== Render Manual ==========
-function initManualTab() { /* igual que ya lo tienes */ }
-function sincronizarCheckboxes(cb) { /* igual que ya lo tienes */ }
-function actualizarContadoresManual() { /* igual que ya lo tienes */ }
-function generarEquiposManual() { /* igual que ya lo tienes */ }
+function initManualTab() {
+  const form1 = document.getElementById("form-manual-1");
+  const form2 = document.getElementById("form-manual-2");
+  if (!form1 || !form2) return;
+
+  form1.innerHTML = "";
+  form2.innerHTML = "";
+
+  function crearBloque(titulo, clase, lista, equipo) {
+    if (!lista.length) return "";
+    let html = `<div class="player-block ${clase}"><h5>${titulo}</h5><div class="player-grid">`;
+    lista.forEach((j, i) => {
+      const id = `${equipo}_${i}_${clase}`;
+      html += `
+        <div class="form-check">
+          <input class="form-check-input jugador-manual-${equipo}" type="checkbox" id="${id}" value="${jugadores.indexOf(j)}">
+          <label class="form-check-label" for="${id}">${j.nombre}</label>
+        </div>`;
+    });
+    html += "</div></div>";
+    return html;
+  }
+
+  const habituales = jugadores.filter(j => j.grupo === "habitual");
+  const visitors   = jugadores.filter(j => j.grupo === "visitor");
+  const hall       = jugadores.filter(j => j.grupo === "hall");
+
+  form1.innerHTML += crearBloque("Habituales", "habituales", habituales, "1");
+  form1.innerHTML += crearBloque("Visitors", "visitors", visitors, "1");
+  form1.innerHTML += crearBloque("Hall of Fame", "hall", hall, "1");
+
+  form2.innerHTML += crearBloque("Habituales", "habituales", habituales, "2");
+  form2.innerHTML += crearBloque("Visitors", "visitors", visitors, "2");
+  form2.innerHTML += crearBloque("Hall of Fame", "hall", hall, "2");
+
+  actualizarContadoresManual();
+  document.querySelectorAll('.jugador-manual-1, .jugador-manual-2').forEach(cb => {
+    cb.addEventListener("change", e => {
+      sincronizarCheckboxes(e.target);
+      actualizarContadoresManual();
+    });
+  });
+  document.getElementById("generar-manual")?.addEventListener("click", e => {
+    e.preventDefault(); generarEquiposManual();
+  });
+}
+
+// sincronizar manual
+function sincronizarCheckboxes(cb) {
+  const val = cb.value;
+  if (cb.checked) {
+    if (cb.classList.contains("jugador-manual-1")) {
+      document.querySelectorAll(`.jugador-manual-2[value="${val}"]`).forEach(x => x.checked = false);
+    } else {
+      document.querySelectorAll(`.jugador-manual-1[value="${val}"]`).forEach(x => x.checked = false);
+    }
+  }
+}
+
+// contadores manual
+function actualizarContadoresManual() {
+  const s1 = document.querySelectorAll(".jugador-manual-1:checked").length;
+  const s2 = document.querySelectorAll(".jugador-manual-2:checked").length;
+  document.getElementById("contador-manual-1").textContent = `Seleccionados: ${s1}`;
+  document.getElementById("contador-manual-2").textContent = `Seleccionados: ${s2}`;
+}
+
+function generarEquiposManual() {
+  const eq1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked")).map(cb => jugadores[cb.value]);
+  const eq2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked")).map(cb => jugadores[cb.value]);
+
+  mostrarEquipos([eq1, eq2], "resultado-manual", "partido");
+}
 
 // ========== Asistencia y Resultado ==========
-function renderAsistenciaRes() { /* igual que ya lo tienes */ }
-async function publicarResultado() { /* igual que ya lo tienes */ }
+function renderAsistenciaRes() {
+  const formRes = document.getElementById("form-asistencia-res");
+  if (!formRes) return;
+
+  function crearBloque(titulo, clase, lista) {
+    if (!lista.length) return "";
+    let html = `<div class="player-block ${clase}"><h5>${titulo}</h5><div class="player-grid">`;
+    lista.forEach((j, i) => {
+      const id = `asistencia_${i}_${clase}`;
+      html += `
+        <div class="form-check">
+          <input class="form-check-input asistencia-checkbox" type="checkbox" id="${id}" value="${j.nombre}">
+          <label class="form-check-label" for="${id}">${j.nombre}</label>
+        </div>`;
+    });
+    html += "</div></div>";
+    return html;
+  }
+
+  const habituales = jugadores.filter(j => j.grupo === "habitual");
+  const visitors   = jugadores.filter(j => j.grupo === "visitor");
+  const hall       = jugadores.filter(j => j.grupo === "hall");
+
+  formRes.innerHTML = "";
+  formRes.innerHTML += crearBloque("Habituales", "habituales", habituales);
+  formRes.innerHTML += crearBloque("Visitors", "visitors", visitors);
+  formRes.innerHTML += crearBloque("Hall of Fame", "hall", hall);
+
+  document.getElementById("publicar-resultado")?.addEventListener("click", e => {
+    e.preventDefault(); publicarResultado();
+  });
+}
+
+async function publicarResultado() {
+  const fecha = document.getElementById("match-date").value || new Date().toISOString().slice(0,10);
+  const goles1 = document.getElementById("goles1").value;
+  const goles2 = document.getElementById("goles2").value;
+  const seleccionados = Array.from(document.querySelectorAll(".asistencia-checkbox:checked")).map(cb => cb.value);
+
+  if (!seleccionados.length) {
+    alert("Selecciona jugadores antes de publicar.");
+    return;
+  }
+
+  const mitad = Math.ceil(seleccionados.length/2);
+  const equipo1 = seleccionados.slice(0, mitad);
+  const equipo2 = seleccionados.slice(mitad);
+
+  await guardarPartido({ fecha, goles1, goles2, equipo1, equipo2 });
+  await incrementarAsistencia(seleccionados);
+
+  alert("Resultado publicado ✅");
+  mostrarHistorial();
+}
 
 // ========== Historial ==========
-async function mostrarHistorial() { /* igual que ya lo tienes */ }
+async function mostrarHistorial() {
+  try {
+    const res = await fetch(`${GAS_URL}?type=matches`);
+    const partidos = await res.json();
+    const cont = document.getElementById("lista-historial");
+    if (!cont) return;
+
+    cont.innerHTML = "";
+    if (!partidos.length) {
+      cont.innerHTML = `<p class="text-muted">No hay partidos guardados.</p>`;
+      return;
+    }
+
+    partidos.reverse().forEach(p => {
+      const html = `
+        <div class="col">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h5 class="card-title">${p.fecha}</h5>
+              <p class="card-text"><strong>Resultado:</strong> ${p.resultado}</p>
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>Equipo 1</h6>
+                  <ul>${p.equipo1.map(n => `<li>${n}</li>`).join("")}</ul>
+                </div>
+                <div class="col-md-6">
+                  <h6>Equipo 2</h6>
+                  <ul>${p.equipo2.map(n => `<li>${n}</li>`).join("")}</ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      cont.insertAdjacentHTML("beforeend", html);
+    });
+  } catch (err) {
+    console.error("Error cargando historial:", err);
+  }
+}
 
 // ========== Arranque ==========
 document.addEventListener("DOMContentLoaded", async () => {
   await cargarAsistencias();
   await cargarJugadores();
   await mostrarHistorial();
+
   const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "puntualidad", "media", "fifa"];
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
@@ -291,6 +479,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
   });
+
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
 });
