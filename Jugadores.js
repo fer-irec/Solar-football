@@ -96,12 +96,55 @@ async function incrementarAsistencia(nombres) {
       { type: "incAttendance", names: nombres },
       "asistencia actualizada"
     );
-    // opcional: console.log(resp);
+    console.log("[GAS/incAttendance] OK →", resp);
+    return resp;
   } catch (e) {
+    console.error("[GAS/incAttendance] ERROR →", e);
     alert("Error al guardar asistencia: " + e.message);
     throw e;
   }
 }
+
+async function guardarPartido(partido) {
+  try {
+    const resp = await postWithRetry(
+      { type: "saveMatch", match: partido },
+      "partido guardado"
+    );
+    console.log("[GAS/saveMatch] OK →", resp);
+    return resp;
+  } catch (e) {
+    console.error("[GAS/saveMatch] ERROR →", e);
+    alert("Error al guardar el partido: " + e.message);
+    throw e;
+  }
+}
+
+// ---- formatear fecha del historial (ISO o dd/MM/yyyy -> dd-MM-yyyy) ----
+function formatFechaHistorial(fecha) {
+  if (!fecha) return "";
+  if (fecha instanceof Date) {
+    const dd = String(fecha.getDate()).padStart(2, "0");
+    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+    const yy = fecha.getFullYear();
+    return `${dd}-${mm}-${yy}`;
+  }
+  if (typeof fecha === "string") {
+    // ISO: 2025-09-29T22:00:00.000Z
+    if (/^\d{4}-\d{2}-\d{2}T/.test(fecha)) {
+      const d = new Date(fecha);
+      if (!isNaN(d)) return formatFechaHistorial(d);
+    }
+    // dd/MM/yyyy -> dd-MM-yyyy
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+      const [dd, mm, yy] = fecha.split("/");
+      return `${dd}-${mm}-${yy}`;
+    }
+    return fecha;
+  }
+  return String(fecha);
+}
+
 
 async function guardarPartido(partido) {
   try {
@@ -495,7 +538,8 @@ async function publicarResultado() {
 /* ========== Historial ========== */
 async function mostrarHistorial() {
   try {
-    const partidos = await getJSON(`${GAS_URL}?type=matches`);
+    // anti-cache
+    const partidos = await getJSON(`${GAS_URL}?type=matches&ts=${Date.now()}`);
     const cont = document.getElementById("lista-historial");
     if (!cont) return;
 
@@ -506,20 +550,21 @@ async function mostrarHistorial() {
     }
 
     partidos.reverse().forEach(p => {
+      const fechaBonita = formatFechaHistorial(p.fecha);
       const html = `
         <div class="col">
           <div class="card shadow-sm">
             <div class="card-body">
-              <h5 class="card-title">${p.fecha}</h5>
+              <h5 class="card-title">${fechaBonita}</h5>
               <p class="card-text"><strong>Resultado:</strong> ${p.resultado}</p>
               <div class="row">
                 <div class="col-md-6">
-                  <h6>Equipo 1</h6>
-                  <ul>${p.equipo1.map(n => `<li>${n}</li>`).join("")}</ul>
+                  <h6><span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1</h6>
+                  <ul>${(p.equipo1 || []).map(n => `<li>${n}</li>`).join("")}</ul>
                 </div>
                 <div class="col-md-6">
-                  <h6>Equipo 2</h6>
-                  <ul>${p.equipo2.map(n => `<li>${n}</li>`).join("")}</ul>
+                  <h6><span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2</h6>
+                  <ul>${(p.equipo2 || []).map(n => `<li>${n}</li>`).join("")}</ul>
                 </div>
               </div>
             </div>
@@ -531,6 +576,7 @@ async function mostrarHistorial() {
     console.error("Error cargando historial:", err);
   }
 }
+
 
 /* ===========================================================
    ALGORTIMO EQUILIBRADO PARA PARTIDO (2 EQUIPOS)
