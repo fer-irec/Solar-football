@@ -15,9 +15,20 @@
     .fifa-stars { white-space: nowrap; display: inline-block; min-width: 80px; }
     .fifa-stars i { color: gold; margin: 0 1px; }
 
-    .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    /* ====== Círculos de colores ====== */
+    .circle {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
     .azul-circle { background-color: #007bff; }
     .rojo-circle { background-color: #dc3545; }
+    .verde-circle { background-color: #28a745; }
+    .blanco-circle { background-color: #f8f9fa; border: 1px solid #ccc; }
+    .naranja-circle { background-color: #fd7e14; }
 
     th.sortable::after { content: " ⇅"; font-weight: normal; opacity: 0.5; }
     th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
@@ -44,6 +55,15 @@
     .equipo-box {
       border-radius: 14px;
       padding: 16px;
+      background: #f9f9f9;
+      border: 2px solid #ddd;
+      margin-bottom: 1rem;
+    }
+    .equipo-box h4, .equipo-box h5 {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
     }
   </style>
 </head>

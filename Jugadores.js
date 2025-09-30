@@ -241,6 +241,7 @@ function generarEquiposTorneo() {
 }
 
 // ========== Mostrar equipos con estilos ==========
+// ========== Mostrar equipos con estilos ==========
 function mostrarEquipos(equipos, contenedorId, modo="torneo") {
   const colores = ["azul-circle", "blanco-circle", "rojo-circle", "verde-circle"];
   const nombresColores = ["Azul", "Blanco", "Rojo", "Verde"];
@@ -258,7 +259,9 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     });
     const mediaAtk = (totalAtk / equipo.length).toFixed(2);
     const mediaDef = (totalDef / equipo.length).toFixed(2);
-    const fifa = Math.round(((+mediaAtk*0.3 + +mediaDef*0.3 + totalTac/equipo.length*0.2 + totalSta/equipo.length*0.2)) * 20);
+    const mediaTac = (totalTac / equipo.length).toFixed(2);
+    const mediaSta = (totalSta / equipo.length).toFixed(2);
+    const fifa = Math.round(((+mediaAtk*0.3 + +mediaDef*0.3 + +mediaTac*0.2 + +mediaSta*0.2)) * 20);
 
     const capitan = equipo.reduce((max, j) =>
       calcularFifa(j) > calcularFifa(max) ? j : max, equipo[0]);
@@ -275,10 +278,10 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
       <div class="col-md-6 mb-3">
         <div class="equipo-box" style="background:#f9f9f9;border:2px solid #ddd;">
           <h4>${titulo}</h4>
-          <p>ATK: ${mediaAtk} | DEF: ${mediaDef} | FIFA: ${fifa}</p>
+          <p>ATK: ${mediaAtk} | DEF: ${mediaDef} | TACT: ${mediaTac} | STA: ${mediaSta} | FIFA: ${fifa}</p>
           <ul>
             ${equipo.map(j =>
-              `<li>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</li>`
+              `<li>${j.nombre} ${generarEstrellasFIFA(calcularFifa(j))} ${j === capitan ? "<strong>(C)</strong>" : ""}</li>`
             ).join("")}
           </ul>
         </div>
@@ -286,6 +289,7 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     cont.insertAdjacentHTML("beforeend", html);
   });
 }
+
 
 // ========== Render Manual ==========
 function initManualTab() {
