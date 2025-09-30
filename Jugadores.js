@@ -4,12 +4,27 @@ const GAS_JUGADORES_URL = GAS_URL; // mismo endpoint sirve jugadores + matches
 
 const asistenciaMap = new Map();
 
+/* -------------------- HELPER ROBUSTO PARA POST A GAS -------------------- */
+/* Envía el JSON dentro de un campo urlencoded "payload=" para que
+   doPost(e) lo reciba SIEMPRE (e.postData.contents o e.parameter.payload) */
+async function gasPost(payload) {
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+    body: "payload=" + encodeURIComponent(JSON.stringify(payload))
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(text || ("HTTP " + res.status));
+  return text;
+}
+
 // ========== Asistencias ==========
 async function cargarAsistencias() {
   try {
     asistenciaMap.clear();
     const res = await fetch(GAS_URL, { method: "GET" });
     const data = await res.json();
+    // Si el endpoint devuelve jugadores (array) no mapeamos nada.
     if (data && !Array.isArray(data)) {
       Object.keys(data).forEach(n => asistenciaMap.set(n, data[n] || 0));
     }
@@ -18,27 +33,24 @@ async function cargarAsistencias() {
   }
 }
 
+// >>> Reemplazadas para usar gasPost <<<
 async function incrementarAsistencia(nombres) {
   try {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ type: "incAttendance", names: nombres })
-    });
+    const msg = await gasPost({ type: "incAttendance", names: nombres });
+    console.log("GAS/incAttendance:", msg);
   } catch (e) {
     alert("Error al guardar asistencia: " + e.message);
+    throw e;
   }
 }
 
 async function guardarPartido(partido) {
   try {
-    await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: JSON.stringify({ type: "saveMatch", match: partido })
-    });
+    const msg = await gasPost({ type: "saveMatch", match: partido });
+    console.log("GAS/saveMatch:", msg);
   } catch (e) {
     alert("Error al guardar el partido: " + e.message);
+    throw e;
   }
 }
 
@@ -409,11 +421,15 @@ async function publicarResultado() {
     return;
   }
 
-  await guardarPartido({ fecha, goles1, goles2, equipo1, equipo2 });
-  await incrementarAsistencia([...equipo1, ...equipo2]);
-
-  alert("Resultado publicado ✅");
-  mostrarHistorial();
+  try {
+    await guardarPartido({ fecha, goles1, goles2, equipo1, equipo2 });
+    await incrementarAsistencia([...equipo1, ...equipo2]);
+    alert("Resultado publicado ✅");
+    mostrarHistorial();
+  } catch (e) {
+    // Los helpers ya muestran alert; aquí sólo evitamos doble mensaje de éxito.
+    console.error(e);
+  }
 }
 
 // ========== Historial ==========
