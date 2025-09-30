@@ -1,6 +1,5 @@
 // ======= GOOGLE APPS SCRIPT (Sheets) =======
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxW_7dViK9N91M3-6yWamNYGt9j2jJodr_MK54b2CdMuHZFu7JQKa5m8Qe0JavudXEJkg/exec";
-
 const GAS_JUGADORES_URL = GAS_URL; // mismo endpoint sirve jugadores + matches
 
 const asistenciaMap = new Map();
@@ -26,7 +25,7 @@ async function getJSON(url){
   }
 }
 
-// POST “text/plain” con timeout + verificación
+// POST “text/plain” con timeout + verificación de respuesta
 async function postPlain(payload){
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort("timeout"), NET_TIMEOUT_MS);
@@ -39,7 +38,7 @@ async function postPlain(payload){
     });
     const text = await res.text();
     if(!res.ok) throw new Error(`HTTP ${res.status}: ${text || "sin cuerpo"}`);
-    return text; // devolvemos texto para validar “Asistencia actualizada”, “Partido guardado…”, etc.
+    return text; // “Asistencia actualizada”, “Partido guardado en matches”, etc.
   } finally {
     clearTimeout(t);
   }
@@ -76,6 +75,65 @@ function toDMY(dateStr){
   const [y,m,d] = dateStr.split("-");
   if(!y || !m || !d) return dateStr; // por si ya viene “dd/MM/yyyy”
   return `${d.padStart(2,"0")}/${m.padStart(2,"0")}/${y}`;
+}
+
+// ---- formatear fecha del historial (ISO o dd/MM/yyyy -> dd-MM-yyyy) ----
+function formatFechaHistorial(fecha) {
+  if (!fecha) return "";
+  if (fecha instanceof Date) {
+    const dd = String(fecha.getDate()).padStart(2, "0");
+    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+    const yy = fecha.getFullYear();
+    return `${dd}-${mm}-${yy}`;
+  }
+  if (typeof fecha === "string") {
+    // ISO: 2025-09-29T22:00:00.000Z
+    if (/^\d{4}-\d{2}-\d{2}T/.test(fecha)) {
+      const d = new Date(fecha);
+      if (!isNaN(d)) return formatFechaHistorial(d);
+    }
+    // dd/MM/yyyy -> dd-MM-yyyy
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
+      const [dd, mm, yy] = fecha.split("/");
+      return `${dd}-${mm}-${yy}`;
+    }
+    return fecha;
+  }
+  return String(fecha);
+}
+
+/* ===========================================================
+   HELPERS DE LIMPIEZA / NORMALIZACIÓN DE JUGADORES (cliente)
+   =========================================================== */
+const _num  = v => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+const _trim = v => (v == null ? "" : String(v)).trim();
+
+/**
+ * Normaliza y filtra la lista de jugadores proveniente del GAS:
+ *  - Elimina filas sin nombre
+ *  - Elimina filas con todas las métricas a 0 (rellenos/guías)
+ *  - Asegura números válidos (evita NaN)
+ */
+function limpiarListaJugadores(rawArr) {
+  const arr = Array.isArray(rawArr) ? rawArr : [];
+  return arr
+    .map(j => ({
+      ...j,
+      nombre: _trim(j?.nombre),
+      ataque: _num(j?.ataque),
+      defensa: _num(j?.defensa),
+      tactica: _num(j?.tactica),
+      estamina: _num(j?.estamina),
+      puntualidad: Number.isFinite(Number(j?.puntualidad)) ? _num(j.puntualidad) : 3,
+      grupo: j?.grupo || (/^visitor\b/i.test(_trim(j?.nombre)) ? "visitor" : "habitual")
+    }))
+    .filter(j =>
+      j.nombre !== "" &&
+      !(j.ataque === 0 && j.defensa === 0 && j.tactica === 0 && j.estamina === 0)
+    );
 }
 
 /* ======================= Asistencias ======================= */
@@ -121,45 +179,6 @@ async function guardarPartido(partido) {
   }
 }
 
-// ---- formatear fecha del historial (ISO o dd/MM/yyyy -> dd-MM-yyyy) ----
-function formatFechaHistorial(fecha) {
-  if (!fecha) return "";
-  if (fecha instanceof Date) {
-    const dd = String(fecha.getDate()).padStart(2, "0");
-    const mm = String(fecha.getMonth() + 1).padStart(2, "0");
-    const yy = fecha.getFullYear();
-    return `${dd}-${mm}-${yy}`;
-  }
-  if (typeof fecha === "string") {
-    // ISO: 2025-09-29T22:00:00.000Z
-    if (/^\d{4}-\d{2}-\d{2}T/.test(fecha)) {
-      const d = new Date(fecha);
-      if (!isNaN(d)) return formatFechaHistorial(d);
-    }
-    // dd/MM/yyyy -> dd-MM-yyyy
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
-      const [dd, mm, yy] = fecha.split("/");
-      return `${dd}-${mm}-${yy}`;
-    }
-    return fecha;
-  }
-  return String(fecha);
-}
-
-
-async function guardarPartido(partido) {
-  try {
-    const resp = await postWithRetry(
-      { type: "saveMatch", match: partido },
-      "partido guardado"
-    );
-    // opcional: console.log(resp);
-  } catch (e) {
-    alert("Error al guardar el partido: " + e.message);
-    throw e;
-  }
-}
-
 /* ====================== DATOS JUGADORES ====================== */
 let jugadores = [];
 let jugadoresOriginal = [];
@@ -167,9 +186,16 @@ let jugadoresOrdenados = [];
 
 async function cargarJugadores() {
   try {
-    const res = await fetch(GAS_JUGADORES_URL);
-    jugadores = await res.json();
+    // Anti-cache para obtener la versión más reciente del GAS
+    const res = await fetch(GAS_JUGADORES_URL + "?ts=" + Date.now());
+    const data = await res.json();
+
+    // ⛳ Saneamos y descartamos filas vacías/0s
+    jugadores = limpiarListaJugadores(data);
+
+    // Puntualidad por defecto
     jugadores = jugadores.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
+
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
 
@@ -183,8 +209,8 @@ async function cargarJugadores() {
 }
 
 /* ====== util de medias/colores/estrellas ====== */
-function calcularMedia(j) { return (j.ataque*0.3 + j.defensa*0.3 + j.tactica*0.2 + j.estamina*0.2); }
-function limitar(valor) { return Math.max(0, Math.min(5, valor)); }
+function calcularMedia(j) { return (_num(j.ataque)*0.3 + _num(j.defensa)*0.3 + _num(j.tactica)*0.2 + _num(j.estamina)*0.2); }
+function limitar(valor) { return Math.max(0, Math.min(5, _num(valor))); }
 function calcularFifa(j) { return Math.round(limitar(calcularMedia(j)) * 20); }
 
 function colorClase(valor) {
@@ -233,7 +259,7 @@ function ordenarPor(columna) {
       const valor = (j, col) => {
         if (col === "media") return calcularMedia(j);
         if (col === "nombre") return j[col].toLowerCase();
-        return parseFloat(j[col]);
+        return _num(j[col]);
       };
       const valA = valor(a, columna), valB = valor(b, columna);
       return valA < valB ? -1 * dir : valA > valB ? 1 * dir : 0;
@@ -254,11 +280,11 @@ function mostrarTabla() {
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const fila = `<tr>
       <td>${j.nombre}</td>
-      <td><span class="${colorClase(j.ataque)}">${Number(j.ataque).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.defensa)}">${Number(j.defensa).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.tactica)}">${Number(j.tactica).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.estamina)}">${Number(j.estamina).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.puntualidad)}">${j.puntualidad ?? '-'}</span></td>
+      <td><span class="${colorClase(j.ataque)}">${_num(j.ataque).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.defensa)}">${_num(j.defensa).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
+      <td><span class="${colorClase(j.puntualidad)}">${_num(j.puntualidad)}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
       <td class="stars">${estrellasHTML}</td>
@@ -338,12 +364,13 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     if (!equipo || !equipo.length) return;
 
     const sum = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
-    const atk  = (sum(equipo, j => j.ataque)  / equipo.length).toFixed(2);
-    const def  = (sum(equipo, j => j.defensa) / equipo.length).toFixed(2);
-    const tact = (sum(equipo, j => j.tactica) / equipo.length).toFixed(2);
-    const sta  = (sum(equipo, j => j.estamina) / equipo.length).toFixed(2);
+    const atk  = (sum(equipo, j => _num(j.ataque))  / equipo.length).toFixed(2);
+    const def  = (sum(equipo, j => _num(j.defensa)) / equipo.length).toFixed(2);
+    const tact = (sum(equipo, j => _num(j.tactica)) / equipo.length).toFixed(2);
+    const sta  = (sum(equipo, j => _num(j.estamina)) / equipo.length).toFixed(2);
     const fifaAvg = Math.round(sum(equipo, j => calcularFifa(j)) / equipo.length);
 
+    // capitán = mayor FIFA
     const capitan = equipo.reduce((best, p) => (calcularFifa(p) > calcularFifa(best) ? p : best), equipo[0]);
 
     let titulo = "";
@@ -578,7 +605,6 @@ async function mostrarHistorial() {
   }
 }
 
-
 /* ===========================================================
    ALGORTIMO EQUILIBRADO PARA PARTIDO (2 EQUIPOS)
    Pesos: ATK 30%, DEF 30%, TACT 20%, STA 20%
@@ -711,10 +737,10 @@ function calcTeamStats(team){
     return { atk:0, def:0, tact:0, sta:0, fifaAvg:0, score:0, gk:0 };
   }
   const sum = (f)=> team.reduce((s,x)=> s + f(x), 0);
-  const atk  = sum(p=>p.ataque)  / team.length;
-  const def  = sum(p=>p.defensa) / team.length;
-  const tact = sum(p=>p.tactica) / team.length;
-  const sta  = sum(p=>p.estamina)/ team.length;
+  const atk  = sum(p=>_num(p.ataque))  / team.length;
+  const def  = sum(p=>_num(p.defensa)) / team.length;
+  const tact = sum(p=>_num(p.tactica)) / team.length;
+  const sta  = sum(p=>_num(p.estamina))/ team.length;
   const fifaAvg = Math.round(sum(p=>calcularFifa(p)) / team.length);
   const score   = teamScore(team) / team.length;
   const gk      = team.some(p => /GK/i.test(p.nombre)) ? 1 : 0;
@@ -825,7 +851,7 @@ function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[Number(cb.value)]);
 
-  if (!(seleccionados.length >= 20 && seleccionados <= 24)) {
+  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
     alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
     return;
   }
