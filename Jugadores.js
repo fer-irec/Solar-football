@@ -60,10 +60,21 @@ let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
 
 function depurarJugadores(list) {
-  const esNombreInvalido = (n) =>
-    !n || !String(n).trim() ||
-    /^(-{2,}|SEPARADOR|HABITUALES?|VISITORS?|HALL)/i.test(String(n).trim());
-  return (Array.isArray(list) ? list : []).filter(j => j && !esNombreInvalido(j.nombre));
+  const INVALID = new Set(["habituales", "visitors", "hall", "hall of fame"]);
+  return (Array.isArray(list) ? list : [])
+    .filter(j => {
+      const n = (j && j.nombre ? String(j.nombre) : "").trim();
+      if (!n) return false;
+      const low = n.toLowerCase();
+      if (/^-+$/.test(low)) return false;      // líneas de guiones
+      if (INVALID.has(low)) return false;      // títulos EXACTOS
+      return true;
+    })
+    .map(j => {
+      // salvaguarda: si no trae grupo y empieza por "Visitor", márcalo como visitor
+      if (!j.grupo && /^visitor\b/i.test(String(j.nombre))) j.grupo = "visitor";
+      return j;
+    });
 }
 
 
@@ -72,7 +83,7 @@ async function cargarJugadores() {
     const res = await fetch(GAS_JUGADORES_URL);
     let data = await res.json();
 
-    // ← limpieza extra en cliente
+    // 👇 limpieza + salvaguarda de grupo para "Visitor ..."
     data = depurarJugadores(data);
 
     jugadores = data.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
@@ -80,13 +91,14 @@ async function cargarJugadores() {
     jugadoresOrdenados = [...jugadores];
 
     mostrarTabla();
-    renderFormularios();     // Partido + Torneo
-    initManualTab();         // Manual
-    renderAsistenciaRes();   // Asistencia y Resultado
+    renderFormularios();
+    initManualTab();
+    renderAsistenciaRes();
   } catch (err) {
     console.error("Error cargando jugadores:", err);
   }
 }
+
 
 
 // ====== util de medias/colores/estrellas ======
