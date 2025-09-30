@@ -234,7 +234,7 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     if (modo === "torneo") {
       titulo = `<span class="circle ${colores[idx % colores.length]}"></span> Equipo ${nombresColores[idx % nombresColores.length]}`;
     } else {
-      // partido/manual
+      // partido o manual
       if (idx === 0) {
         titulo = `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`;
       } else {
@@ -576,7 +576,155 @@ function generarEquipos() {
   }
 }
 
-// ========== Torneo (4 equipos) ==========
+/* ===========================================================
+   TORNEO (4 EQUIPOS) – semilla snake + optimización
+   =========================================================== */
+
+// Helpers para balancear 4 equipos
+function std(arr) {
+  if (!arr.length) return 0;
+  const m = arr.reduce((s,x)=>s+x,0)/arr.length;
+  const v = arr.reduce((s,x)=> s + (x-m)*(x-m), 0) / arr.length;
+  return Math.sqrt(v);
+}
+
+function calcTeamStats(team){
+  if (!team.length) {
+    return { atk:0, def:0, tact:0, sta:0, fifaAvg:0, score:0, gk:0 };
+  }
+  const sum = (f)=> team.reduce((s,x)=> s + f(x), 0);
+  const atk  = sum(p=>p.ataque)  / team.length;
+  const def  = sum(p=>p.defensa) / team.length;
+  const tact = sum(p=>p.tactica) / team.length;
+  const sta  = sum(p=>p.estamina)/ team.length;
+  const fifaAvg = Math.round(sum(p=>calcularFifa(p)) / team.length);
+  const score   = teamScore(team) / team.length;  // normalizamos por tamaño
+  const gk      = team.some(p => /GK/i.test(p.nombre)) ? 1 : 0;
+
+  return {
+    atk:+atk.toFixed(2), def:+def.toFixed(2),
+    tact:+tact.toFixed(2), sta:+sta.toFixed(2),
+    fifaAvg, score, gk
+  };
+}
+
+function desiredSizes(total, k=4){
+  const base = Math.floor(total / k);
+  const extra = total % k;
+  // p.ej. 22 -> [6,6,5,5]
+  return Array.from({length:k}, (_,i)=> base + (i < extra ? 1 : 0));
+}
+
+// Primer reparto: snake 1→4, 4→1 por media
+function seedSnake(players, k, targetSizes){
+  const sorted = [...players].sort((a,b)=> calcularMedia(b) - calcularMedia(a));
+  const teams = Array.from({length:k}, ()=>[]);
+  let dir = 1, i = 0;
+
+  for (const p of sorted){
+    // busca el siguiente equipo con hueco
+    let guard = 0;
+    while (teams[i].length >= targetSizes[i] && guard < 2*k) {
+      i += dir;
+      if (i === k) { i = k-1; dir = -1; }
+      if (i < 0)   { i = 0;   dir =  1; }
+      guard++;
+    }
+    teams[i].push(p);
+
+    // avanza serpiente
+    i += dir;
+    if (i === k) { i = k-1; dir = -1; }
+    if (i < 0)   { i = 0;   dir =  1; }
+  }
+  return teams;
+}
+
+// Función costo multi-criterio
+function costeEquipos(equipos, targetSizes, totalGK){
+  // penalty por tamaños (alto para respetarlos)
+  let sizePen = 0;
+  for (let i=0;i<equipos.length;i++){
+    const diff = Math.abs(equipos[i].length - targetSizes[i]);
+    sizePen += diff * diff * 3;
+  }
+
+  const stats = equipos.map(calcTeamStats);
+
+  const varScore = std(stats.map(s=>s.score)); // objetivo principal
+  const compStd  = 0.3*std(stats.map(s=>s.atk))
+                 + 0.3*std(stats.map(s=>s.def))
+                 + 0.2*std(stats.map(s=>s.tact))
+                 + 0.2*std(stats.map(s=>s.sta));
+  const fifaStd  = std(stats.map(s=>s.fifaAvg)); // 0..100
+
+  // GK: si hay suficientes globalmente, penaliza equipos sin GK
+  let gkPen = 0;
+  if (totalGK >= equipos.length) {
+    gkPen = equipos.reduce((acc,t)=> acc + (calcTeamStats(t).gk ? 0 : 1), 0) * 0.5;
+  }
+
+  // Pesos del objetivo
+  const wVar=1.0, wComp=0.55, wFifa=0.02, wSize=10, wGK=0.35;
+
+  return wVar*varScore + wComp*compStd + wFifa*fifaStd + wSize*sizePen + wGK*gkPen;
+}
+
+// Optimización (annealing + swaps/moves)
+function optimizeEquipos(seed, targetSizes, iters=4800){
+  let teams = seed.map(t=>t.slice());
+  const totalGK = seed.flat().filter(p => /GK/i.test(p.nombre)).length;
+
+  let best = teams.map(t=>t.slice());
+  let bestCost = costeEquipos(teams, targetSizes, totalGK);
+  let currCost = bestCost;
+
+  const startT = 0.9, endT = 0.02;
+
+  for (let step=0; step<iters; step++){
+    const temp = startT + (endT - startT) * (step/iters);
+
+    let i = Math.floor(Math.random()*teams.length);
+    let j = Math.floor(Math.random()*teams.length);
+    if (i === j) j = (j+1) % teams.length;
+
+    // ¿conviene mover 1-->1 (swap) o 1-->0 (move) para respetar tamaños?
+    const moveIJ = (teams[i].length > targetSizes[i]) && (teams[j].length < targetSizes[j]);
+    const moveJI = (teams[j].length > targetSizes[j]) && (teams[i].length < targetSizes[i]);
+
+    const cand = teams.map(t=>t.slice());
+
+    if (moveIJ || moveJI) {
+      // mover 1 jugador del que sobra al que falta
+      const from = moveIJ ? i : j;
+      const to   = moveIJ ? j : i;
+      const pick = Math.floor(Math.random()*cand[from].length);
+      const p = cand[from].splice(pick,1)[0];
+      cand[to].push(p);
+    } else {
+      // swap 1x1
+      const ia = Math.floor(Math.random()*cand[i].length);
+      const ib = Math.floor(Math.random()*cand[j].length);
+      const tmp = cand[i][ia];
+      cand[i][ia] = cand[j][ib];
+      cand[j][ib] = tmp;
+    }
+
+    const newCost = costeEquipos(cand, targetSizes, totalGK);
+    const delta = newCost - currCost;
+
+    if (delta < 0 || Math.random() < Math.exp(-delta / Math.max(1e-6, temp))) {
+      teams = cand;
+      currCost = newCost;
+      if (newCost < bestCost) {
+        bestCost = newCost;
+        best = teams.map(t=>t.slice());
+      }
+    }
+  }
+  return best;
+}
+
 function generarEquiposTorneo() {
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[Number(cb.value)]);
@@ -586,13 +734,16 @@ function generarEquiposTorneo() {
     return;
   }
 
-  // división simple en 4 grupos (puedes mejorar con otro heurístico si quieres)
-  const equipos = [];
-  const tam = Math.ceil(seleccionados.length / 4);
-  for (let i = 0; i < 4; i++) {
-    equipos.push(seleccionados.slice(i*tam, (i+1)*tam));
-  }
+  // tamaños objetivo (p.ej. 22 -> [6,6,5,5])
+  const target = desiredSizes(seleccionados.length, 4);
 
+  // Semilla: snake por media
+  const seed = seedSnake(seleccionados, 4, target);
+
+  // Optimización (swaps/movimientos) con función de coste multi-criterio
+  const equipos = optimizeEquipos(seed, target, 4800);
+
+  // Mostrar con el estilo habitual
   mostrarEquipos(equipos, "resultado-torneo", "torneo");
 }
 
