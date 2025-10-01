@@ -87,12 +87,10 @@ function formatFechaHistorial(fecha) {
     return `${dd}-${mm}-${yy}`;
   }
   if (typeof fecha === "string") {
-    // ISO: 2025-09-29T22:00:00.000Z
     if (/^\d{4}-\d{2}-\d{2}T/.test(fecha)) {
       const d = new Date(fecha);
       if (!isNaN(d)) return formatFechaHistorial(d);
     }
-    // dd/MM/yyyy -> dd-MM-yyyy
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(fecha)) {
       const [dd, mm, yy] = fecha.split("/");
       return `${dd}-${mm}-${yy}`;
@@ -127,6 +125,7 @@ function limpiarListaJugadores(rawArr) {
       defensa: _num(j?.defensa),
       tactica: _num(j?.tactica),
       estamina: _num(j?.estamina),
+      asistencia: _num(j?.asistencia),     // ⟵ nos aseguramos que venga como número
       puntualidad: Number.isFinite(Number(j?.puntualidad)) ? _num(j.puntualidad) : 3,
       grupo: j?.grupo || (/^visitor\b/i.test(_trim(j?.nombre)) ? "visitor" : "habitual")
     }))
@@ -284,6 +283,7 @@ function mostrarTabla() {
       <td><span class="${colorClase(j.defensa)}">${_num(j.defensa).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
+      <td><span class="fw-semibold">${_num(j.asistencia)}</span></td>     <!-- ⟵ NUEVA COLUMNA -->
       <td><span class="${colorClase(j.puntualidad)}">${_num(j.puntualidad)}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
@@ -370,18 +370,15 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     const sta  = (sum(equipo, j => _num(j.estamina)) / equipo.length).toFixed(2);
     const fifaAvg = Math.round(sum(equipo, j => calcularFifa(j)) / equipo.length);
 
-    // capitán = mayor FIFA
     const capitan = equipo.reduce((best, p) => (calcularFifa(p) > calcularFifa(best) ? p : best), equipo[0]);
 
     let titulo = "";
     if (modo === "torneo") {
       titulo = `<span class="circle ${colores[idx % colores.length]}"></span> Equipo ${nombresColores[idx % nombresColores.length]}`;
     } else {
-      if (idx === 0) {
-        titulo = `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`;
-      } else {
-        titulo = `<span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2`;
-      }
+      titulo = (idx === 0)
+        ? `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`
+        : `<span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2`;
     }
 
     const lista = equipo.map(j =>
@@ -868,7 +865,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarJugadores();
   await mostrarHistorial();
 
-  const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "puntualidad", "media", "fifa"];
+  // ⟵ Actualizamos el mapeo de columnas para incluir "asistencia"
+  const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "asistencia", "puntualidad", "media", "fifa"];
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
     if (columna) {
