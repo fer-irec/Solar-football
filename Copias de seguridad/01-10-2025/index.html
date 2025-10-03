@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SOLAR football</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .valor-rojo { color: #d93025; font-weight: bold; }
+    .valor-naranja { color: #f57c00; font-weight: bold; }
+    .valor-amarillo { color: #fbc02d; font-weight: bold; }
+    .valor-verde-claro { color: #7cb342; font-weight: bold; }
+    .valor-verde-oscuro { color: #72a8da; font-weight: bold; }
+    .fifa-stars { white-space: nowrap; display: inline-block; min-width: 80px; }
+    .fifa-stars i { color: gold; margin: 0 1px; }
+
+    /* Círculos de colores */
+    .circle { width: 15px; height: 15px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+    .azul-circle { background-color: #007bff; }
+    .rojo-circle { background-color: #dc3545; }
+    .verde-circle { background-color: #28a745; }
+    .blanco-circle { background-color: #f8f9fa; border: 1px solid #ccc; }
+    .naranja-circle { background-color: #fd7e14; }
+
+    th.sortable::after { content: " ⇅"; font-weight: normal; opacity: 0.5; }
+    th.orden-asc::after { content: " ↑"; font-weight: bold; opacity: 1; }
+    th.orden-desc::after { content: " ↓"; font-weight: bold; opacity: 1; }
+
+    .player-block { border-radius: 12px; padding: 14px; margin-bottom: 16px; border: 2px solid transparent; }
+    .player-block.habituales { background:#eef5ff; border-color:#cfe2ff; }
+    .player-block.visitors   { background:#fff8e6; border-color:#ffe2a8; }
+    .player-block.hall       { background:#f3ecff; border-color:#dbc9ff; }
+
+    .player-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem 1rem; }
+    .player-grid .form-check-label { font-size: 1.05rem; font-weight: 500; }
+    @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .equipo-box { border-radius: 14px; padding: 16px; background: #f9f9f9; border: 2px solid #ddd; margin-bottom: 1rem; }
+    .equipo-box h4, .equipo-box h5 { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="text-center mb-3">
+    <img src="logo-solarfc.jpg" alt="Logo Solar Football" class="img-fluid" style="max-height: 200px;">
+  </div>
+  <h1 class="text-center mb-2">SOLAR football</h1>
+  <p class="text-center text-muted" id="fecha-modificacion">Última actualización: <span></span></p>
+
+  <ul class="nav nav-tabs mb-4" id="tabs">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#jugadores">Jugadores</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#convocatoria">Partido</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#torneo">Torneo</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#manual">Manual</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#asistencia">Asistencia y Resultado</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#consejos">Consejos</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#fotos">Fotos</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#historial">Historial</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Jugadores -->
+    <div class="tab-pane fade show active" id="jugadores">
+      <table id="tabla-jugadores" class="table table-bordered text-center">
+        <thead class="table-dark">
+          <tr>
+            <th class="sortable">Jugador</th>
+            <th class="sortable">Ataque</th>
+            <th class="sortable">Defensa</th>
+            <th class="sortable">Táctica</th>
+            <th class="sortable">Estamina</th>
+            <th class="sortable">Asistencia</th>
+            <th class="sortable">Puntualidad</th>
+            <th class="sortable">Media</th>
+            <th class="sortable">FIFA</th>
+            <th>Stars</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Partido -->
+    <div class="tab-pane fade" id="convocatoria">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Crear Equipos para Partido</h3>
+        <p class="text-center text-muted" id="contador-partido">Seleccionados: 0</p>
+        <form id="form-asistencia" class="mb-3"></form>
+        <div class="text-center">
+          <button class="btn btn-primary mb-4" id="generar-equipos" disabled>Generar Equipos</button>
+        </div>
+        <div id="resultado-equipos" class="row mt-4 mb-4"></div>
+      </div>
+    </div>
+
+    <!-- Torneo -->
+    <div class="tab-pane fade" id="torneo">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
+        <p class="text-center text-muted" id="contador-torneo">Seleccionados: 0</p>
+        <form id="form-torneo" class="mb-3"></form>
+        <div class="text-center">
+          <button id="generar-torneo" class="btn btn-primary mt-3" disabled>Generar Equipos Torneo</button>
+        </div>
+        <div id="resultado-torneo" class="row mt-4 mb-4"></div>
+      </div>
+    </div>
+
+    <!-- Manual -->
+    <div class="tab-pane fade" id="manual">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Configurar equipos manualmente</h3>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="equipo-box" style="background:#eef5ff;border:2px solid #cfe2ff;">
+              <h5><span class="circle azul-circle"></span> Equipo 1</h5>
+              <p class="text-muted" id="contador-manual-1">Seleccionados: 0</p>
+              <form id="form-manual-1" class="mb-3"></form>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="equipo-box" style="background:#ffe2e6;border:2px solid #f5a6a6;">
+              <h5><span class="circle rojo-circle"></span> Equipo 2</h5>
+              <p class="text-muted" id="contador-manual-2">Seleccionados: 0</p>
+              <form id="form-manual-2" class="mb-3"></form>
+            </div>
+          </div>
+        </div>
+        <div class="text-center">
+          <button class="btn btn-primary mt-3" id="generar-manual">Generar tabla de puntuaciones</button>
+        </div>
+        <div id="resultado-manual" class="row mt-4 mb-4"></div>
+      </div>
+    </div>
+
+    <!-- Asistencia y Resultado -->
+    <div class="tab-pane fade" id="asistencia">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Publicar Asistencia y Resultado</h3>
+        <!-- Importante: contenedor DIV (no form) para que el JS pinte las dos columnas -->
+        <div id="form-asistencia-res" class="mb-3"></div>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="match-date" class="form-label">Fecha</label>
+            <input type="date" id="match-date" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label for="goles1" class="form-label">Goles Equipo 1</label>
+            <input type="number" id="goles1" class="form-control" min="0">
+          </div>
+          <div class="col-md-3">
+            <label for="goles2" class="form-label">Goles Equipo 2</label>
+            <input type="number" id="goles2" class="form-control" min="0">
+          </div>
+        </div>
+        <div class="text-center">
+          <button id="publicar-resultado" class="btn btn-success mt-3">Publicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consejos -->
+    <div class="tab-pane fade" id="consejos">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Consejos para jugar en Solar FC</h3>
+        <div class="ratio ratio-16x9">
+          <video controls>
+            <source src="SolarFC_tip.mp4" type="video/mp4">
+            Tu navegador no soporta la reproducción de video.
+          </video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fotos -->
+    <div class="tab-pane fade" id="fotos">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Ganadores 5º torneo</h3>
+        <div class="row justify-content-center">
+          <div class="col-md-6 mb-4">
+            <img src="winner-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Ganador 5º Torneo">
+            <p class="text-center mt-2">GANADORES</p>
+          </div>
+          <div class="col-md-6 mb-4">
+            <img src="players-5th-tournament.jpg" class="img-fluid rounded shadow-sm" alt="Jugadores 5º Torneo">
+            <p class="text-center mt-2">JUGADORES</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div class="tab-pane fade" id="historial">
+      <div class="container mt-4">
+        <h3 class="text-center mb-4">Historial de Partidos</h3>
+        <div id="lista-historial" class="row row-cols-1 row-cols-md-2 g-4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="Jugadores.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var fecha = new Date(document.lastModified);
+    var fechaSpan = document.querySelector('#fecha-modificacion span');
+    if (fechaSpan) {
+      fechaSpan.textContent = fecha.toLocaleDateString('es-ES', {
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+  });
+</script>
+</body>
+</html>
