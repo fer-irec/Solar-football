@@ -645,80 +645,167 @@ function scorePonderado(a, b) {
   return 0.3*dAtk + 0.3*dDef + 0.2*dTact + 0.2*dSta;
 }
 
+function popcount(x){
+  let c = 0;
+  while (x) { x &= (x - 1); c++; }
+  return c;
+}
+
+function avg(arr, f){
+  return arr.reduce((s,x)=> s + f(x), 0) / (arr.length || 1);
+}
+
+function topKAvgMedia(team, k=5){
+  const sorted = [...team].sort((a,b)=> (b.media ?? calcularMedia(b)) - (a.media ?? calcularMedia(a)));
+  const take = sorted.slice(0, Math.min(k, sorted.length));
+  return avg(take, p => p.media ?? calcularMedia(p));
+}
+
+function countAbsStars(team){
+  return team.reduce((c,p)=> c + ((p.media ?? calcularMedia(p)) >= STAR_CUTOFF ? 1 : 0), 0);
+}
+function countAbsLows(team){
+  return team.reduce((c,p)=> c + ((p.media ?? calcularMedia(p)) <= LOW_CUTOFF ? 1 : 0), 0);
+}
+
+function buildTierMap12(players){
+  // tiers relativos: top4 / mid4 / bottom4
+  const sorted = [...players].sort((a,b)=> b.media - a.media);
+  const tierByName = new Map();
+  sorted.forEach((p, idx) => {
+    const tier = (idx < 4) ? "bueno" : (idx < 8) ? "medio" : "malo";
+    tierByName.set(p.nombre, tier);
+  });
+  return tierByName;
+}
+
+function countTier(team, tierByName, tier){
+  return team.reduce((c,p)=> c + (tierByName.get(p.nombre) === tier ? 1 : 0), 0);
+}
+
+function teamCompStats(team){
+  return {
+    atk:  avg(team, p => _num(p.ataque)),
+    def:  avg(team, p => _num(p.defensa)),
+    tact: avg(team, p => _num(p.tactica)),
+    sta:  avg(team, p => _num(p.estamina)),
+    media: avg(team, p => p.media),
+    top5: topKAvgMedia(team, 5),
+    gk: team.some(p => /GK/i.test(p.nombre)) ? 1 : 0
+  };
+}
+
 function generarEquipos() {
   try {
     const seleccionados = Array.from(document.querySelectorAll(".jugador-checkbox:checked"))
       .map(cb => jugadores[Number(cb.value)])
       .map(j => ({ ...j, media: calcularMedia(j), fifa: calcularFifa(j) }));
 
-    if (seleccionados.length < 10 || seleccionados.length > 12) {
-      throw new Error("Selecciona entre 10 y 12 jugadores para formar 2 equipos.");
+    if (seleccionados.length !== 12) {
+      throw new Error("Para futsal equilibrado con cambios, selecciona exactamente 12 (6 vs 6).");
     }
 
-    const intentos = 1500;
-    let mejorVar = Infinity;
-    let mejor = { eq1: [], eq2: [] };
+    // Tier relativo (buenos/medios/malos)
+    const tierByName = buildTierMap12(seleccionados);
 
-    const varianzaScore = (a, b) => {
-      const sA = teamScore(a);
-      const sB = teamScore(b);
-      const m = (sA + sB) / 2;
-      return ((sA - m) ** 2 + (sB - m) ** 2) / 2;
-    };
+    // Para reforzar aún más tu idea de “condiciones iguales”:
+    // balancea también estrellas/flojos ABSOLUTOS si existen (por tus cutoffs)
+    const totalStarsAbs = countAbsStars(seleccionados);
+    const totalLowsAbs  = countAbsLows(seleccionados);
+    const allowStarDiff = totalStarsAbs % 2; // 0 si par, 1 si impar
+    const allowLowDiff  = totalLowsAbs  % 2;
 
-    for (let i = 0; i < intentos; i++) {
-      const mezcla = [...seleccionados].sort(() => Math.random() - 0.5);
-      const mitad = Math.floor(seleccionados.length / 2);
-      let A = mezcla.slice(0, mitad);
-      let B = mezcla.slice(mitad);
+    const n = 12;
+    const k = 6;
 
-      // búsqueda local
-      let bestVar = varianzaScore(A, B);
-      const itersLocal = 1000;
-      for (let k = 0; k < itersLocal; k++) {
-        const ia = Math.floor(Math.random() * A.length);
-        const ib = Math.floor(Math.random() * B.length);
-        const candA = A.slice(), candB = B.slice();
-        [candA[ia], candB[ib]] = [candB[ib], candA[ia]];
-        const v = varianzaScore(candA, candB);
-        if (v < bestVar) { A = candA; B = candB; bestVar = v; }
+    let bestCost = Infinity;
+    let bestA = null, bestB = null;
+
+    const sq = x => x*x;
+
+    for (let mask = 0; mask < (1<<n); mask++) {
+      // evita duplicado espejo: fuerza que el jugador 0 esté en A
+      if ((mask & 1) === 0) continue;
+      if (popcount(mask) !== k) continue;
+
+      const A = [], B = [];
+      for (let i=0;i<n;i++){
+        if ((mask>>i)&1) A.push(seleccionados[i]);
+        else B.push(seleccionados[i]);
       }
 
-      // desempates por componentes y fifa promedio
-      const avg = (arr, f) => arr.reduce((s, x) => s + f(x), 0) / arr.length;
-      const compSpread = scorePonderado(
-        { atk: avg(A, j=>j.ataque), def: avg(A, j=>j.defensa), tact: avg(A, j=>j.tactica), sta: avg(A, j=>j.estamina) },
-        { atk: avg(B, j=>j.ataque), def: avg(B, j=>j.defensa), tact: avg(B, j=>j.tactica), sta: avg(B, j=>j.estamina) }
-      );
-      const fifaAvgDiff = Math.abs(
-        (A.reduce((s, j) => s + j.fifa, 0) / A.length) -
-        (B.reduce((s, j) => s + j.fifa, 0) / B.length)
-      );
+      // ===== Restricción DURA: 2-2-2 por tiers (buenos/medios/malos) =====
+      if (countTier(A, tierByName, "bueno") !== 2) continue;
+      if (countTier(A, tierByName, "medio") !== 2) continue;
+      if (countTier(A, tierByName, "malo")  !== 2) continue;
+      // (B automáticamente quedará 2-2-2 también)
 
-      const mejorCandidato =
-        (bestVar < mejorVar) ||
-        (bestVar === mejorVar && compSpread < (mejor.compSpread ?? Infinity)) ||
-        (bestVar === mejorVar && compSpread === (mejor.compSpread ?? Infinity) && fifaAvgDiff < (mejor.fifaAvgDiff ?? Infinity));
+      // ===== Restricción (muy importante): balance de estrellas/flojos ABSOLUTOS si aplica =====
+      // Si tus cutoffs no detectan nada, esto no afecta.
+      const starDiff = Math.abs(countAbsStars(A) - countAbsStars(B));
+      const lowDiff  = Math.abs(countAbsLows(A)  - countAbsLows(B));
+      if (starDiff > allowStarDiff) continue;
+      if (lowDiff  > allowLowDiff)  continue;
 
-      if (mejorCandidato) {
-        mejorVar = bestVar;
-        mejor = { eq1: A, eq2: B, compSpread, fifaAvgDiff };
+      // ===== GK (si hay 2+ GK, uno por equipo) =====
+      const totalGK = seleccionados.filter(p => /GK/i.test(p.nombre)).length;
+      if (totalGK >= 2) {
+        const gkA = A.some(p=>/GK/i.test(p.nombre));
+        const gkB = B.some(p=>/GK/i.test(p.nombre));
+        if (!(gkA && gkB)) continue;
+      }
+
+      // ===== Coste (ya con condiciones iguales aseguradas, afinamos “sensación futsal”) =====
+      const a = teamCompStats(A);
+      const b = teamCompStats(B);
+
+      // pesos: prioriza mucho “top5” (quinteto) y luego media + componentes
+      const cost =
+        8.0 * sq(a.top5 - b.top5) +
+        4.0 * sq(a.media - b.media) +
+        1.4 * sq(a.atk  - b.atk) +
+        1.4 * sq(a.def  - b.def) +
+        1.0 * sq(a.tact - b.tact) +
+        1.0 * sq(a.sta  - b.sta) +
+        6.0 * sq(starDiff) +
+        6.0 * sq(lowDiff);
+
+      if (cost < bestCost) {
+        bestCost = cost;
+        bestA = A; bestB = B;
       }
     }
 
-    const cont = document.getElementById("resultado-equipos");
-    if (!mejor.eq1.length || !mejor.eq2.length || !cont) {
-      cont.innerHTML = `<div class="alert alert-danger">No se pudieron formar equipos equilibrados.</div>`;
-      return;
+    if (!bestA || !bestB) {
+      throw new Error("No encontré reparto que cumpla 2-2-2 + restricciones. Revisa cutoffs o nombres GK.");
     }
 
-    // Presentación
-    mostrarEquipos([mejor.eq1, mejor.eq2], "resultado-equipos", "partido");
+    console.log("Best cost:", bestCost);
+    console.log("Team A tiers:", {
+      buenos: countTier(bestA, tierByName, "bueno"),
+      medios: countTier(bestA, tierByName, "medio"),
+      malos:  countTier(bestA, tierByName, "malo"),
+      starsAbs: countAbsStars(bestA),
+      lowsAbs:  countAbsLows(bestA),
+      top5: topKAvgMedia(bestA, 5).toFixed(2),
+    });
+    console.log("Team B tiers:", {
+      buenos: countTier(bestB, tierByName, "bueno"),
+      medios: countTier(bestB, tierByName, "medio"),
+      malos:  countTier(bestB, tierByName, "malo"),
+      starsAbs: countAbsStars(bestB),
+      lowsAbs:  countAbsLows(bestB),
+      top5: topKAvgMedia(bestB, 5).toFixed(2),
+    });
+
+    mostrarEquipos([bestA, bestB], "resultado-equipos", "partido");
+
   } catch (error) {
     const cont = document.getElementById("resultado-equipos");
     if (cont) cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
   }
 }
+
 
 /* ===========================================================
    TORNEO (4 EQUIPOS) – semilla snake + optimización
