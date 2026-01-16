@@ -129,17 +129,25 @@ function limpiarListaJugadores(rawArr) {
       puntualidad: Number.isFinite(Number(j?.puntualidad)) ? _num(j.puntualidad) : 3,
       grupo: j?.grupo || (/^visitor\b/i.test(_trim(j?.nombre)) ? "visitor" : "habitual")
     }))
-    .filter(j =>
-      j.nombre !== "" &&
-      !(j.ataque === 0 && j.defensa === 0 && j.tactica === 0 && j.estamina === 0)
-    );
+    .filter(j => {
+      if (j.nombre === "") return false;
+
+      const sinStats = (j.ataque === 0 && j.defensa === 0 && j.tactica === 0 && j.estamina === 0);
+
+      // 👇 No filtres visitors ni hall aunque no tengan stats
+      if (j.grupo === "visitor" || j.grupo === "hall") return true;
+
+      // Para habituales sí: quita filas basura sin stats
+      return !sinStats;
+    });
+
 }
 
 /* ======================= Asistencias ======================= */
 async function cargarAsistencias() {
   try {
     asistenciaMap.clear();
-    const data = await getJSON(GAS_URL);
+    const data = await getJSON(`${GAS_URL}?type=attendance&ts=${Date.now()}`);
     if (data && !Array.isArray(data)) {
       Object.keys(data).forEach(n => asistenciaMap.set(n, data[n] || 0));
     }
