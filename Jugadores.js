@@ -343,9 +343,6 @@ function renderFormularios() {
   document.querySelectorAll(".jugador-torneo-checkbox").forEach(cb => {
     cb.addEventListener("change", actualizarContadorTorneo);
   });
-  // inicializar contadores (incluye rango dinámico en torneo)
-  actualizarContadorPartido();
-  actualizarContadorTorneo();
 }
 
 /* ========== Contadores ========== */
@@ -950,15 +947,14 @@ function optimizeEquipos(seed, targetSizes, iters=4800){
 }
 function generarEquiposTorneo() {
   const k = parseInt(document.getElementById("num-equipos-torneo")?.value || "4", 10);
+  const min = 5 * k;
+  const max = 6 * k;
 
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[Number(cb.value)]);
 
-  const min = 5 * k;
-  const max = 6 * k;
-
   if (!(seleccionados.length >= min && seleccionados.length <= max)) {
-    alert(`Selecciona entre ${min} y ${max} jugadores para generar ${k} equipos.`);
+    alert(`Selecciona entre ${min} y ${max} jugadores para generar ${k} equipos (5–6 por equipo).`);
     return;
   }
 
@@ -992,8 +988,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
+
   document.getElementById("num-equipos-torneo")?.addEventListener("change", () => {
-    // recalcula rango y (opcional) limpia el resultado para evitar confusión
     actualizarContadorTorneo();
     const cont = document.getElementById("resultado-torneo");
     if (cont) cont.innerHTML = "";
