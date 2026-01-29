@@ -100,7 +100,20 @@
     <!-- Torneo -->
     <div class="tab-pane fade" id="torneo">
       <div class="container mt-4">
-        <h3 class="text-center mb-4">Crear 4 Equipos para Torneo</h3>
+        <h3 class="text-center mb-3">Crear Equipos para Torneo</h3>
+
+        <div class="row justify-content-center mb-2">
+          <div class="col-md-4">
+            <label for="num-equipos-torneo" class="form-label">Número de equipos</label>
+            <select id="num-equipos-torneo" class="form-select">
+              <option value="3">3 equipos</option>
+              <option value="4" selected>4 equipos</option>
+              <option value="5">5 equipos</option>
+            </select>
+            <div class="form-text">Regla: entre 5 y 6 jugadores por equipo.</div>
+          </div>
+        </div>
+
         <p class="text-center text-muted" id="contador-torneo">Seleccionados: 0</p>
         <form id="form-torneo" class="mb-3"></form>
         <div class="text-center">

@@ -343,6 +343,9 @@ function renderFormularios() {
   document.querySelectorAll(".jugador-torneo-checkbox").forEach(cb => {
     cb.addEventListener("change", actualizarContadorTorneo);
   });
+  // inicializar contadores (incluye rango dinámico en torneo)
+  actualizarContadorPartido();
+  actualizarContadorTorneo();
 }
 
 /* ========== Contadores ========== */
@@ -353,16 +356,22 @@ function actualizarContadorPartido() {
   if (btn) btn.disabled = !(seleccionados >= 10 && seleccionados <= 12);
 }
 function actualizarContadorTorneo() {
+  const k = parseInt(document.getElementById("num-equipos-torneo")?.value || "4", 10);
+  const min = 5 * k;
+  const max = 6 * k;
+
   const seleccionados = document.querySelectorAll(".jugador-torneo-checkbox:checked").length;
-  document.getElementById("contador-torneo").textContent = `Seleccionados: ${seleccionados}`;
+  const cont = document.getElementById("contador-torneo");
+  if (cont) cont.textContent = `Seleccionados: ${seleccionados} (mín ${min} / máx ${max})`;
+
   const btn = document.getElementById("generar-torneo");
-  if (btn) btn.disabled = !(seleccionados >= 20 && seleccionados <= 24);
+  if (btn) btn.disabled = !(seleccionados >= min && seleccionados <= max);
 }
 
 /* ========== Mostrar equipos (Partido/Torneo/Manual) ========== */
 function mostrarEquipos(equipos, contenedorId, modo="torneo") {
-  const colores = ["azul-circle", "blanco-circle", "rojo-circle", "verde-circle"];
-  const nombresColores = ["Azul", "Blanco", "Rojo", "Verde"];
+  const colores = ["azul-circle", "rojo-circle", "verde-circle", "blanco-circle", "naranja-circle"];
+  const nombresColores = ["Azul", "Rojo", "Verde", "Blanco", "Naranja"];
 
   const cont = document.getElementById(contenedorId);
   if (!cont) return;
@@ -940,16 +949,21 @@ function optimizeEquipos(seed, targetSizes, iters=4800){
   return best;
 }
 function generarEquiposTorneo() {
+  const k = parseInt(document.getElementById("num-equipos-torneo")?.value || "4", 10);
+
   const seleccionados = Array.from(document.querySelectorAll(".jugador-torneo-checkbox:checked"))
     .map(cb => jugadores[Number(cb.value)]);
 
-  if (!(seleccionados.length >= 20 && seleccionados.length <= 24)) {
-    alert("Selecciona entre 20 y 24 jugadores para generar torneo.");
+  const min = 5 * k;
+  const max = 6 * k;
+
+  if (!(seleccionados.length >= min && seleccionados.length <= max)) {
+    alert(`Selecciona entre ${min} y ${max} jugadores para generar ${k} equipos.`);
     return;
   }
 
-  const target = desiredSizes(seleccionados.length, 4);
-  const seed = seedSnake(seleccionados, 4, target);
+  const target = desiredSizes(seleccionados.length, k);
+  const seed = seedSnake(seleccionados, k, target);
   const equipos = optimizeEquipos(seed, target, 4800);
   mostrarEquipos(equipos, "resultado-torneo", "torneo");
 }
@@ -978,4 +992,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("generar-equipos")?.addEventListener("click", generarEquipos);
   document.getElementById("generar-torneo")?.addEventListener("click", generarEquiposTorneo);
+  document.getElementById("num-equipos-torneo")?.addEventListener("change", () => {
+    // recalcula rango y (opcional) limpia el resultado para evitar confusión
+    actualizarContadorTorneo();
+    const cont = document.getElementById("resultado-torneo");
+    if (cont) cont.innerHTML = "";
+  });
 });
