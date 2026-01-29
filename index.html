@@ -35,9 +35,10 @@
     .player-block.visitors   { background:#fff8e6; border-color:#ffe2a8; }
     .player-block.hall       { background:#f3ecff; border-color:#dbc9ff; }
 
-    .player-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem 1rem; }
-    .player-grid .form-check-label { font-size: 1.05rem; font-weight: 500; }
-    @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(2, 1fr); } }
+    .player-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: .5rem .75rem; }
+    .player-grid .form-check { min-width: 0; }
+    .player-grid .form-check-label { font-size: 1.02rem; font-weight: 500; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+    @media (max-width: 768px) { .player-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } }
 
     .equipo-box { border-radius: 14px; padding: 16px; background: #f9f9f9; border: 2px solid #ddd; margin-bottom: 1rem; }
     .equipo-box h4, .equipo-box h5 { display: flex; align-items: center; gap: 6px; font-weight: 600; }
