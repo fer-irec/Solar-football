@@ -389,7 +389,11 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
     let titulo = "";
     if (modo === "torneo") {
       titulo = `<span class="circle ${colores[idx % colores.length]}"></span> Equipo ${nombresColores[idx % nombresColores.length]}`;
+    } else if (modo === "manual") {
+      // Manual: Equipo 1 (Azul), 2 (Rojo), 3 (Verde), 4 (Blanco), 5 (Naranja)
+      titulo = `<span class="circle ${colores[idx % colores.length]}"></span> Equipo ${idx + 1}`;
     } else {
+      // Partido (histórico): mantiene el estilo anterior de 2 equipos
       titulo = (idx === 0)
         ? `<span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1`
         : `<span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2`;
@@ -415,21 +419,34 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
 
 /* ========================= MANUAL ========================= */
 function initManualTab() {
-  const form1 = document.getElementById("form-manual-1");
-  const form2 = document.getElementById("form-manual-2");
-  if (!form1 || !form2) return;
+  const sel = document.getElementById("num-equipos-manual");
+  const columns = document.getElementById("manual-columns");
+  const btn = document.getElementById("generar-manual");
+  const out = document.getElementById("resultado-manual");
+  if (!sel || !columns || !btn) return;
 
-  form1.innerHTML = "";
-  form2.innerHTML = "";
+  // Colores/estilos por equipo (1..5)
+  const estilos = [
+    { bg:"#eef5ff", border:"#cfe2ff", circle:"azul-circle",  label:"Equipo 1" },
+    { bg:"#ffe2e6", border:"#f5a6a6", circle:"rojo-circle",  label:"Equipo 2" },
+    { bg:"#e8f7ec", border:"#bfe7c9", circle:"verde-circle", label:"Equipo 3" },
+    { bg:"#f8f9fa", border:"#d6d8db", circle:"blanco-circle",label:"Equipo 4" },
+    { bg:"#fff0e6", border:"#ffd2b3", circle:"naranja-circle",label:"Equipo 5" },
+  ];
 
-  function crearBloque(titulo, clase, lista, equipo) {
+  const habituales = jugadores.filter(j => j.grupo === "habitual");
+  const visitors   = jugadores.filter(j => j.grupo === "visitor");
+  const hall       = jugadores.filter(j => j.grupo === "hall");
+
+  function crearBloque(titulo, clase, lista, equipoN) {
     if (!lista.length) return "";
     let html = `<div class="player-block ${clase}"><h5>${titulo}</h5><div class="player-grid">`;
     lista.forEach((j, i) => {
-      const id = `${equipo}_${i}_${clase}`;
+      const idxGlobal = jugadores.indexOf(j);
+      const id = `manual_${equipoN}_${i}_${clase}`;
       html += `
         <div class="form-check">
-          <input class="form-check-input jugador-manual-${equipo}" type="checkbox" id="${id}" value="${jugadores.indexOf(j)}">
+          <input class="form-check-input jugador-manual-${equipoN}" data-team="${equipoN}" type="checkbox" id="${id}" value="${idxGlobal}">
           <label class="form-check-label" for="${id}">${j.nombre}</label>
         </div>`;
     });
@@ -437,55 +454,86 @@ function initManualTab() {
     return html;
   }
 
-  const habituales = jugadores.filter(j => j.grupo === "habitual");
-  const visitors   = jugadores.filter(j => j.grupo === "visitor");
-  const hall       = jugadores.filter(j => j.grupo === "hall");
-
-  form1.innerHTML += crearBloque("Habituales", "habituales", habituales, "1");
-  form1.innerHTML += crearBloque("Visitors", "visitors", visitors, "1");
-  form1.innerHTML += crearBloque("Hall of Fame", "hall", hall, "1");
-
-  form2.innerHTML += crearBloque("Habituales", "habituales", habituales, "2");
-  form2.innerHTML += crearBloque("Visitors", "visitors", visitors, "2");
-  form2.innerHTML += crearBloque("Hall of Fame", "hall", hall, "2");
-
-  actualizarContadoresManual();
-  document.querySelectorAll('.jugador-manual-1, .jugador-manual-2').forEach(cb => {
-    cb.addEventListener("change", e => {
-      sincronizarCheckboxes(e.target);
-      actualizarContadoresManual();
-    });
-  });
-  document.getElementById("generar-manual")?.addEventListener("click", e => {
-    e.preventDefault(); 
-    const eq1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked")).map(cb => jugadores[cb.value]);
-    const eq2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked")).map(cb => jugadores[cb.value]);
-    mostrarEquipos([eq1, eq2], "resultado-manual", "partido");
-  });
-}
-
-function sincronizarCheckboxes(cb) {
-  const val = cb.value;
-  if (cb.checked) {
-    if (cb.classList.contains("jugador-manual-1")) {
-      document.querySelectorAll(`.jugador-manual-2[value="${val}"]`).forEach(x => x.checked = false);
-    } else {
-      document.querySelectorAll(`.jugador-manual-1[value="${val}"]`).forEach(x => x.checked = false);
+  function sincronizar(cb, k) {
+    if (!cb.checked) return;
+    const val = cb.value;
+    const team = Number(cb.dataset.team || "0");
+    for (let t = 1; t <= k; t++) {
+      if (t === team) continue;
+      document.querySelectorAll(`.jugador-manual-${t}[value="${val}"]`).forEach(x => x.checked = false);
     }
   }
-}
 
-function actualizarContadoresManual() {
-  const s1 = document.querySelectorAll(".jugador-manual-1:checked").length;
-  const s2 = document.querySelectorAll(".jugador-manual-2:checked").length;
-  document.getElementById("contador-manual-1").textContent = `Seleccionados: ${s1}`;
-  document.getElementById("contador-manual-2").textContent = `Seleccionados: ${s2}`;
-}
+  function actualizarContadores(k) {
+    for (let t = 1; t <= k; t++) {
+      const n = document.querySelectorAll(`.jugador-manual-${t}:checked`).length;
+      const el = document.getElementById(`contador-manual-${t}`);
+      if (el) el.textContent = `Seleccionados: ${n}`;
+    }
+  }
 
-function generarEquiposManual() {
-  const eq1 = Array.from(document.querySelectorAll(".jugador-manual-1:checked")).map(cb => jugadores[cb.value]);
-  const eq2 = Array.from(document.querySelectorAll(".jugador-manual-2:checked")).map(cb => jugadores[cb.value]);
-  mostrarEquipos([eq1, eq2], "resultado-manual", "partido");
+  function render(k) {
+    // Columnas (una por equipo)
+    columns.innerHTML = "";
+    for (let t = 1; t <= k; t++) {
+      const st = estilos[t - 1];
+      const colClass = (k >= 4) ? "col-12 col-md-6 col-lg-3" : "col-12 col-md-4";
+      columns.insertAdjacentHTML("beforeend", `
+        <div class="${colClass}">
+          <div class="equipo-box" style="background:${st.bg};border:2px solid ${st.border};">
+            <h5><span class="circle ${st.circle}"></span> ${st.label}</h5>
+            <p class="text-muted" id="contador-manual-${t}">Seleccionados: 0</p>
+            <form id="form-manual-${t}" class="mb-3"></form>
+          </div>
+        </div>
+      `);
+    }
+
+    // Pintar lista de jugadores completa en CADA columna/equipo
+    for (let t = 1; t <= k; t++) {
+      const form = document.getElementById(`form-manual-${t}`);
+      if (!form) continue;
+      form.innerHTML = "";
+      form.innerHTML += crearBloque("Habituales", "habituales", habituales, t);
+      form.innerHTML += crearBloque("Visitors", "visitors", visitors, t);
+      form.innerHTML += crearBloque("Hall of Fame", "hall", hall, t);
+    }
+
+    // Listeners + sincronización (un jugador solo puede estar en 1 equipo)
+    columns.querySelectorAll('input[type="checkbox"][data-team]').forEach(cb => {
+      cb.addEventListener("change", e => {
+        sincronizar(e.target, k);
+        actualizarContadores(k);
+      });
+    });
+
+    actualizarContadores(k);
+    if (out) out.innerHTML = "";
+  }
+
+  // Render inicial
+  let k = parseInt(sel.value || "4", 10);
+  k = Math.max(3, Math.min(5, k));
+  render(k);
+
+  // Cambiar nº equipos
+  sel.addEventListener("change", () => {
+    let kk = parseInt(sel.value || "4", 10);
+    kk = Math.max(3, Math.min(5, kk));
+    render(kk);
+  });
+
+  // Generar tabla/puntuaciones
+  btn.addEventListener("click", e => {
+    e.preventDefault();
+    const kk = Math.max(3, Math.min(5, parseInt(sel.value || "4", 10)));
+    const equipos = [];
+    for (let t = 1; t <= kk; t++) {
+      const eq = Array.from(document.querySelectorAll(`.jugador-manual-${t}:checked`)).map(cb => jugadores[cb.value]);
+      equipos.push(eq);
+    }
+    mostrarEquipos(equipos, "resultado-manual", "manual");
+  });
 }
 
 /* ========== Asistencia y Resultado ========== */

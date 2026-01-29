@@ -127,23 +127,22 @@
     <!-- Manual -->
     <div class="tab-pane fade" id="manual">
       <div class="container mt-4">
-        <h3 class="text-center mb-4">Configurar equipos manualmente</h3>
-        <div class="row">
-          <div class="col-md-6">
-            <div class="equipo-box" style="background:#eef5ff;border:2px solid #cfe2ff;">
-              <h5><span class="circle azul-circle"></span> Equipo 1</h5>
-              <p class="text-muted" id="contador-manual-1">Seleccionados: 0</p>
-              <form id="form-manual-1" class="mb-3"></form>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="equipo-box" style="background:#ffe2e6;border:2px solid #f5a6a6;">
-              <h5><span class="circle rojo-circle"></span> Equipo 2</h5>
-              <p class="text-muted" id="contador-manual-2">Seleccionados: 0</p>
-              <form id="form-manual-2" class="mb-3"></form>
-            </div>
+        <h3 class="text-center mb-3">Configurar equipos manualmente</h3>
+
+        <div class="row justify-content-center mb-2">
+          <div class="col-md-4">
+            <label for="num-equipos-manual" class="form-label">Número de equipos</label>
+            <select id="num-equipos-manual" class="form-select">
+              <option value="3">3 equipos</option>
+              <option value="4" selected>4 equipos</option>
+              <option value="5">5 equipos</option>
+            </select>
+            <div class="form-text">Se muestran columnas por equipo (Azul, Rojo, Verde, Blanco y Naranja).</div>
           </div>
         </div>
+
+        <div id="manual-columns" class="row g-3"></div>
+
         <div class="text-center">
           <button class="btn btn-primary mt-3" id="generar-manual">Generar tabla de puntuaciones</button>
         </div>
