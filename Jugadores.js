@@ -477,7 +477,12 @@ function initManualTab() {
     columns.innerHTML = "";
     for (let t = 1; t <= k; t++) {
       const st = estilos[t - 1];
-      const colClass = (k >= 4) ? "col-12 col-md-6 col-lg-3" : "col-12 col-md-4";
+      // 2 equipos -> 2 columnas en md; 3 equipos -> 3 columnas en md; 4-5 equipos -> 2 en md y 4 en lg (se envuelve)
+      const colClass = (k === 2)
+        ? "col-12 col-md-6"
+        : (k === 3)
+          ? "col-12 col-md-4"
+          : "col-12 col-md-6 col-lg-3";
       columns.insertAdjacentHTML("beforeend", `
         <div class="${colClass}">
           <div class="equipo-box" style="background:${st.bg};border:2px solid ${st.border};">
@@ -513,20 +518,20 @@ function initManualTab() {
 
   // Render inicial
   let k = parseInt(sel.value || "4", 10);
-  k = Math.max(3, Math.min(5, k));
+  k = Math.max(2, Math.min(5, k));
   render(k);
 
   // Cambiar nº equipos
   sel.addEventListener("change", () => {
     let kk = parseInt(sel.value || "4", 10);
-    kk = Math.max(3, Math.min(5, kk));
+    kk = Math.max(2, Math.min(5, kk));
     render(kk);
   });
 
   // Generar tabla/puntuaciones
   btn.addEventListener("click", e => {
     e.preventDefault();
-    const kk = Math.max(3, Math.min(5, parseInt(sel.value || "4", 10)));
+    const kk = Math.max(2, Math.min(5, parseInt(sel.value || "4", 10)));
     const equipos = [];
     for (let t = 1; t <= kk; t++) {
       const eq = Array.from(document.querySelectorAll(`.jugador-manual-${t}:checked`)).map(cb => jugadores[cb.value]);
