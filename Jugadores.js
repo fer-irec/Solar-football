@@ -768,108 +768,129 @@ function generarEquipos() {
       .map(cb => jugadores[Number(cb.value)])
       .map(j => ({ ...j, media: calcularMedia(j), fifa: calcularFifa(j) }));
 
-    if (seleccionados.length !== 12) {
-      throw new Error("Para futsal equilibrado con cambios, selecciona exactamente 12 (6 vs 6).");
+    const n = seleccionados.length;
+
+    // Solo se permiten 10, 11 o 12 jugadores
+    if (![10, 11, 12].includes(n)) {
+      throw new Error("Selecciona exactamente 10, 11 o 12 jugadores. Ni más ni menos.");
     }
 
-    // Tier relativo (buenos/medios/malos)
+    // Tamaños de equipo:
+    // 10 -> 5 vs 5
+    // 11 -> 6 vs 5
+    // 12 -> 6 vs 6
+    const kA = Math.ceil(n / 2);
+    const kB = n - kA;
+
+    // Si tu función realmente depende de que haya 12, renómbrala/adáptala.
+    // Si solo clasifica por nivel relativo, puede quedarse así.
     const tierByName = buildTierMap12(seleccionados);
 
-    // Para reforzar aún más tu idea de “condiciones iguales”:
-    // balancea también estrellas/flojos ABSOLUTOS si existen (por tus cutoffs)
     const totalStarsAbs = countAbsStars(seleccionados);
-    const totalLowsAbs  = countAbsLows(seleccionados);
+    const totalLowsAbs = countAbsLows(seleccionados);
     const allowStarDiff = totalStarsAbs % 2; // 0 si par, 1 si impar
-    const allowLowDiff  = totalLowsAbs  % 2;
+    const allowLowDiff = totalLowsAbs % 2;
 
-    const n = 12;
-    const k = 6;
+    const totalGK = seleccionados.filter(p => /GK/i.test(p.nombre)).length;
 
     let bestCost = Infinity;
     let bestA = null, bestB = null;
 
-    const sq = x => x*x;
+    const sq = x => x * x;
 
-    for (let mask = 0; mask < (1<<n); mask++) {
+    for (let mask = 0; mask < (1 << n); mask++) {
       // evita duplicado espejo: fuerza que el jugador 0 esté en A
       if ((mask & 1) === 0) continue;
-      if (popcount(mask) !== k) continue;
+      if (popcount(mask) !== kA) continue;
 
       const A = [], B = [];
-      for (let i=0;i<n;i++){
-        if ((mask>>i)&1) A.push(seleccionados[i]);
+      for (let i = 0; i < n; i++) {
+        if ((mask >> i) & 1) A.push(seleccionados[i]);
         else B.push(seleccionados[i]);
       }
 
-      // ===== Restricción DURA: 2-2-2 por tiers (buenos/medios/malos) =====
-      if (countTier(A, tierByName, "bueno") !== 2) continue;
-      if (countTier(A, tierByName, "medio") !== 2) continue;
-      if (countTier(A, tierByName, "malo")  !== 2) continue;
-      // (B automáticamente quedará 2-2-2 también)
+      // ===== Balance flexible por tiers =====
+      // En lugar de exigir 2-2-2, imponemos que la diferencia por tier
+      // entre equipos no sea mayor de 1. Así funciona para 10, 11 y 12.
+      const buenosA = countTier(A, tierByName, "bueno");
+      const buenosB = countTier(B, tierByName, "bueno");
+      const mediosA = countTier(A, tierByName, "medio");
+      const mediosB = countTier(B, tierByName, "medio");
+      const malosA = countTier(A, tierByName, "malo");
+      const malosB = countTier(B, tierByName, "malo");
 
-      // ===== Restricción (muy importante): balance de estrellas/flojos ABSOLUTOS si aplica =====
-      // Si tus cutoffs no detectan nada, esto no afecta.
+      if (Math.abs(buenosA - buenosB) > 1) continue;
+      if (Math.abs(mediosA - mediosB) > 1) continue;
+      if (Math.abs(malosA - malosB) > 1) continue;
+
+      // ===== Balance de estrellas/flojos ABSOLUTOS =====
       const starDiff = Math.abs(countAbsStars(A) - countAbsStars(B));
-      const lowDiff  = Math.abs(countAbsLows(A)  - countAbsLows(B));
+      const lowDiff = Math.abs(countAbsLows(A) - countAbsLows(B));
       if (starDiff > allowStarDiff) continue;
-      if (lowDiff  > allowLowDiff)  continue;
+      if (lowDiff > allowLowDiff) continue;
 
       // ===== GK (si hay 2+ GK, uno por equipo) =====
-      const totalGK = seleccionados.filter(p => /GK/i.test(p.nombre)).length;
       if (totalGK >= 2) {
-        const gkA = A.some(p=>/GK/i.test(p.nombre));
-        const gkB = B.some(p=>/GK/i.test(p.nombre));
+        const gkA = A.some(p => /GK/i.test(p.nombre));
+        const gkB = B.some(p => /GK/i.test(p.nombre));
         if (!(gkA && gkB)) continue;
       }
 
-      // ===== Coste (ya con condiciones iguales aseguradas, afinamos “sensación futsal”) =====
+      // ===== Coste =====
       const a = teamCompStats(A);
       const b = teamCompStats(B);
 
-      // pesos: prioriza mucho “top5” (quinteto) y luego media + componentes
+      const topA = topKAvgMedia(A, Math.min(5, A.length));
+      const topB = topKAvgMedia(B, Math.min(5, B.length));
+
       const cost =
-        8.0 * sq(a.top5 - b.top5) +
+        8.0 * sq(topA - topB) +
         4.0 * sq(a.media - b.media) +
-        1.4 * sq(a.atk  - b.atk) +
-        1.4 * sq(a.def  - b.def) +
+        1.4 * sq(a.atk - b.atk) +
+        1.4 * sq(a.def - b.def) +
         1.0 * sq(a.tact - b.tact) +
-        1.0 * sq(a.sta  - b.sta) +
+        1.0 * sq(a.sta - b.sta) +
         6.0 * sq(starDiff) +
         6.0 * sq(lowDiff);
 
       if (cost < bestCost) {
         bestCost = cost;
-        bestA = A; bestB = B;
+        bestA = A;
+        bestB = B;
       }
     }
 
     if (!bestA || !bestB) {
-      throw new Error("No encontré reparto que cumpla 2-2-2 + restricciones. Revisa cutoffs o nombres GK.");
+      throw new Error("No encontré un reparto válido para 10, 11 o 12 jugadores. Revisa tiers, cutoffs o nombres GK.");
     }
 
     console.log("Best cost:", bestCost);
-    console.log("Team A tiers:", {
+    console.log("Team A:", {
+      size: bestA.length,
       buenos: countTier(bestA, tierByName, "bueno"),
       medios: countTier(bestA, tierByName, "medio"),
-      malos:  countTier(bestA, tierByName, "malo"),
+      malos: countTier(bestA, tierByName, "malo"),
       starsAbs: countAbsStars(bestA),
-      lowsAbs:  countAbsLows(bestA),
-      top5: topKAvgMedia(bestA, 5).toFixed(2),
+      lowsAbs: countAbsLows(bestA),
+      top5: topKAvgMedia(bestA, Math.min(5, bestA.length)).toFixed(2),
     });
-    console.log("Team B tiers:", {
+    console.log("Team B:", {
+      size: bestB.length,
       buenos: countTier(bestB, tierByName, "bueno"),
       medios: countTier(bestB, tierByName, "medio"),
-      malos:  countTier(bestB, tierByName, "malo"),
+      malos: countTier(bestB, tierByName, "malo"),
       starsAbs: countAbsStars(bestB),
-      lowsAbs:  countAbsLows(bestB),
-      top5: topKAvgMedia(bestB, 5).toFixed(2),
+      lowsAbs: countAbsLows(bestB),
+      top5: topKAvgMedia(bestB, Math.min(5, bestB.length)).toFixed(2),
     });
 
     mostrarEquipos([bestA, bestB], "resultado-equipos", "partido");
 
   } catch (error) {
     const cont = document.getElementById("resultado-equipos");
-    if (cont) cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    if (cont) {
+      cont.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    }
   }
 }
 
