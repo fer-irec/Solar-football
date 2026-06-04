@@ -350,7 +350,7 @@ function actualizarContadorPartido() {
   const seleccionados = document.querySelectorAll(".jugador-checkbox:checked").length;
   document.getElementById("contador-partido").textContent = `Seleccionados: ${seleccionados}`;
   const btn = document.getElementById("generar-equipos");
-  if (btn) btn.disabled = !(seleccionados >= 10 && seleccionados <= 12);
+  if (btn) btn.disabled = !(seleccionados >= 8 && seleccionados <= 14);
 }
 function actualizarContadorTorneo() {
   const k = parseInt(document.getElementById("num-equipos-torneo")?.value || "4", 10);
@@ -735,12 +735,15 @@ function countAbsLows(team){
   return team.reduce((c,p)=> c + ((p.media ?? calcularMedia(p)) <= LOW_CUTOFF ? 1 : 0), 0);
 }
 
-function buildTierMap12(players){
-  // tiers relativos: top4 / mid4 / bottom4
+function buildTierMap(players){
+  // tiers relativos: tercio superior / tercio medio / tercio inferior
+  const n = players.length;
+  const topCount = Math.floor(n / 3);
+  const bottomCount = Math.floor(n / 3);
   const sorted = [...players].sort((a,b)=> b.media - a.media);
   const tierByName = new Map();
   sorted.forEach((p, idx) => {
-    const tier = (idx < 4) ? "bueno" : (idx < 8) ? "medio" : "malo";
+    const tier = (idx < topCount) ? "bueno" : (idx < n - bottomCount) ? "medio" : "malo";
     tierByName.set(p.nombre, tier);
   });
   return tierByName;
@@ -770,21 +773,17 @@ function generarEquipos() {
 
     const n = seleccionados.length;
 
-    // Solo se permiten 10, 11 o 12 jugadores
-    if (![10, 11, 12].includes(n)) {
-      throw new Error("Selecciona exactamente 10, 11 o 12 jugadores. Ni más ni menos.");
+    // Se permiten entre 8 y 14 jugadores
+    if (n < 8 || n > 14) {
+      throw new Error("Selecciona entre 8 y 14 jugadores para generar los equipos.");
     }
 
-    // Tamaños de equipo:
-    // 10 -> 5 vs 5
-    // 11 -> 6 vs 5
-    // 12 -> 6 vs 6
+    // Tamaños de equipo (ceil/2 vs floor/2):
+    // 8->4v4, 9->5v4, 10->5v5, 11->6v5, 12->6v6, 13->7v6, 14->7v7
     const kA = Math.ceil(n / 2);
     const kB = n - kA;
 
-    // Si tu función realmente depende de que haya 12, renómbrala/adáptala.
-    // Si solo clasifica por nivel relativo, puede quedarse así.
-    const tierByName = buildTierMap12(seleccionados);
+    const tierByName = buildTierMap(seleccionados);
 
     const totalStarsAbs = countAbsStars(seleccionados);
     const totalLowsAbs = countAbsLows(seleccionados);
@@ -861,7 +860,7 @@ function generarEquipos() {
     }
 
     if (!bestA || !bestB) {
-      throw new Error("No encontré un reparto válido para 10, 11 o 12 jugadores. Revisa tiers, cutoffs o nombres GK.");
+      throw new Error("No encontré un reparto válido. Revisa los tiers, cutoffs o nombres GK.");
     }
 
     console.log("Best cost:", bestCost);
