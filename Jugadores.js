@@ -285,8 +285,9 @@ function mostrarTabla() {
     const media = mediaVal.toFixed(2);
     const fifa = Math.round(mediaVal * 20);
     const estrellasHTML = generarEstrellasFIFA(fifa);
-    const fila = `<tr>
-      <td>${j.nombre}</td>
+    const grupo = (j.grupo === "visitor" || j.grupo === "hall") ? j.grupo : "habitual";
+    const fila = `<tr class="fila-${grupo}">
+      <td><span class="grupo-dot dot-${grupo}"></span>${j.nombre}</td>
       <td><span class="${colorClase(j.ataque)}">${_num(j.ataque).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.defensa)}">${_num(j.defensa).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
