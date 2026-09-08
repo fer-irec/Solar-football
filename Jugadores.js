@@ -108,10 +108,17 @@ const _num  = v => {
   return Number.isFinite(n) ? n : 0;
 };
 const _trim = v => (v == null ? "" : String(v)).trim();
-// Normaliza un nombre para poder emparejar "Jugadores" ↔ "matches" aunque
-// difieran en mayúsculas/minúsculas o en espacios extra (p.ej. "Rolando (GK)"
-// vs "rolando  (gk)"). Solo se usa para comparar/indexar, nunca para mostrar.
-const normNombre = v => _trim(v).toLowerCase().replace(/\s+/g, " ");
+// Normaliza un nombre para poder emparejar la hoja "Jugadores" con la hoja
+// "matches" aunque difieran en mayúsculas/minúsculas, acentos, espacios extra
+// o en la etiqueta "(GK)": en el histórico hay partidos guardados como
+// "Rolando" y otros como "Rolando (GK)", y ambos son el mismo jugador.
+// Solo se usa para comparar/indexar, nunca para mostrar el nombre.
+const normNombre = v => _trim(v)
+  .toLowerCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // fuera acentos
+  .replace(/\(\s*gk\s*\)/g, " ")                      // fuera la etiqueta de portero
+  .replace(/\s+/g, " ")
+  .trim();
 
 /**
  * Normaliza y filtra la lista de jugadores proveniente del GAS:
