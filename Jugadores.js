@@ -480,7 +480,8 @@ function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  const totalPartidos = matchesData.length;
+  // Partidos de la temporada actual (desde el 01/09/2026) — misma base que Balance/Curiosidades
+  const totalPartidos = matchesTemporada.length;
 
   jugadoresOrdenados.forEach(j => {
     const mediaVal = limitar(calcularMedia(j));
@@ -489,8 +490,9 @@ function mostrarTabla() {
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const grupo = (j.grupo === "visitor" || j.grupo === "hall") ? j.grupo : "habitual";
 
-    // % de asistencia sobre el total de partidos registrados
-    const pctAsistencia = totalPartidos > 0 ? Math.min(100, Math.round((_num(j.asistencia) / totalPartidos) * 100)) : 0;
+    // % de asistencia sobre los partidos de la temporada (partidos realmente jugados por el jugador, no el contador histórico)
+    const asistenciaTemporada = _num(j.partidosJugados);
+    const pctAsistencia = totalPartidos > 0 ? Math.min(100, Math.round((asistenciaTemporada / totalPartidos) * 100)) : 0;
 
     // Balance de partidos (victorias suman, derrotas restan)
     const balance = _num(j.balance);
@@ -512,8 +514,8 @@ function mostrarTabla() {
       <td><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
       <td class="asistencia-cell">
-        <span class="fw-semibold">${_num(j.asistencia)}</span>
-        <div class="progress asistencia-bar" title="${pctAsistencia}% de los partidos registrados">
+        <span class="fw-semibold">${asistenciaTemporada}/${totalPartidos}</span>
+        <div class="progress asistencia-bar" title="${pctAsistencia}% de los partidos de la temporada (desde 01/09/2026)">
           <div class="progress-bar" style="width:${pctAsistencia}%;background:${colorHexPct(pctAsistencia)};"></div>
         </div>
       </td>
@@ -1271,7 +1273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await mostrarHistorial();
 
   // ⟵ Mapeo de columnas ordenables (alineado con las <th> de la tabla; null = no ordenable)
-  const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "asistencia", "puntualidad", "balance", "media", "fifa", null, null];
+  const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "media", "fifa", null, null];
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
     if (columna) {
