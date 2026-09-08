@@ -190,6 +190,8 @@ async function guardarPartido(partido) {
 let jugadores = [];
 let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
+let matchesData = [];
+let statsPorJugador = new Map();
 
 async function cargarJugadores() {
   try {
@@ -203,6 +205,10 @@ async function cargarJugadores() {
     // Puntualidad por defecto
     jugadores = jugadores.map(j => ({ ...j, puntualidad: j.puntualidad ?? 3 }));
 
+    // 📊 Cargamos el historial de partidos y calculamos balance/curiosidades
+    await cargarPartidosStats();
+    aplicarEstadisticasPartidos();
+
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
 
@@ -213,6 +219,171 @@ async function cargarJugadores() {
   } catch (err) {
     console.error("Error cargando jugadores:", err);
   }
+}
+
+/* ====== Estadísticas de partidos (balance / rachas / curiosidades) ====== */
+async function cargarPartidosStats() {
+  try {
+    const data = await getJSON(`${GAS_URL}?type=matches&ts=${Date.now()}`);
+    matchesData = Array.isArray(data) ? data : [];
+  } catch (e) {
+    console.warn("No se pudieron cargar los partidos para estadísticas:", e);
+    matchesData = [];
+  }
+}
+
+/**
+ * Recorre los partidos (en orden cronológico, tal cual los devuelve el GAS)
+ * y calcula por jugador: partidos jugados, victorias, derrotas, empates,
+ * racha máxima de victorias/derrotas y promedio de goles a favor/en contra
+ * del equipo en el que jugó.
+ */
+function calcularEstadisticasPartidos(matches) {
+  const stats = new Map();
+  const getStat = nombre => {
+    if (!stats.has(nombre)) {
+      stats.set(nombre, { jugados: 0, v: 0, d: 0, e: 0, curV: 0, curD: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0 });
+    }
+    return stats.get(nombre);
+  };
+
+  const registrar = (nombre, golesFavor, golesContra) => {
+    nombre = _trim(nombre);
+    if (!nombre) return;
+    const s = getStat(nombre);
+    s.jugados++;
+    s.favorSum += golesFavor;
+    s.contraSum += golesContra;
+    if (golesFavor > golesContra) {
+      s.v++; s.curV++; s.curD = 0; s.maxV = Math.max(s.maxV, s.curV);
+    } else if (golesFavor < golesContra) {
+      s.d++; s.curD++; s.curV = 0; s.maxD = Math.max(s.maxD, s.curD);
+    } else {
+      s.e++; s.curV = 0; s.curD = 0;
+    }
+  };
+
+  (matches || []).forEach(p => {
+    const g1 = _num(p.goles1), g2 = _num(p.goles2);
+    const eq1 = Array.isArray(p.equipo1) ? p.equipo1 : [];
+    const eq2 = Array.isArray(p.equipo2) ? p.equipo2 : [];
+    eq1.forEach(n => registrar(n, g1, g2));
+    eq2.forEach(n => registrar(n, g2, g1));
+  });
+
+  return stats;
+}
+
+/**
+ * Determina las "curiosidades" (récords) del grupo a partir de las
+ * estadísticas por jugador. Solo entran en juego jugadores con al
+ * menos `minPartidos` partidos jugados. Empates en el récord se
+ * reparten entre todos los que lo alcanzan.
+ */
+function calcularCuriosidades(statsMap, minPartidos = 3) {
+  const resultado = new Map();
+  const addTag = (nombre, tag) => {
+    if (!resultado.has(nombre)) resultado.set(nombre, []);
+    resultado.get(nombre).push(tag);
+  };
+
+  const elegibles = [...statsMap.entries()].filter(([, s]) => s.jugados >= minPartidos);
+  if (!elegibles.length) return resultado;
+
+  const maxV = Math.max(...elegibles.map(([, s]) => s.v));
+  if (maxV > 0) elegibles.filter(([, s]) => s.v === maxV).forEach(([n]) => addTag(n, `🏆 Más victorias (${maxV})`));
+
+  const maxD = Math.max(...elegibles.map(([, s]) => s.d));
+  if (maxD > 0) elegibles.filter(([, s]) => s.d === maxD).forEach(([n]) => addTag(n, `📉 Más derrotas (${maxD})`));
+
+  const maxStreakV = Math.max(...elegibles.map(([, s]) => s.maxV));
+  if (maxStreakV > 0) elegibles.filter(([, s]) => s.maxV === maxStreakV).forEach(([n]) => addTag(n, `🔥 Racha de ${maxStreakV} victorias`));
+
+  const maxStreakD = Math.max(...elegibles.map(([, s]) => s.maxD));
+  if (maxStreakD > 0) elegibles.filter(([, s]) => s.maxD === maxStreakD).forEach(([n]) => addTag(n, `❄️ Racha de ${maxStreakD} derrotas`));
+
+  const minContraProm = Math.min(...elegibles.map(([, s]) => s.contraSum / s.jugados));
+  elegibles.filter(([, s]) => (s.contraSum / s.jugados) === minContraProm)
+    .forEach(([n]) => addTag(n, `🛡️ Equipo menos goleado (${minContraProm.toFixed(2)}/partido)`));
+
+  const maxFavorProm = Math.max(...elegibles.map(([, s]) => s.favorSum / s.jugados));
+  elegibles.filter(([, s]) => (s.favorSum / s.jugados) === maxFavorProm)
+    .forEach(([n]) => addTag(n, `⚽ Equipo más goleador (${maxFavorProm.toFixed(2)}/partido)`));
+
+  return resultado;
+}
+
+/** Fusiona balance/curiosidades calculados dentro de cada objeto jugador */
+function aplicarEstadisticasPartidos() {
+  statsPorJugador = calcularEstadisticasPartidos(matchesData);
+  const curiosidadesPorJugador = calcularCuriosidades(statsPorJugador, 3);
+
+  jugadores = jugadores.map(j => {
+    const s = statsPorJugador.get(j.nombre) || { jugados: 0, v: 0, d: 0, e: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0 };
+    return {
+      ...j,
+      partidosJugados: s.jugados,
+      victorias: s.v,
+      derrotas: s.d,
+      empates: s.e,
+      balance: s.v - s.d,
+      curiosidades: curiosidadesPorJugador.get(j.nombre) || [],
+    };
+  });
+}
+
+/** Radar mini (SVG) de Ataque / Defensa / Táctica / Estamina, escala 0-5 */
+function generarRadarSVG(j, size = 60) {
+  const ejes = [
+    { label: "ATK", value: limitar(j.ataque) },
+    { label: "DEF", value: limitar(j.defensa) },
+    { label: "TAC", value: limitar(j.tactica) },
+    { label: "STA", value: limitar(j.estamina) },
+  ];
+  const max = 5;
+  const cx = size / 2, cy = size / 2;
+  const r = size / 2 - 11;
+  const n = ejes.length;
+  const angleStep = (2 * Math.PI) / n;
+  const puntoEn = (valor, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const rad = (Math.max(0, Math.min(max, valor)) / max) * r;
+    return [cx + rad * Math.cos(angle), cy + rad * Math.sin(angle)];
+  };
+
+  let grid = "";
+  [0.33, 0.66, 1].forEach(frac => {
+    const pts = ejes.map((_, i) => {
+      const angle = -Math.PI / 2 + i * angleStep;
+      return `${(cx + frac * r * Math.cos(angle)).toFixed(1)},${(cy + frac * r * Math.sin(angle)).toFixed(1)}`;
+    }).join(" ");
+    grid += `<polygon points="${pts}" fill="none" stroke="#e4e9e5" stroke-width="1"/>`;
+  });
+
+  let ejesSVG = "";
+  ejes.forEach((_, i) => {
+    const angle = -Math.PI / 2 + i * angleStep;
+    const x = (cx + r * Math.cos(angle)).toFixed(1);
+    const y = (cy + r * Math.sin(angle)).toFixed(1);
+    ejesSVG += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e4e9e5" stroke-width="1"/>`;
+  });
+
+  const dataPts = ejes.map((e, i) => puntoEn(e.value, i).map(v => v.toFixed(1)).join(",")).join(" ");
+  const tooltip = ejes.map(e => `${e.label} ${e.value.toFixed(2)}`).join(" · ");
+
+  return `<span title="${tooltip}"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="radar-mini" role="img" aria-label="Radar de atributos: ${tooltip}">
+    ${grid}${ejesSVG}
+    <polygon points="${dataPts}" fill="rgba(31,138,76,.35)" stroke="#1f8a4c" stroke-width="1.5"/>
+  </svg></span>`;
+}
+
+/** Color por porcentaje (0-100), reutilizado en la barra de asistencia */
+function colorHexPct(pct) {
+  if (pct < 20) return "#d93025";
+  if (pct < 40) return "#f57c00";
+  if (pct < 60) return "#c9971e";
+  if (pct < 80) return "#67a04a";
+  return "#1f8a4c";
 }
 
 /* ====== util de medias/colores/estrellas ====== */
@@ -280,23 +451,49 @@ function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
+  const totalPartidos = matchesData.length;
+
   jugadoresOrdenados.forEach(j => {
     const mediaVal = limitar(calcularMedia(j));
     const media = mediaVal.toFixed(2);
     const fifa = Math.round(mediaVal * 20);
     const estrellasHTML = generarEstrellasFIFA(fifa);
     const grupo = (j.grupo === "visitor" || j.grupo === "hall") ? j.grupo : "habitual";
+
+    // % de asistencia sobre el total de partidos registrados
+    const pctAsistencia = totalPartidos > 0 ? Math.min(100, Math.round((_num(j.asistencia) / totalPartidos) * 100)) : 0;
+
+    // Balance de partidos (victorias suman, derrotas restan)
+    const balance = _num(j.balance);
+    const balanceClass = balance > 0 ? "balance-pos" : balance < 0 ? "balance-neg" : "balance-neutro";
+    const balanceTxt = balance > 0 ? `+${balance}` : `${balance}`;
+    const record = `${_num(j.victorias)}V - ${_num(j.derrotas)}D - ${_num(j.empates)}E en ${_num(j.partidosJugados)} partidos`;
+
+    // Curiosidades (récords del grupo)
+    const curiosidades = Array.isArray(j.curiosidades) ? j.curiosidades : [];
+    const curiosidadesHTML = curiosidades.length
+      ? curiosidades.map(c => `<span class="curiosidad-badge">${c}</span>`).join("")
+      : `<span class="text-muted">—</span>`;
+
     const fila = `<tr class="fila-${grupo}">
       <td><span class="grupo-dot dot-${grupo}"></span>${j.nombre}</td>
+      <td class="radar-cell">${generarRadarSVG(j)}</td>
       <td><span class="${colorClase(j.ataque)}">${_num(j.ataque).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.defensa)}">${_num(j.defensa).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
       <td><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
-      <td><span class="fw-semibold">${_num(j.asistencia)}</span></td>     <!-- ⟵ NUEVA COLUMNA -->
+      <td class="asistencia-cell">
+        <span class="fw-semibold">${_num(j.asistencia)}</span>
+        <div class="progress asistencia-bar" title="${pctAsistencia}% de los partidos registrados">
+          <div class="progress-bar" style="width:${pctAsistencia}%;background:${colorHexPct(pctAsistencia)};"></div>
+        </div>
+      </td>
       <td><span class="${colorClase(j.puntualidad)}">${_num(j.puntualidad)}</span></td>
+      <td><span class="balance-badge ${balanceClass}" title="${record}">${balanceTxt}</span></td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
       <td class="stars">${estrellasHTML}</td>
+      <td class="curiosidades-cell">${curiosidadesHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
@@ -1044,8 +1241,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await cargarJugadores();
   await mostrarHistorial();
 
-  // ⟵ Actualizamos el mapeo de columnas para incluir "asistencia"
-  const columnas = ["nombre", "ataque", "defensa", "tactica", "estamina", "asistencia", "puntualidad", "media", "fifa"];
+  // ⟵ Mapeo de columnas ordenables (alineado con las <th> de la tabla; null = no ordenable)
+  const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "asistencia", "puntualidad", "balance", "media", "fifa", null, null];
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
     if (columna) {
