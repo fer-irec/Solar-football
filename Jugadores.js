@@ -108,6 +108,10 @@ const _num  = v => {
   return Number.isFinite(n) ? n : 0;
 };
 const _trim = v => (v == null ? "" : String(v)).trim();
+// Normaliza un nombre para poder emparejar "Jugadores" ↔ "matches" aunque
+// difieran en mayúsculas/minúsculas o en espacios extra (p.ej. "Rolando (GK)"
+// vs "rolando  (gk)"). Solo se usa para comparar/indexar, nunca para mostrar.
+const normNombre = v => _trim(v).toLowerCase().replace(/\s+/g, " ");
 
 /**
  * Normaliza y filtra la lista de jugadores proveniente del GAS:
@@ -273,8 +277,8 @@ function calcularEstadisticasPartidos(matches) {
     return stats.get(nombre);
   };
 
-  const registrar = (nombre, golesFavor, golesContra) => {
-    nombre = _trim(nombre);
+  const registrar = (nombreRaw, golesFavor, golesContra) => {
+    const nombre = normNombre(nombreRaw);
     if (!nombre) return;
     const s = getStat(nombre);
     s.jugados++;
@@ -355,7 +359,8 @@ function aplicarEstadisticasPartidos() {
   const curiosidadesPorJugador = calcularCuriosidades(statsPorJugador, 3);
 
   jugadores = jugadores.map(j => {
-    const s = statsPorJugador.get(j.nombre) || { jugados: 0, v: 0, d: 0, e: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0 };
+    const key = normNombre(j.nombre);
+    const s = statsPorJugador.get(key) || { jugados: 0, v: 0, d: 0, e: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0 };
     return {
       ...j,
       partidosJugados: s.jugados,
@@ -363,7 +368,7 @@ function aplicarEstadisticasPartidos() {
       derrotas: s.d,
       empates: s.e,
       balance: s.v - s.d,
-      curiosidades: curiosidadesPorJugador.get(j.nombre) || [],
+      curiosidades: curiosidadesPorJugador.get(key) || [],
     };
   });
 }
