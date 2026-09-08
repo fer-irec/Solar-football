@@ -194,6 +194,14 @@
     .btn-success:hover, .btn-success:focus { background: #e6a400; border-color: #e6a400; color: #1f2a24; }
 
     #manual-columns .equipo-box { min-height: 100%; }
+
+    /* Goles por equipo en "Asistencia y Resultado": azul / rojo a juego con el resto de la web */
+    .label-azul { color: #0d5f9c; font-weight: 700; }
+    .label-rojo { color: #c2273a; font-weight: 700; }
+    .input-azul { border-color: #9dc2ea; }
+    .input-azul:focus { border-color: #4d8fdb; box-shadow: 0 0 0 .2rem rgba(77,143,219,.25); }
+    .input-rojo { border-color: #eeb0b7; }
+    .input-rojo:focus { border-color: #dc3545; box-shadow: 0 0 0 .2rem rgba(220,53,69,.25); }
   </style>
 </head>
 <body>
@@ -322,22 +330,47 @@
     <div class="tab-pane fade" id="asistencia">
       <div class="container mt-4">
         <h3 class="text-center mb-4">Publicar Asistencia y Resultado</h3>
-        <!-- Importante: contenedor DIV (no form) para que el JS pinte las dos columnas -->
-        <div id="form-asistencia-res" class="mb-3"></div>
+
         <div class="row mb-3">
           <div class="col-md-6">
             <label for="match-date" class="form-label">Fecha</label>
             <input type="date" id="match-date" class="form-control">
           </div>
           <div class="col-md-3">
-            <label for="goles1" class="form-label">Goles Equipo 1</label>
-            <input type="number" id="goles1" class="form-control" min="0">
+            <label for="goles1" class="form-label label-azul">Goles Equipo Azul</label>
+            <input type="number" id="goles1" class="form-control input-azul" min="0">
           </div>
           <div class="col-md-3">
-            <label for="goles2" class="form-label">Goles Equipo 2</label>
-            <input type="number" id="goles2" class="form-control" min="0">
+            <label for="goles2" class="form-label label-rojo">Goles Equipo Rojo</label>
+            <input type="number" id="goles2" class="form-control input-rojo" min="0">
           </div>
         </div>
+
+        <!-- Resumen (por defecto los últimos equipos generados en "Partido") -->
+        <div class="row mb-2" id="resumen-equipos-asistencia">
+          <div class="col-md-6">
+            <div class="equipo-box" style="background:#eef5ff;border:2px solid #cfe2ff;">
+              <h6 class="mb-2"><span class="circle azul-circle"></span> Equipo Azul</h6>
+              <p id="resumen-azul" class="mb-0 text-muted">Sin jugadores seleccionados.</p>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="equipo-box" style="background:#ffe2e6;border:2px solid #f5a6a6;">
+              <h6 class="mb-2"><span class="circle rojo-circle"></span> Equipo Rojo</h6>
+              <p id="resumen-rojo" class="mb-0 text-muted">Sin jugadores seleccionados.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mb-3">
+          <button id="editar-equipos-asistencia" class="btn btn-outline-primary btn-sm" type="button">
+            <i class="fas fa-pen"></i> Editar equipos
+          </button>
+        </div>
+
+        <!-- Importante: contenedor DIV (no form) para que el JS pinte las dos columnas. Oculto hasta pulsar "Editar equipos". -->
+        <div id="form-asistencia-res" class="mb-3" hidden></div>
+
         <div class="text-center">
           <button id="publicar-resultado" class="btn btn-success mt-3">Publicar</button>
         </div>
@@ -386,7 +419,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js?v=6"></script>
+<script src="Jugadores.js?v=7"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {

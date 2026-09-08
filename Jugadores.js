@@ -778,9 +778,51 @@ function initManualTab() {
 }
 
 /* ========== Asistencia y Resultado ========== */
+
+// Últimos equipos generados en la pestaña "Partido": se usan para precargar
+// automáticamente esta pestaña y agilizar la publicación del resultado.
+const LS_KEY_ULTIMO_PARTIDO = "sf_ultimo_partido_generado";
+let ultimoPartidoGenerado = null;
+
+function guardarUltimoPartidoGenerado(equipoAzul, equipoRojo) {
+  ultimoPartidoGenerado = { azul: equipoAzul, rojo: equipoRojo };
+  try { localStorage.setItem(LS_KEY_ULTIMO_PARTIDO, JSON.stringify(ultimoPartidoGenerado)); } catch (e) { /* almacenamiento no disponible */ }
+}
+
+function cargarUltimoPartidoGenerado() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_ULTIMO_PARTIDO);
+    if (raw) ultimoPartidoGenerado = JSON.parse(raw);
+  } catch (e) {
+    ultimoPartidoGenerado = null;
+  }
+}
+
+function fechaHoyISO() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/** Refleja en los recuadros de resumen quién está marcado ahora mismo en cada equipo */
+function actualizarResumenEquiposAsistencia() {
+  const azulNames = Array.from(document.querySelectorAll(".asistencia-azul:checked")).map(cb => cb.value);
+  const rojoNames = Array.from(document.querySelectorAll(".asistencia-rojo:checked")).map(cb => cb.value);
+  const elAzul = document.getElementById("resumen-azul");
+  const elRojo = document.getElementById("resumen-rojo");
+  if (elAzul) elAzul.textContent = azulNames.length ? azulNames.join(", ") : "Sin jugadores seleccionados.";
+  if (elRojo) elRojo.textContent = rojoNames.length ? rojoNames.join(", ") : "Sin jugadores seleccionados.";
+}
+
 function renderAsistenciaRes() {
   const cont = document.getElementById("form-asistencia-res");
   if (!cont) return;
+
+  // Fecha por defecto: hoy (solo si el campo está vacío, para no pisar lo que el usuario ya haya tocado)
+  const fechaInput = document.getElementById("match-date");
+  if (fechaInput && !fechaInput.value) fechaInput.value = fechaHoyISO();
 
   cont.innerHTML = `
     <div class="row">
@@ -801,29 +843,37 @@ function renderAsistenciaRes() {
   const formAzul = document.getElementById("form-asistencia-azul");
   const formRojo = document.getElementById("form-asistencia-rojo");
 
+  // Precarga: los últimos equipos generados en "Partido" (si los hay) quedan
+  // marcados de entrada, para no tener que volver a seleccionarlos a mano.
+  const azulSet = new Set((ultimoPartidoGenerado && ultimoPartidoGenerado.azul) || []);
+  const rojoSet = new Set((ultimoPartidoGenerado && ultimoPartidoGenerado.rojo) || []);
+
   jugadores.forEach((j, i) => {
     const idAzul = `asistencia_azul_${i}`;
     const idRojo = `asistencia_rojo_${i}`;
+    const marcadoAzul = azulSet.has(j.nombre) ? " checked" : "";
+    const marcadoRojo = rojoSet.has(j.nombre) ? " checked" : "";
 
     formAzul.insertAdjacentHTML("beforeend", `
       <div class="form-check">
-        <input class="form-check-input asistencia-checkbox asistencia-azul" type="checkbox" id="${idAzul}" value="${j.nombre}">
+        <input class="form-check-input asistencia-checkbox asistencia-azul" type="checkbox" id="${idAzul}" value="${j.nombre}"${marcadoAzul}>
         <label class="form-check-label" for="${idAzul}">${j.nombre}</label>
       </div>`);
 
     formRojo.insertAdjacentHTML("beforeend", `
       <div class="form-check">
-        <input class="form-check-input asistencia-checkbox asistencia-rojo" type="checkbox" id="${idRojo}" value="${j.nombre}">
+        <input class="form-check-input asistencia-checkbox asistencia-rojo" type="checkbox" id="${idRojo}" value="${j.nombre}"${marcadoRojo}>
         <label class="form-check-label" for="${idRojo}">${j.nombre}</label>
       </div>`);
   });
 
-  // sincronizar (no puede estar en los dos equipos)
+  // sincronizar (no puede estar en los dos equipos) + mantener el resumen en vivo
   document.querySelectorAll(".asistencia-azul").forEach(cb => {
     cb.addEventListener("change", e => {
       if (e.target.checked) {
         document.querySelector(`#asistencia_rojo_${e.target.id.split("_")[2]}`).checked = false;
       }
+      actualizarResumenEquiposAsistencia();
     });
   });
   document.querySelectorAll(".asistencia-rojo").forEach(cb => {
@@ -831,6 +881,7 @@ function renderAsistenciaRes() {
       if (e.target.checked) {
         document.querySelector(`#asistencia_azul_${e.target.id.split("_")[2]}`).checked = false;
       }
+      actualizarResumenEquiposAsistencia();
     });
   });
 
@@ -838,6 +889,8 @@ function renderAsistenciaRes() {
     e.preventDefault();
     await publicarResultado();
   });
+
+  actualizarResumenEquiposAsistencia();
 }
 
 async function publicarResultado() {
@@ -1121,6 +1174,11 @@ function generarEquipos() {
 
     mostrarEquipos([bestA, bestB], "resultado-equipos", "partido");
 
+    // Guardamos estos equipos como los últimos generados, para precargarlos
+    // automáticamente en la pestaña "Asistencia y Resultado"
+    guardarUltimoPartidoGenerado(bestA.map(p => p.nombre), bestB.map(p => p.nombre));
+    renderAsistenciaRes();
+
   } catch (error) {
     const cont = document.getElementById("resultado-equipos");
     if (cont) {
@@ -1275,9 +1333,27 @@ function generarEquiposTorneo() {
 
 /* ========== Arranque ========== */
 document.addEventListener("DOMContentLoaded", async () => {
+  cargarUltimoPartidoGenerado(); // últimos equipos generados en "Partido" (si los hubiera de una sesión anterior)
+
   await cargarAsistencias();
   await cargarJugadores();
   await mostrarHistorial();
+
+  // "Editar equipos" en Asistencia y Resultado: muestra/oculta las listas de jugadores
+  const btnEditarEquipos = document.getElementById("editar-equipos-asistencia");
+  const contEdicionEquipos = document.getElementById("form-asistencia-res");
+  btnEditarEquipos?.addEventListener("click", () => {
+    if (!contEdicionEquipos) return;
+    const estabaOculto = contEdicionEquipos.hasAttribute("hidden");
+    if (estabaOculto) {
+      contEdicionEquipos.removeAttribute("hidden");
+      btnEditarEquipos.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar edición';
+    } else {
+      contEdicionEquipos.setAttribute("hidden", "");
+      btnEditarEquipos.innerHTML = '<i class="fas fa-pen"></i> Editar equipos';
+      actualizarResumenEquiposAsistencia();
+    }
+  });
 
   // ⟵ Mapeo de columnas ordenables (alineado con las <th> de la tabla; null = no ordenable)
   const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "media", "fifa", null, null];
