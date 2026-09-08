@@ -204,6 +204,8 @@ let jugadoresOrdenados = [];
 let matchesData = [];
 let matchesTemporada = [];
 let statsPorJugador = new Map();
+let pagosData = [];               // filas de la hoja "Pagos": { fecha, pagador }
+let pagosPorJugador = new Map();  // nombre normalizado -> nº de veces que ha pagado
 
 // A partir de esta fecha cuentan los partidos para Balance / Curiosidades
 // (los partidos anteriores del histórico no se tienen en cuenta en estas estadísticas)
@@ -246,6 +248,10 @@ async function cargarJugadores() {
     await cargarPartidosStats();
     aplicarEstadisticasPartidos();
 
+    // 💰 Historial de pagos (quién ha pagado cada partido)
+    await cargarPagos();
+    aplicarPagos();
+
     jugadoresOriginal = [...jugadores];
     jugadoresOrdenados = [...jugadores];
 
@@ -256,6 +262,43 @@ async function cargarJugadores() {
   } catch (err) {
     console.error("Error cargando jugadores:", err);
   }
+}
+
+/* ====== Pagos: quién ha pagado cada partido (hoja "Pagos") ====== */
+async function cargarPagos() {
+  try {
+    const data = await getJSON(`${GAS_URL}?type=payments&ts=${Date.now()}`);
+    pagosData = Array.isArray(data) ? data : [];
+  } catch (e) {
+    // Si el Apps Script todavía no tiene el endpoint de pagos, la web sigue
+    // funcionando igual: simplemente todos los contadores se quedan a 0.
+    console.warn("No se pudieron cargar los pagos:", e);
+    pagosData = [];
+  }
+}
+
+/** Cuenta cuántas veces ha pagado cada jugador y lo fusiona en cada objeto jugador */
+function aplicarPagos() {
+  pagosPorJugador = new Map();
+  (pagosData || []).forEach(p => {
+    const key = normNombre(p && p.pagador);
+    if (!key) return;
+    pagosPorJugador.set(key, (pagosPorJugador.get(key) || 0) + 1);
+  });
+
+  const conPagos = arr => (arr || []).map(j => ({
+    ...j,
+    pagos: pagosPorJugador.get(normNombre(j.nombre)) || 0
+  }));
+  jugadores        = conPagos(jugadores);
+  jugadoresOriginal = conPagos(jugadoresOriginal);
+  jugadoresOrdenados = conPagos(jugadoresOrdenados);
+}
+
+async function guardarPago(pago) {
+  const resp = await postWithRetry({ type: "savePayment", payment: pago }, "pago");
+  console.log("[GAS/savePayment] OK →", resp);
+  return resp;
 }
 
 /* ====== Estadísticas de partidos (balance / rachas / curiosidades) ====== */
@@ -527,6 +570,13 @@ function mostrarTabla() {
     const balanceTxt = balance > 0 ? `+${balance}` : `${balance}`;
     const record = `${_num(j.victorias)}V - ${_num(j.derrotas)}D - ${_num(j.empates)}E en ${_num(j.partidosJugados)} partidos`;
 
+    // Veces que ha pagado (historial de la hoja "Pagos")
+    const pagos = _num(j.pagos);
+    const pagosTxt = `${pagos} ${pagos === 1 ? "vez" : "veces"}`;
+    const pagosHTML = pagos > 0
+      ? `<span class="pagos-badge" title="Ha pagado ${pagosTxt}"><i class="fas fa-hand-holding-dollar"></i> ${pagos}</span>`
+      : `<span class="pagos-badge pagos-cero" title="Todavía no ha pagado ninguna vez">0</span>`;
+
     // Curiosidades (récords del grupo)
     const curiosidades = Array.isArray(j.curiosidades) ? j.curiosidades : [];
     const curiosidadesHTML = curiosidades.length
@@ -548,6 +598,7 @@ function mostrarTabla() {
       </td>
       <td><span class="${colorClase(j.puntualidad)}">${_num(j.puntualidad)}</span></td>
       <td><span class="balance-badge ${balanceClass}" title="${record}">${balanceTxt}</span></td>
+      <td>${pagosHTML}</td>
       <td><span class="${colorClase(media)}">${media}</span></td>
       <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
       <td class="stars">${estrellasHTML}</td>
@@ -834,6 +885,49 @@ function actualizarResumenEquiposAsistencia() {
   const elRojo = document.getElementById("resumen-rojo");
   if (elAzul) elAzul.textContent = azulNames.length ? azulNames.join(", ") : "Sin jugadores seleccionados.";
   if (elRojo) elRojo.textContent = rojoNames.length ? rojoNames.join(", ") : "Sin jugadores seleccionados.";
+  // El desplegable de "¿Quién ha pagado?" solo ofrece a los que juegan hoy
+  actualizarSelectPagador();
+}
+
+/** Rellena el desplegable "¿Quién ha pagado?" con los jugadores de ESTE partido */
+function actualizarSelectPagador() {
+  const sel = document.getElementById("pagador");
+  if (!sel) return;
+
+  const nombres = [
+    ...Array.from(document.querySelectorAll(".asistencia-azul:checked")).map(cb => cb.value),
+    ...Array.from(document.querySelectorAll(".asistencia-rojo:checked")).map(cb => cb.value),
+  ].sort((a, b) => a.localeCompare(b, "es"));
+
+  const previo = sel.value;
+  sel.innerHTML = `<option value="">— Sin registrar —</option>` +
+    nombres.map(n => {
+      const veces = pagosPorJugador.get(normNombre(n)) || 0;
+      return `<option value="${n}">${n} (ha pagado ${veces})</option>`;
+    }).join("");
+
+  // Conservamos la selección previa si ese jugador sigue en el partido
+  if (previo && nombres.includes(previo)) sel.value = previo;
+  if (!nombres.length) {
+    sel.innerHTML = `<option value="">— Marca primero los equipos —</option>`;
+  }
+  actualizarContadorPagador();
+}
+
+/** Aviso con las veces que ya ha pagado el jugador seleccionado */
+function actualizarContadorPagador() {
+  const sel = document.getElementById("pagador");
+  const out = document.getElementById("pagador-contador");
+  if (!sel || !out) return;
+  const nombre = sel.value;
+  if (!nombre) {
+    out.innerHTML = `<span class="text-muted">Selecciona un jugador para ver su historial.</span>`;
+    return;
+  }
+  const veces = pagosPorJugador.get(normNombre(nombre)) || 0;
+  out.innerHTML = veces === 0
+    ? `<strong>${nombre}</strong> todavía no ha pagado ninguna vez.`
+    : `<strong>${nombre}</strong> ha pagado <strong>${veces}</strong> ${veces === 1 ? "vez" : "veces"}.`;
 }
 
 function renderAsistenciaRes() {
@@ -905,10 +999,14 @@ function renderAsistenciaRes() {
     });
   });
 
-  document.getElementById("publicar-resultado")?.addEventListener("click", async e => {
-    e.preventDefault();
-    await publicarResultado();
-  });
+  // onclick/onchange (y no addEventListener) porque renderAsistenciaRes se
+  // llama varias veces: con addEventListener se acumulaban handlers y el
+  // partido se podía llegar a publicar dos veces de un solo clic.
+  const btnPublicar = document.getElementById("publicar-resultado");
+  if (btnPublicar) btnPublicar.onclick = async e => { e.preventDefault(); await publicarResultado(); };
+
+  const selPagador = document.getElementById("pagador");
+  if (selPagador) selPagador.onchange = actualizarContadorPagador;
 
   actualizarResumenEquiposAsistencia();
 }
@@ -932,7 +1030,24 @@ async function publicarResultado() {
   // 2) Incrementar asistencia (si falla, avisamos)
   await incrementarAsistencia([...equipo1, ...equipo2]);
 
-  alert("Resultado publicado ✅");
+  // 3) Registrar quién ha pagado (opcional: si falla, el resultado ya está guardado)
+  const pagador = document.getElementById("pagador")?.value || "";
+  let avisoPago = "";
+  if (pagador) {
+    try {
+      await guardarPago({ fecha, pagador });
+      await cargarPagos();
+      aplicarPagos();
+      mostrarTabla();
+      actualizarSelectPagador();
+      avisoPago = `\n💰 Pago registrado: ${pagador}.`;
+    } catch (e) {
+      console.error("[GAS/savePayment] ERROR →", e);
+      avisoPago = `\n\n⚠️ El resultado sí se guardó, pero no se pudo registrar el pago de ${pagador}.`;
+    }
+  }
+
+  alert("Resultado publicado ✅" + avisoPago);
   mostrarHistorial();
 }
 
@@ -1448,7 +1563,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // ⟵ Mapeo de columnas ordenables (alineado con las <th> de la tabla; null = no ordenable)
-  const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "media", "fifa", null, null];
+  const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "pagos", "media", "fifa", null, null];
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
     if (columna) {

@@ -127,6 +127,21 @@
     .balance-neg { background: #fdecea; color: #d93025; }
     .balance-neutro { background: #eef1ee; color: var(--sf-muted); }
 
+    /* Veces que ha pagado cada jugador */
+    .pagos-badge {
+      display: inline-block; min-width: 38px; padding: .1rem .45rem; border-radius: 999px;
+      font-weight: 700; font-size: .82rem; background: #eaf4f7; color: var(--sf-blue-dark);
+    }
+    .pagos-badge i { font-size: .72rem; margin-right: 2px; opacity: .8; }
+    .pagos-badge.pagos-cero { background: #eef1ee; color: var(--sf-muted); }
+
+    /* Casilla "¿Quién ha pagado?" */
+    .pagador-box {
+      background: #eaf4f7; border: 1px solid #cbe4ea; border-radius: 12px; padding: .85rem 1rem;
+    }
+    .pagador-box .form-label { font-weight: 600; color: var(--sf-blue-dark); margin-bottom: .35rem; }
+    #pagador-contador { font-size: .92rem; }
+
     /* Curiosidades / récords por jugador */
     .curiosidades-cell { text-align: left; max-width: 190px; }
     .curiosidad-badge {
@@ -293,6 +308,7 @@
             <th class="sortable">Asistencia</th>
             <th class="sortable">Puntualidad</th>
             <th class="sortable">Balance</th>
+            <th class="sortable">Pagos</th>
             <th class="sortable">Media</th>
             <th class="sortable">FIFA</th>
             <th>Stars</th>
@@ -391,6 +407,29 @@
           </div>
         </div>
 
+        <!-- ¿Quién ha pagado? Se rellena solo con los jugadores de este partido -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <div class="pagador-box">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <label for="pagador" class="form-label">
+                    <i class="fas fa-hand-holding-dollar"></i> ¿Quién ha pagado?
+                  </label>
+                  <select id="pagador" class="form-select">
+                    <option value="">— Marca primero los equipos —</option>
+                  </select>
+                </div>
+                <div class="col-md-6 mt-2 mt-md-0">
+                  <p id="pagador-contador" class="mb-0">
+                    <span class="text-muted">Selecciona un jugador para ver su historial.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Resumen (por defecto los últimos equipos generados en "Partido") -->
         <div class="row mb-2" id="resumen-equipos-asistencia">
           <div class="col-md-6">
@@ -464,7 +503,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js?v=12"></script>
+<script src="Jugadores.js?v=13"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
