@@ -917,6 +917,47 @@ async function publicarResultado() {
 }
 
 /* ========== Historial ========== */
+
+/** Tarjeta de un partido: marcador grande estilo "resultado de liga" + chips de jugadores por equipo */
+function tarjetaPartidoHTML(p) {
+  const fechaBonita = formatFechaHistorial(p.fecha);
+  const golesAzul = _num(p.goles1);
+  const golesRojo = _num(p.goles2);
+  const ganaAzul = golesAzul > golesRojo;
+  const ganaRojo = golesRojo > golesAzul;
+  const empate = !ganaAzul && !ganaRojo;
+  const trofeo = ' <i class="fas fa-trophy"></i>';
+
+  const chips = (lista, clase) => (lista || []).map(n => `<span class="chip-jugador ${clase}">${n}</span>`).join("");
+
+  return `
+    <div class="col">
+      <div class="partido-card">
+        <div class="partido-card-fecha"><i class="fas fa-calendar-day"></i> ${fechaBonita}</div>
+        <div class="marcador">
+          <div class="marcador-equipo ${ganaAzul ? "marcador-ganador" : ""}">
+            <span class="circle azul-circle"></span>
+            <span class="marcador-nombre">Azul${ganaAzul ? trofeo : ""}</span>
+          </div>
+          <div class="marcador-goles">
+            <span class="goles-num ${ganaAzul ? "goles-ganador" : ""}">${golesAzul}</span>
+            <span class="marcador-sep">–</span>
+            <span class="goles-num ${ganaRojo ? "goles-ganador" : ""}">${golesRojo}</span>
+          </div>
+          <div class="marcador-equipo marcador-equipo-derecha ${ganaRojo ? "marcador-ganador" : ""}">
+            <span class="marcador-nombre">${ganaRojo ? trofeo : ""}Rojo</span>
+            <span class="circle rojo-circle"></span>
+          </div>
+        </div>
+        ${empate ? '<div class="marcador-empate">Empate</div>' : ""}
+        <div class="partido-card-jugadores">
+          <div class="jugadores-fila">${chips(p.equipo1, "chip-azul")}</div>
+          <div class="jugadores-fila">${chips(p.equipo2, "chip-rojo")}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 async function mostrarHistorial() {
   try {
     // anti-cache
@@ -930,29 +971,45 @@ async function mostrarHistorial() {
       return;
     }
 
-    partidos.reverse().forEach(p => {
-      const fechaBonita = formatFechaHistorial(p.fecha);
-      const html = `
-        <div class="col">
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h5 class="card-title">${fechaBonita}</h5>
-              <p class="card-text"><strong>Resultado:</strong> ${p.resultado}</p>
-              <div class="row">
-                <div class="col-md-6">
-                  <h6><span class="circle blanco-circle"></span><span class="circle azul-circle"></span> Equipo 1</h6>
-                  <ul>${(p.equipo1 || []).map(n => `<li>${n}</li>`).join("")}</ul>
-                </div>
-                <div class="col-md-6">
-                  <h6><span class="circle rojo-circle"></span><span class="circle naranja-circle"></span> Equipo 2</h6>
-                  <ul>${(p.equipo2 || []).map(n => `<li>${n}</li>`).join("")}</ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>`;
-      cont.insertAdjacentHTML("beforeend", html);
+    // Temporada actual (desde el 01/09/2026) visible; el resto queda plegado bajo "Temporada 25-26"
+    const actuales = [];
+    const anteriores = [];
+    partidos.forEach(p => {
+      const d = parseFechaPartido(p.fecha);
+      (d && d >= TEMPORADA_INICIO ? actuales : anteriores).push(p);
     });
+    actuales.reverse();   // más recientes primero
+    anteriores.reverse();
+
+    if (actuales.length) {
+      cont.insertAdjacentHTML("beforeend", `<div class="row row-cols-1 row-cols-md-2 g-4" id="historial-actual"></div>`);
+      const contActual = document.getElementById("historial-actual");
+      actuales.forEach(p => contActual.insertAdjacentHTML("beforeend", tarjetaPartidoHTML(p)));
+    } else {
+      cont.insertAdjacentHTML("beforeend", `<p class="text-muted">Todavía no se ha disputado ningún partido esta temporada.</p>`);
+    }
+
+    if (anteriores.length) {
+      cont.insertAdjacentHTML("beforeend", `
+        <div class="temporada-anterior mt-4">
+          <button class="btn btn-outline-secondary btn-sm temporada-anterior-toggle" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#temporada-25-26"
+                  aria-expanded="false" aria-controls="temporada-25-26">
+            <i class="fas fa-chevron-right"></i> Temporada 25-26
+            <span class="badge-count">${anteriores.length}</span>
+          </button>
+          <div class="collapse mt-3" id="temporada-25-26">
+            <div class="row row-cols-1 row-cols-md-2 g-4"></div>
+          </div>
+        </div>`);
+      const contAnterior = cont.querySelector("#temporada-25-26 .row");
+      anteriores.forEach(p => contAnterior.insertAdjacentHTML("beforeend", tarjetaPartidoHTML(p)));
+
+      const toggleBtn = cont.querySelector(".temporada-anterior-toggle");
+      const collapseEl = document.getElementById("temporada-25-26");
+      collapseEl?.addEventListener("show.bs.collapse", () => toggleBtn.classList.add("abierto"));
+      collapseEl?.addEventListener("hide.bs.collapse", () => toggleBtn.classList.remove("abierto"));
+    }
   } catch (err) {
     console.error("Error cargando historial:", err);
   }
