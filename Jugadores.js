@@ -339,10 +339,17 @@ function calcularCuriosidades(statsMap, minPartidos = 3) {
   return resultado;
 }
 
+/** Refleja en la cabecera cuántos partidos lleva disputados la temporada actual */
+function actualizarContadorTemporada() {
+  const el = document.getElementById("contador-temporada-num");
+  if (el) el.textContent = matchesTemporada.length;
+}
+
 /** Fusiona balance/curiosidades calculados dentro de cada objeto jugador */
 function aplicarEstadisticasPartidos() {
   // Solo cuentan los partidos de la temporada actual (desde el 01/09/2026)
   matchesTemporada = filtrarPartidosTemporada(matchesData);
+  actualizarContadorTemporada();
 
   statsPorJugador = calcularEstadisticasPartidos(matchesTemporada);
   const curiosidadesPorJugador = calcularCuriosidades(statsPorJugador, 3);

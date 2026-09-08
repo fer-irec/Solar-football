@@ -47,6 +47,18 @@
     .hero img { border-radius: 50%; background: #fff; padding: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
     .hero h1 { font-weight: 800; letter-spacing: -.02em; margin: .5rem 0 0; }
     .hero #fecha-modificacion { color: rgba(255,255,255,.82) !important; margin: .25rem 0 0; font-size: .92rem; }
+    .hero .temporada-badge {
+      display: inline-flex; align-items: center; gap: .45rem;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.35);
+      color: #fff;
+      padding: .35rem .95rem;
+      border-radius: 999px;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-top: .65rem;
+    }
+    .hero .temporada-badge strong { font-size: .95rem; }
 
     /* Navegación */
     #tabs { border-bottom: none; gap: .4rem; flex-wrap: wrap; }
@@ -190,6 +202,10 @@
     <img src="logo-solarfc.jpg" alt="Logo Solar Football" width="160" height="160" style="max-height: 160px; width: 160px; height: 160px; object-fit: cover;">
     <h1>SOLAR football</h1>
     <p id="fecha-modificacion">Última actualización: <span></span></p>
+    <div class="temporada-badge">
+      <i class="fas fa-futbol"></i>
+      Partidos disputados esta temporada: <strong id="contador-temporada-num">0</strong>
+    </div>
   </div>
 
   <ul class="nav nav-pills mb-4 justify-content-center" id="tabs">
@@ -370,7 +386,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js?v=5"></script>
+<script src="Jugadores.js?v=6"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
