@@ -1033,6 +1033,13 @@ const DELTA = 0.5;      // penalización por demasiadas estrellas
 const STAR_CUTOFF = 3.75; // >= 3.75 (en escala 0-5) es estrella
 const LOW_CUTOFF  = 2.00; // <= 2.0 (en escala 0-5) es flojo
 
+// Los jugadores marcados "(GK)" en el nombre son porteros: especialistas defensivos.
+// Cuando un equipo cuenta con portero, se le suma este plus a su "defensa" SOLO de
+// cara al cálculo de equilibrio entre equipos (no altera las medias que se muestran),
+// para que el algoritmo compense de forma natural al equipo que se queda sin portero.
+const GK_DEF_BONUS = 0.6; // sobre una escala de defensa 0-5
+const esPortero = nombre => /\(GK\)/i.test(nombre || "");
+
 function teamScore(team) {
   const ratings = team.map(p => calcularMedia(p)); // 0–5
   const base = ratings.reduce((a,b)=>a+b, 0);
@@ -1108,14 +1115,16 @@ function countTier(team, tierByName, tier){
 }
 
 function teamCompStats(team){
+  const tieneGK = team.some(p => esPortero(p.nombre));
   return {
     atk:  avg(team, p => _num(p.ataque)),
-    def:  avg(team, p => _num(p.defensa)),
+    // Plus defensivo del portero SOLO para equilibrar (ver GK_DEF_BONUS más arriba)
+    def:  avg(team, p => _num(p.defensa)) + (tieneGK ? GK_DEF_BONUS : 0),
     tact: avg(team, p => _num(p.tactica)),
     sta:  avg(team, p => _num(p.estamina)),
     media: avg(team, p => p.media),
     top5: topKAvgMedia(team, 5),
-    gk: team.some(p => /GK/i.test(p.nombre)) ? 1 : 0
+    gk: tieneGK ? 1 : 0
   };
 }
 
@@ -1144,7 +1153,7 @@ function generarEquipos() {
     const allowStarDiff = totalStarsAbs % 2; // 0 si par, 1 si impar
     const allowLowDiff = totalLowsAbs % 2;
 
-    const totalGK = seleccionados.filter(p => /GK/i.test(p.nombre)).length;
+    const totalGK = seleccionados.filter(p => esPortero(p.nombre)).length;
 
     let bestCost = Infinity;
     let bestA = null, bestB = null;
@@ -1184,8 +1193,8 @@ function generarEquipos() {
 
       // ===== GK (si hay 2+ GK, uno por equipo) =====
       if (totalGK >= 2) {
-        const gkA = A.some(p => /GK/i.test(p.nombre));
-        const gkB = B.some(p => /GK/i.test(p.nombre));
+        const gkA = A.some(p => esPortero(p.nombre));
+        const gkB = B.some(p => esPortero(p.nombre));
         if (!(gkA && gkB)) continue;
       }
 
@@ -1264,21 +1273,23 @@ function std(arr) {
 }
 function calcTeamStats(team){
   if (!team.length) {
-    return { atk:0, def:0, tact:0, sta:0, fifaAvg:0, score:0, gk:0 };
+    return { atk:0, def:0, tact:0, sta:0, fifaAvg:0, score:0, gk:0, numGK:0 };
   }
   const sum = (f)=> team.reduce((s,x)=> s + f(x), 0);
+  const numGK = team.filter(p => esPortero(p.nombre)).length;
   const atk  = sum(p=>_num(p.ataque))  / team.length;
-  const def  = sum(p=>_num(p.defensa)) / team.length;
+  // Plus defensivo del portero SOLO para equilibrar (ver GK_DEF_BONUS más arriba)
+  const def  = (sum(p=>_num(p.defensa)) / team.length) + (numGK > 0 ? GK_DEF_BONUS : 0);
   const tact = sum(p=>_num(p.tactica)) / team.length;
   const sta  = sum(p=>_num(p.estamina))/ team.length;
   const fifaAvg = Math.round(sum(p=>calcularFifa(p)) / team.length);
   const score   = teamScore(team) / team.length;
-  const gk      = team.some(p => /GK/i.test(p.nombre)) ? 1 : 0;
+  const gk      = numGK > 0 ? 1 : 0;
 
   return {
     atk:+atk.toFixed(2), def:+def.toFixed(2),
     tact:+tact.toFixed(2), sta:+sta.toFixed(2),
-    fifaAvg, score, gk
+    fifaAvg, score, gk, numGK
   };
 }
 function desiredSizes(total, k=4){
@@ -1322,14 +1333,18 @@ function costeEquipos(equipos, targetSizes, totalGK){
 
   let gkPen = 0;
   if (totalGK >= equipos.length) {
-    gkPen = equipos.reduce((acc,t)=> acc + (calcTeamStats(t).gk ? 0 : 1), 0) * 0.5;
+    gkPen = stats.reduce((acc,s)=> acc + (s.gk ? 0 : 1), 0) * 0.5;
   }
-  const wVar=1.0, wComp=0.55, wFifa=0.02, wSize=10, wGK=0.35;
-  return wVar*varScore + wComp*compStd + wFifa*fifaStd + wSize*sizePen + wGK*gkPen;
+  // Si dos o más porteros caen en el mismo equipo, deberían repartirse: penaliza
+  // cada portero "de más" que se acumule en un equipo que ya tiene uno.
+  const gkStackPen = stats.reduce((acc,s)=> acc + Math.max(0, (s.numGK || 0) - 1), 0);
+
+  const wVar=1.0, wComp=0.55, wFifa=0.02, wSize=10, wGK=0.35, wGKStack=2.0;
+  return wVar*varScore + wComp*compStd + wFifa*fifaStd + wSize*sizePen + wGK*gkPen + wGKStack*gkStackPen;
 }
 function optimizeEquipos(seed, targetSizes, iters=4800){
   let teams = seed.map(t=>t.slice());
-  const totalGK = seed.flat().filter(p => /GK/i.test(p.nombre)).length;
+  const totalGK = seed.flat().filter(p => esPortero(p.nombre)).length;
 
   let best = teams.map(t=>t.slice());
   let bestCost = costeEquipos(teams, targetSizes, totalGK);
