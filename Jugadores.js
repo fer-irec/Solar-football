@@ -370,20 +370,28 @@ function aplicarEstadisticasPartidos() {
 
 /** Radar mini (SVG) de Ataque / Defensa / Táctica / Estamina, escala 0-5 */
 function generarRadarSVG(j, size = 48) {
+  // Ratio de asistencia de la temporada actual: 1 = ha venido a todos los partidos, 0 = a ninguno
+  const totalPartidosTemporada = matchesTemporada.length;
+  const ratioAsistencia = totalPartidosTemporada > 0
+    ? Math.max(0, Math.min(1, _num(j.partidosJugados) / totalPartidosTemporada))
+    : 0;
+
+  // Cada eje lleva su propia escala (0-5 para los atributos, 0-1 para la asistencia);
+  // "frac" es lo que realmente se dibuja: la posición normalizada de 0 a 1 sobre ese eje.
   const ejes = [
-    { label: "ATK", value: limitar(j.ataque) },
-    { label: "DEF", value: limitar(j.defensa) },
-    { label: "TAC", value: limitar(j.tactica) },
-    { label: "STA", value: limitar(j.estamina) },
+    { label: "ATK", texto: limitar(j.ataque).toFixed(2), frac: limitar(j.ataque) / 5 },
+    { label: "DEF", texto: limitar(j.defensa).toFixed(2), frac: limitar(j.defensa) / 5 },
+    { label: "TAC", texto: limitar(j.tactica).toFixed(2), frac: limitar(j.tactica) / 5 },
+    { label: "STA", texto: limitar(j.estamina).toFixed(2), frac: limitar(j.estamina) / 5 },
+    { label: "ASIS", texto: `${Math.round(ratioAsistencia * 100)}%`, frac: ratioAsistencia },
   ];
-  const max = 5;
   const cx = size / 2, cy = size / 2;
   const r = size / 2 - 11;
   const n = ejes.length;
   const angleStep = (2 * Math.PI) / n;
-  const puntoEn = (valor, i) => {
+  const puntoEn = (frac, i) => {
     const angle = -Math.PI / 2 + i * angleStep;
-    const rad = (Math.max(0, Math.min(max, valor)) / max) * r;
+    const rad = Math.max(0, Math.min(1, frac)) * r;
     return [cx + rad * Math.cos(angle), cy + rad * Math.sin(angle)];
   };
 
@@ -404,8 +412,8 @@ function generarRadarSVG(j, size = 48) {
     ejesSVG += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e4e9e5" stroke-width="1"/>`;
   });
 
-  const dataPts = ejes.map((e, i) => puntoEn(e.value, i).map(v => v.toFixed(1)).join(",")).join(" ");
-  const tooltip = ejes.map(e => `${e.label} ${e.value.toFixed(2)}`).join(" · ");
+  const dataPts = ejes.map((e, i) => puntoEn(e.frac, i).map(v => v.toFixed(1)).join(",")).join(" ");
+  const tooltip = ejes.map(e => `${e.label} ${e.texto}`).join(" · ");
 
   return `<span title="${tooltip}"><svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="radar-mini" role="img" aria-label="Radar de atributos: ${tooltip}">
     ${grid}${ejesSVG}
