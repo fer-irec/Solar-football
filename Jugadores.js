@@ -191,7 +191,33 @@ let jugadores = [];
 let jugadoresOriginal = [];
 let jugadoresOrdenados = [];
 let matchesData = [];
+let matchesTemporada = [];
 let statsPorJugador = new Map();
+
+// A partir de esta fecha cuentan los partidos para Balance / Curiosidades
+// (los partidos anteriores del histórico no se tienen en cuenta en estas estadísticas)
+const TEMPORADA_INICIO = new Date(2026, 8, 1); // 01/09/2026 (mes 0-indexado: 8 = septiembre)
+
+/** Convierte fecha del partido ("dd/MM/yyyy", ISO, o Date) a Date. Devuelve null si no se puede. */
+function parseFechaPartido(fecha) {
+  if (!fecha) return null;
+  if (fecha instanceof Date) return isNaN(fecha) ? null : fecha;
+  const s = String(fecha).trim();
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+/** Filtra los partidos de la temporada actual (desde TEMPORADA_INICIO en adelante) */
+function filtrarPartidosTemporada(matches) {
+  return (matches || []).filter(p => {
+    const d = parseFechaPartido(p.fecha);
+    return d && d >= TEMPORADA_INICIO;
+  });
+}
 
 async function cargarJugadores() {
   try {
@@ -315,7 +341,10 @@ function calcularCuriosidades(statsMap, minPartidos = 3) {
 
 /** Fusiona balance/curiosidades calculados dentro de cada objeto jugador */
 function aplicarEstadisticasPartidos() {
-  statsPorJugador = calcularEstadisticasPartidos(matchesData);
+  // Solo cuentan los partidos de la temporada actual (desde el 01/09/2026)
+  matchesTemporada = filtrarPartidosTemporada(matchesData);
+
+  statsPorJugador = calcularEstadisticasPartidos(matchesTemporada);
   const curiosidadesPorJugador = calcularCuriosidades(statsPorJugador, 3);
 
   jugadores = jugadores.map(j => {
@@ -333,7 +362,7 @@ function aplicarEstadisticasPartidos() {
 }
 
 /** Radar mini (SVG) de Ataque / Defensa / Táctica / Estamina, escala 0-5 */
-function generarRadarSVG(j, size = 60) {
+function generarRadarSVG(j, size = 48) {
   const ejes = [
     { label: "ATK", value: limitar(j.ataque) },
     { label: "DEF", value: limitar(j.defensa) },
