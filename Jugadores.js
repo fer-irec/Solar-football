@@ -545,6 +545,22 @@ function ordenarPor(columna) {
   mostrarTabla();
 }
 
+/**
+ * Ordena desde el <select> de móvil. A diferencia de ordenarPor (que va rotando
+ * descendente → ascendente → sin orden a cada clic en la cabecera), aquí cada
+ * opción tiene que dar siempre el mismo resultado.
+ */
+function ordenarDesdeSelect(columna) {
+  ordenActual = { columna: null, estado: 0 };
+  if (!columna) {
+    jugadoresOrdenados = [...jugadoresOriginal];
+    mostrarTabla();
+    return;
+  }
+  ordenarPor(columna);                            // 1ª llamada → descendente
+  if (columna === "nombre") ordenarPor(columna);  // los nombres, mejor de A a Z
+}
+
 /* ========== Mostrar tabla ========== */
 function mostrarTabla() {
   const tbody = document.querySelector("#tabla-jugadores tbody");
@@ -584,25 +600,25 @@ function mostrarTabla() {
       : `<span class="text-muted">—</span>`;
 
     const fila = `<tr class="fila-${grupo}">
-      <td><span class="grupo-dot dot-${grupo}"></span>${j.nombre}</td>
-      <td class="radar-cell">${generarRadarSVG(j)}</td>
-      <td><span class="${colorClase(j.ataque)}">${_num(j.ataque).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.defensa)}">${_num(j.defensa).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
-      <td><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
-      <td class="asistencia-cell">
+      <td class="c-jugador"><span class="grupo-dot dot-${grupo}"></span>${j.nombre}</td>
+      <td class="radar-cell c-radar">${generarRadarSVG(j)}</td>
+      <td class="det c-stat" data-label="Ataque"><span class="${colorClase(j.ataque)}">${_num(j.ataque).toFixed(2)}</span></td>
+      <td class="det c-stat" data-label="Defensa"><span class="${colorClase(j.defensa)}">${_num(j.defensa).toFixed(2)}</span></td>
+      <td class="det c-stat" data-label="Táctica"><span class="${colorClase(j.tactica)}">${_num(j.tactica).toFixed(2)}</span></td>
+      <td class="det c-stat" data-label="Estamina"><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
+      <td class="det asistencia-cell c-asis" data-label="Asistencia">
         <span class="fw-semibold">${asistenciaTemporada}/${totalPartidos}</span>
         <div class="progress asistencia-bar" title="${pctAsistencia}% de los partidos de la temporada (desde 01/09/2026)">
           <div class="progress-bar" style="width:${pctAsistencia}%;background:${colorHexPct(pctAsistencia)};"></div>
         </div>
       </td>
-      <td><span class="${colorClase(j.puntualidad)}">${_num(j.puntualidad)}</span></td>
-      <td><span class="balance-badge ${balanceClass}" title="${record}">${balanceTxt}</span></td>
-      <td>${pagosHTML}</td>
-      <td><span class="${colorClase(media)}">${media}</span></td>
-      <td><span class="${colorFifa(fifa)}">${fifa}</span></td>
-      <td class="stars">${estrellasHTML}</td>
-      <td class="curiosidades-cell">${curiosidadesHTML}</td>
+      <td class="det c-punt" data-label="Puntualidad"><span class="${colorClase(j.puntualidad)}">${_num(j.puntualidad)}</span></td>
+      <td class="det c-bal" data-label="Balance"><span class="balance-badge ${balanceClass}" title="${record}">${balanceTxt}</span></td>
+      <td class="det c-pagos" data-label="Pagos">${pagosHTML}</td>
+      <td class="c-media"><span class="${colorClase(media)}">${media}</span></td>
+      <td class="c-fifa"><span class="${colorFifa(fifa)}">${fifa}</span></td>
+      <td class="stars c-stars">${estrellasHTML}</td>
+      <td class="det curiosidades-cell c-curi" data-label="Curiosidades">${curiosidadesHTML}</td>
     </tr>`;
     tbody.insertAdjacentHTML("beforeend", fila);
   });
@@ -1561,6 +1577,35 @@ document.addEventListener("DOMContentLoaded", async () => {
       actualizarResumenEquiposAsistencia();
     }
   });
+
+  // --- Móvil: cada fila es una tarjeta y se despliega al tocarla ---
+  // Delegado en el tbody para que siga funcionando después de cada mostrarTabla().
+  const tbodyJug = document.querySelector("#tabla-jugadores tbody");
+  if (tbodyJug) {
+    tbodyJug.addEventListener("click", e => {
+      // Solo en la vista de tarjetas; en escritorio la tabla se queda como está
+      if (!window.matchMedia("(max-width: 767.98px)").matches) return;
+      const fila = e.target.closest("tr");
+      if (fila) fila.classList.toggle("abierta");
+    });
+  }
+
+  // --- Móvil: la tira de pestañas se desliza; dejamos la pestaña activa a la vista ---
+  const tabsNav = document.getElementById("tabs");
+  const centrarPestanaActiva = () => {
+    if (!tabsNav) return;
+    const activa = tabsNav.querySelector(".nav-link.active");
+    if (activa && tabsNav.scrollWidth > tabsNav.clientWidth) {
+      const offset = activa.offsetLeft - (tabsNav.clientWidth - activa.offsetWidth) / 2;
+      tabsNav.scrollTo({ left: Math.max(0, offset), behavior: "smooth" });
+    }
+  };
+  centrarPestanaActiva();
+  tabsNav?.addEventListener("shown.bs.tab", centrarPestanaActiva);
+
+  // --- Móvil: selector de orden (la cabecera de la tabla queda oculta) ---
+  const selOrden = document.getElementById("orden-movil");
+  if (selOrden) selOrden.addEventListener("change", () => ordenarDesdeSelect(selOrden.value));
 
   // ⟵ Mapeo de columnas ordenables (alineado con las <th> de la tabla; null = no ordenable)
   const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "pagos", "media", "fifa", null, null];

@@ -11,6 +11,13 @@
   <link rel="icon" href="favicon.ico" sizes="any">
   <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16">
+  <!-- Instalable en la pantalla de inicio del móvil -->
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Solar FC">
+  <meta name="mobile-web-app-capable" content="yes">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
@@ -59,6 +66,7 @@
       margin-top: .65rem;
     }
     .hero .temporada-badge strong { font-size: .95rem; }
+    .temporada-badge .badge-corto { display: none; }  /* se usa solo en móvil */
 
     /* Navegación */
     #tabs { border-bottom: none; gap: .4rem; flex-wrap: wrap; }
@@ -262,17 +270,189 @@
       background: var(--sf-border); color: var(--sf-muted); border-radius: 999px;
       padding: .1rem .55rem; font-size: .75rem; font-weight: 700;
     }
+
+    /* El selector de orden solo tiene sentido en móvil (en escritorio se ordena
+       pulsando la cabecera de la tabla) */
+    .orden-movil-wrap { display: none; }
+
+    /* =====================================================================
+       MÓVIL (< 768px)
+       La tabla de 14 columnas no cabe en un teléfono, así que aquí cada fila
+       se convierte en una tarjeta: cabecera siempre visible (nombre, radar,
+       media, FIFA y estrellas) y el resto de datos se despliega al tocarla.
+       Todo va dentro de este @media, así que el escritorio no cambia nada.
+       ===================================================================== */
+    @media (max-width: 767.98px) {
+
+      /* --- Cabecera compacta: el logo a 160px se comía la pantalla entera.
+             Lleva width/height en el atributo style, de ahí los !important --- */
+      /* text-align lleva !important porque .text-center de Bootstrap también */
+      .hero {
+        display: flex; align-items: center; gap: .8rem;
+        text-align: left !important;
+        padding: .85rem .9rem; border-radius: 14px; margin-bottom: .9rem;
+      }
+      .hero img {
+        flex: 0 0 74px;
+        width: 74px !important; height: 74px !important;
+        max-height: 74px !important; padding: 6px;
+      }
+      .hero-txt { flex: 1 1 auto; min-width: 0; }
+      .hero h1 { font-size: 1.3rem; margin: 0; }
+      .hero #fecha-modificacion { font-size: .74rem; margin-top: .1rem !important; }
+      .hero .temporada-badge { font-size: .75rem; padding: .25rem .65rem; margin-top: .4rem; white-space: nowrap; }
+      .temporada-badge .badge-largo { display: none; }
+      .temporada-badge .badge-corto { display: inline; }
+      .container.py-4 { padding-top: .75rem !important; }
+
+      /* --- Pestañas: una sola tira deslizable y fija arriba, en vez de
+             4 filas apiladas que obligaban a subir para cambiar de pestaña --- */
+      #tabs {
+        /* !important porque .justify-content-center de Bootstrap lo lleva también:
+           centrado + nowrap dejaba las primeras pestañas fuera de alcance */
+        flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start !important;
+        -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        position: sticky; top: 0; z-index: 30;
+        background: var(--sf-bg);
+        margin: 0 -12px .9rem; padding: .5rem 12px;
+        box-shadow: 0 4px 12px -6px rgba(15,35,45,.25);
+      }
+      #tabs::-webkit-scrollbar { display: none; }
+      #tabs .nav-item { flex: 0 0 auto; }
+      #tabs .nav-link { font-size: .84rem; padding: .42rem .8rem; white-space: nowrap; }
+      #tabs .nav-link i { margin-right: .3rem; }
+
+      /* --- Formularios: 16px es el mínimo para que iOS no haga zoom
+             automático al enfocar un campo --- */
+      .form-control, .form-select { font-size: 16px; }
+      .form-select-sm, .form-control-sm { font-size: 16px; }
+
+      /* --- Casillas con más área de toque (marcar 12 jugadores a dedo) --- */
+      .form-check { padding-top: .2rem; padding-bottom: .2rem; min-height: 2rem; }
+      .form-check-input { width: 1.25em; height: 1.25em; margin-top: .2em; }
+      .player-grid .form-check-label { font-size: .93rem; }
+
+      h3 { font-size: 1.2rem; }
+      .btn-lg { font-size: 1rem; }
+
+      /* --- Selector de orden visible --- */
+      .orden-movil-wrap { display: block; }
+      .orden-movil-wrap .form-label { font-size: .78rem; font-weight: 700; color: var(--sf-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+      /* --- La tabla ya no necesita salirse del contenedor: sin full-bleed --- */
+      .tabla-jugadores-wrap {
+        position: static; left: auto; right: auto;
+        margin: 0; width: auto; max-width: none; padding: 0;
+        overflow: visible !important;
+      }
+
+      /* ============ Tabla -> tarjetas ============ */
+      #tabla-jugadores {
+        display: block; background: transparent; box-shadow: none;
+        border-radius: 0; font-size: .9rem; width: 100%;
+      }
+      #tabla-jugadores thead { display: none; }        /* el orden va en el select */
+      #tabla-jugadores tbody { display: block; }
+
+      #tabla-jugadores tbody tr {
+        display: flex; flex-wrap: wrap; align-items: center;
+        background: var(--sf-surface) !important;
+        border: 1px solid var(--sf-border);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(15,35,45,.06);
+        padding: .55rem .7rem; margin-bottom: .55rem;
+        cursor: pointer;
+      }
+      #tabla-jugadores tbody tr:hover { background: var(--sf-surface) !important; }
+
+      /* Franja de color del grupo (en escritorio va en la 1ª celda) */
+      #tabla-jugadores tbody tr.fila-habitual { border-left: 5px solid #4d8fdb; }
+      #tabla-jugadores tbody tr.fila-visitor  { border-left: 5px solid var(--sf-gold); background: #fffaf0 !important; }
+      #tabla-jugadores tbody tr.fila-hall     { border-left: 5px solid #9b6bff; background: #f8f5ff !important; }
+      #tabla-jugadores tbody tr.fila-habitual td:first-child,
+      #tabla-jugadores tbody tr.fila-visitor td:first-child,
+      #tabla-jugadores tbody tr.fila-hall td:first-child { border-left: none; }
+
+      #tabla-jugadores tbody td { border: none !important; padding: 0; text-align: left; }
+
+      /* --- Cabecera de la tarjeta (siempre visible) --- */
+      #tabla-jugadores td.c-radar { order: 1; width: 52px; flex: 0 0 52px; }
+      #tabla-jugadores td.c-jugador {
+        order: 2; flex: 1 1 auto; min-width: 0 !important;
+        white-space: normal !important; padding-left: .5rem !important;
+        font-size: 1rem; font-weight: 700; line-height: 1.2;
+      }
+      #tabla-jugadores td.c-media,
+      #tabla-jugadores td.c-fifa { order: 3; flex: 0 0 auto; text-align: center; padding-left: .5rem !important; }
+      #tabla-jugadores td.c-media span,
+      #tabla-jugadores td.c-fifa span { font-size: 1.02rem; }
+      #tabla-jugadores td.c-media::before,
+      #tabla-jugadores td.c-fifa::before {
+        display: block; font-size: .58rem; font-weight: 700; letter-spacing: .05em;
+        text-transform: uppercase; color: var(--sf-muted); line-height: 1;
+      }
+      #tabla-jugadores td.c-media::before { content: "Media"; }
+      #tabla-jugadores td.c-fifa::before  { content: "FIFA"; }
+
+      /* Estrellas + flecha de desplegar, en su propia línea */
+      #tabla-jugadores td.c-stars {
+        order: 4; width: 100%; flex: 0 0 100%;
+        display: flex; align-items: center; justify-content: space-between;
+        margin-top: .3rem;
+      }
+      #tabla-jugadores td.c-stars::after {
+        content: "\f107";                       /* chevron-down de Font Awesome */
+        font-family: "Font Awesome 6 Free"; font-weight: 900;
+        color: var(--sf-blue); font-size: .95rem;
+        transition: transform .15s ease;
+      }
+      #tabla-jugadores tbody tr.abierta td.c-stars::after { transform: rotate(180deg); }
+      #tabla-jugadores tbody tr.abierta td.c-stars {
+        border-bottom: 1px dashed var(--sf-border) !important;
+        padding-bottom: .45rem !important; margin-bottom: .5rem;
+      }
+
+      /* --- Detalle: oculto hasta que se toca la tarjeta --- */
+      #tabla-jugadores td.det { display: none; }
+      #tabla-jugadores tbody tr.abierta td.det {
+        display: block; order: 5;
+        flex: 0 0 50%; width: 50%;
+        padding: .28rem .3rem !important;
+      }
+      #tabla-jugadores tbody tr.abierta td.det::before {
+        content: attr(data-label); display: block;
+        font-size: .6rem; font-weight: 700; letter-spacing: .05em;
+        text-transform: uppercase; color: var(--sf-muted); margin-bottom: 1px;
+      }
+      #tabla-jugadores tbody tr.abierta td.c-curi {
+        order: 6; flex: 0 0 100%; width: 100%; max-width: none;
+        margin-top: .2rem;
+      }
+      #tabla-jugadores tbody tr.abierta td.c-asis { min-width: 0; }
+      .curiosidad-badge { white-space: normal; }
+    }
+
+    /* Pantallas muy estrechas (iPhone SE y similares) */
+    @media (max-width: 360px) {
+      #tabla-jugadores tbody tr.abierta td.det { flex: 0 0 100%; width: 100%; }
+      .hero h1 { font-size: 1.25rem; }
+    }
+
   </style>
 </head>
 <body>
 <div class="container py-4">
   <div class="hero text-center">
     <img src="logo-solarfc.jpg" alt="Logo Solar Football" width="160" height="160" style="max-height: 160px; width: 160px; height: 160px; object-fit: cover;">
-    <h1>SOLAR football</h1>
-    <p id="fecha-modificacion">Última actualización: <span></span></p>
-    <div class="temporada-badge">
-      <i class="fas fa-futbol"></i>
-      Partidos disputados esta temporada: <strong id="contador-temporada-num">0</strong>
+    <div class="hero-txt">
+      <h1>SOLAR football</h1>
+      <p id="fecha-modificacion">Última actualización: <span></span></p>
+      <div class="temporada-badge">
+        <i class="fas fa-futbol"></i>
+        <span class="badge-largo">Partidos disputados esta temporada:</span>
+        <span class="badge-corto">Esta temporada:</span>
+        <strong id="contador-temporada-num">0</strong>
+      </div>
     </div>
   </div>
 
@@ -294,6 +474,24 @@
         <span class="leyenda-item"><span class="grupo-dot dot-habitual"></span>Habituales</span>
         <span class="leyenda-item"><span class="grupo-dot dot-visitor"></span>Visitors</span>
         <span class="leyenda-item"><span class="grupo-dot dot-hall"></span>Hall of Fame</span>
+      </div>
+      <!-- Solo en móvil: la cabecera de la tabla se oculta, así que el orden va aquí -->
+      <div class="orden-movil-wrap mb-3">
+        <label for="orden-movil" class="form-label mb-1">Ordenar por</label>
+        <select id="orden-movil" class="form-select form-select-sm">
+          <option value="">Orden de la hoja</option>
+          <option value="media">Media (mayor primero)</option>
+          <option value="fifa">FIFA (mayor primero)</option>
+          <option value="nombre">Nombre (A-Z)</option>
+          <option value="partidosJugados">Asistencia</option>
+          <option value="balance">Balance</option>
+          <option value="pagos">Pagos</option>
+          <option value="ataque">Ataque</option>
+          <option value="defensa">Defensa</option>
+          <option value="tactica">Táctica</option>
+          <option value="estamina">Estamina</option>
+          <option value="puntualidad">Puntualidad</option>
+        </select>
       </div>
       <div class="tabla-jugadores-wrap table-responsive">
       <table id="tabla-jugadores" class="table table-bordered text-center">
@@ -503,7 +701,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js?v=13"></script>
+<script src="Jugadores.js?v=14"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
