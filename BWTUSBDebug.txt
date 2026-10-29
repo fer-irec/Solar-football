@@ -1,0 +1,15 @@
+Device Count: 1
+Initialized function Complete....!
+
+Device is counted as PAT board device -> Calling function bwtekGetPATBoardDeviceCount() 
+
+Device Count: 1
+Initialized function Complete....!
+
+Device is counted as PAT board device -> Calling function bwtekGetPATBoardDeviceCount() 
+
+Device Count: 1
+Initialized function Complete....!
+
+Device is counted as PAT board device -> Calling function bwtekGetPATBoardDeviceCount() 
+

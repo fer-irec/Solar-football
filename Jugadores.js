@@ -206,6 +206,7 @@ let matchesTemporada = [];
 let statsPorJugador = new Map();
 let pagosData = [];               // filas de la hoja "Pagos": { fecha, pagador }
 let pagosPorJugador = new Map();  // nombre normalizado -> nº de veces que ha pagado
+let jornadasTemporadaTotal = 0;   // jornadas disputadas esta temporada (ver calcularJornadasTemporadaTotal)
 
 // A partir de esta fecha cuentan los partidos para Balance / Curiosidades
 // (los partidos anteriores del histórico no se tienen en cuenta en estas estadísticas)
@@ -222,6 +223,20 @@ function parseFechaPartido(fecha) {
   if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   const d = new Date(s);
   return isNaN(d) ? null : d;
+}
+
+/**
+ * Clave de jornada a partir de la fecha del partido.
+ *
+ * Una "jornada" es un día de fútbol; un "partido" es cada resultado. En un
+ * triangular (3 equipos, 6 partidos) los 6 comparten fecha, así que cuentan
+ * como una sola jornada: 1 de asistencia para el que va, pero 6 resultados
+ * para el balance. Devuelve null si la fecha no se puede interpretar.
+ */
+function claveJornada(fecha) {
+  const d = parseFechaPartido(fecha);
+  if (!d) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /** Filtra los partidos de la temporada actual (desde TEMPORADA_INICIO en adelante) */
@@ -322,16 +337,17 @@ function calcularEstadisticasPartidos(matches) {
   const stats = new Map();
   const getStat = nombre => {
     if (!stats.has(nombre)) {
-      stats.set(nombre, { jugados: 0, v: 0, d: 0, e: 0, curV: 0, curD: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0 });
+      stats.set(nombre, { jugados: 0, v: 0, d: 0, e: 0, curV: 0, curD: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0, jornadas: new Set() });
     }
     return stats.get(nombre);
   };
 
-  const registrar = (nombreRaw, golesFavor, golesContra) => {
+  const registrar = (nombreRaw, golesFavor, golesContra, jornada) => {
     const nombre = normNombre(nombreRaw);
     if (!nombre) return;
     const s = getStat(nombre);
     s.jugados++;
+    if (jornada) s.jornadas.add(jornada);   // varios partidos el mismo día = 1 jornada
     s.favorSum += golesFavor;
     s.contraSum += golesContra;
     if (golesFavor > golesContra) {
@@ -347,8 +363,9 @@ function calcularEstadisticasPartidos(matches) {
     const g1 = _num(p.goles1), g2 = _num(p.goles2);
     const eq1 = Array.isArray(p.equipo1) ? p.equipo1 : [];
     const eq2 = Array.isArray(p.equipo2) ? p.equipo2 : [];
-    eq1.forEach(n => registrar(n, g1, g2));
-    eq2.forEach(n => registrar(n, g2, g1));
+    const jornada = claveJornada(p.fecha);
+    eq1.forEach(n => registrar(n, g1, g2, jornada));
+    eq2.forEach(n => registrar(n, g2, g1, jornada));
   });
 
   return stats;
@@ -393,16 +410,33 @@ function calcularCuriosidades(statsMap, minPartidos = 3) {
   return resultado;
 }
 
-/** Refleja en la cabecera cuántos partidos lleva disputados la temporada actual */
+/**
+ * Jornadas disputadas esta temporada = días distintos con partido registrado.
+ *
+ * Una jornada puede haberse apuntado solo subiendo a mano la columna
+ * "Asistencia" de la hoja, sin registrar los resultados. En ese caso la mayor
+ * asistencia individual va por delante, así que nos quedamos con la más alta:
+ * el contador y las fracciones "X/Y" no se quedan cortos sin tocar nada a mano.
+ */
+function calcularJornadasTemporadaTotal() {
+  const jornadasRegistradas = new Set(
+    matchesTemporada.map(p => claveJornada(p.fecha)).filter(Boolean)
+  ).size;
+  const maxAsistencia = (jugadores || []).reduce((max, j) => Math.max(max, _num(j.asistencia)), 0);
+  return Math.max(jornadasRegistradas, maxAsistencia);
+}
+
+/** Refleja en la cabecera cuántas jornadas lleva disputadas la temporada actual */
 function actualizarContadorTemporada() {
   const el = document.getElementById("contador-temporada-num");
-  if (el) el.textContent = matchesTemporada.length;
+  if (el) el.textContent = jornadasTemporadaTotal;
 }
 
 /** Fusiona balance/curiosidades calculados dentro de cada objeto jugador */
 function aplicarEstadisticasPartidos() {
   // Solo cuentan los partidos de la temporada actual (desde el 01/09/2026)
   matchesTemporada = filtrarPartidosTemporada(matchesData);
+  jornadasTemporadaTotal = calcularJornadasTemporadaTotal();
   actualizarContadorTemporada();
 
   statsPorJugador = calcularEstadisticasPartidos(matchesTemporada);
@@ -410,10 +444,14 @@ function aplicarEstadisticasPartidos() {
 
   jugadores = jugadores.map(j => {
     const key = normNombre(j.nombre);
-    const s = statsPorJugador.get(key) || { jugados: 0, v: 0, d: 0, e: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0 };
+    const s = statsPorJugador.get(key) || { jugados: 0, v: 0, d: 0, e: 0, maxV: 0, maxD: 0, favorSum: 0, contraSum: 0, jornadas: new Set() };
     return {
       ...j,
       partidosJugados: s.jugados,
+      // Asistencia = jornadas (días) en las que ha jugado. Nos quedamos con la
+      // mayor entre lo registrado y tu columna del Sheet, por si una jornada se
+      // apuntó solo a mano.
+      jornadasAsistidas: Math.max(s.jornadas ? s.jornadas.size : 0, _num(j.asistencia)),
       victorias: s.v,
       derrotas: s.d,
       empates: s.e,
@@ -426,9 +464,9 @@ function aplicarEstadisticasPartidos() {
 /** Radar mini (SVG) de Ataque / Defensa / Táctica / Estamina, escala 0-5 */
 function generarRadarSVG(j, size = 48) {
   // Ratio de asistencia de la temporada actual: 1 = ha venido a todos los partidos, 0 = a ninguno
-  const totalPartidosTemporada = matchesTemporada.length;
-  const ratioAsistencia = totalPartidosTemporada > 0
-    ? Math.max(0, Math.min(1, _num(j.partidosJugados) / totalPartidosTemporada))
+  const totalJornadas = jornadasTemporadaTotal;
+  const ratioAsistencia = totalJornadas > 0
+    ? Math.max(0, Math.min(1, _num(j.jornadasAsistidas) / totalJornadas))
     : 0;
 
   // Cada eje lleva su propia escala (0-5 para los atributos, 0-1 para la asistencia);
@@ -567,7 +605,7 @@ function mostrarTabla() {
   if (!tbody) return;
   tbody.innerHTML = "";
   // Partidos de la temporada actual (desde el 01/09/2026) — misma base que Balance/Curiosidades
-  const totalPartidos = matchesTemporada.length;
+  const totalPartidos = jornadasTemporadaTotal;
 
   jugadoresOrdenados.forEach(j => {
     const mediaVal = limitar(calcularMedia(j));
@@ -577,7 +615,8 @@ function mostrarTabla() {
     const grupo = (j.grupo === "visitor" || j.grupo === "hall") ? j.grupo : "habitual";
 
     // % de asistencia sobre los partidos de la temporada (partidos realmente jugados por el jugador, no el contador histórico)
-    const asistenciaTemporada = _num(j.partidosJugados);
+    // Jornadas a las que ha venido (no partidos: un triangular es 1 jornada)
+    const asistenciaTemporada = _num(j.jornadasAsistidas);
     const pctAsistencia = totalPartidos > 0 ? Math.min(100, Math.round((asistenciaTemporada / totalPartidos) * 100)) : 0;
 
     // Balance de partidos (victorias suman, derrotas restan)
@@ -608,7 +647,7 @@ function mostrarTabla() {
       <td class="det c-stat" data-label="Estamina"><span class="${colorClase(j.estamina)}">${_num(j.estamina).toFixed(2)}</span></td>
       <td class="det asistencia-cell c-asis" data-label="Asistencia">
         <span class="fw-semibold">${asistenciaTemporada}/${totalPartidos}</span>
-        <div class="progress asistencia-bar" title="${pctAsistencia}% de los partidos de la temporada (desde 01/09/2026)">
+        <div class="progress asistencia-bar" title="${pctAsistencia}% de las jornadas de la temporada (desde 01/09/2026)">
           <div class="progress-bar" style="width:${pctAsistencia}%;background:${colorHexPct(pctAsistencia)};"></div>
         </div>
       </td>
@@ -688,6 +727,33 @@ function actualizarContadorTorneo() {
   if (btn) btn.disabled = !(seleccionados >= min && seleccionados <= max);
 }
 
+/* ========== Fotos de jugadores ========== */
+// Las fotos están en "Fotos jugadores/<Nombre>.<ext>". Como desde el navegador no se
+// puede listar la carpeta, se prueban las extensiones en orden; si ninguna existe,
+// se muestra un círculo con la inicial del jugador.
+const FOTOS_DIR = "Fotos jugadores/";
+const FOTOS_EXT = ["jpg", "png", "jpeg", "webp", "JPG", "PNG", "JPEG"];
+
+function siguienteFotoJugador(img) {
+  const i = Number(img.dataset.ext || 0) + 1;
+  if (i < FOTOS_EXT.length) {
+    img.dataset.ext = i;
+    img.src = FOTOS_DIR + encodeURIComponent(img.dataset.nombre) + "." + FOTOS_EXT[i];
+  } else {
+    img.replaceWith(Object.assign(document.createElement("span"), {
+      className: "foto-jugador foto-jugador-vacia",
+      textContent: (img.dataset.nombre || "?").charAt(0).toUpperCase()
+    }));
+  }
+}
+
+function fotoJugadorHTML(nombre) {
+  const n = String(nombre || "").trim().replace(/"/g, "&quot;");
+  return `<img class="foto-jugador" alt="${n}" data-nombre="${n}" data-ext="0"
+            src="${FOTOS_DIR}${encodeURIComponent(n)}.${FOTOS_EXT[0]}"
+            onerror="siguienteFotoJugador(this)">`;
+}
+
 /* ========== Mostrar equipos (Partido/Torneo/Manual) ========== */
 function mostrarEquipos(equipos, contenedorId, modo="torneo") {
   const colores = ["azul-circle", "rojo-circle", "verde-circle", "blanco-circle", "naranja-circle"];
@@ -724,7 +790,7 @@ function mostrarEquipos(equipos, contenedorId, modo="torneo") {
 
     const lista = equipo.map(j =>
       `<li class="list-group-item d-flex justify-content-between align-items-center">
-         <span>${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</span>
+         <span class="d-flex align-items-center">${fotoJugadorHTML(j.nombre)}${j.nombre} ${j === capitan ? "<strong>(C)</strong>" : ""}</span>
          ${generarEstrellasFIFA(calcularFifa(j))}
        </li>`).join("");
 
@@ -1040,11 +1106,45 @@ async function publicarResultado() {
     return;
   }
 
+  // Asistencia: se cuenta por JORNADA (día), no por partido. En un triangular se
+  // publican 6 resultados con la misma fecha y cada jugador solo debe sumar 1.
+  // Por eso miramos a quién se le ha sumado ya hoy y solo acreditamos a los que
+  // aún no salían: así el tercer equipo, que no juega el primer partido del día,
+  // también acaba sumando su asistencia.
+  const jornada = claveJornada(fecha);
+  const yaAcreditados = new Set();
+  if (jornada) {
+    matchesData
+      .filter(p => claveJornada(p.fecha) === jornada)
+      .forEach(p => [...(p.equipo1 || []), ...(p.equipo2 || [])]
+        .forEach(n => yaAcreditados.add(normNombre(n))));
+  }
+  const nuevosDelDia = [...equipo1, ...equipo2].filter(n => !yaAcreditados.has(normNombre(n)));
+
   // 1) Guardar partido (si falla, detener)
   await guardarPartido({ fecha, goles1, goles2, equipo1, equipo2 });
 
-  // 2) Incrementar asistencia (si falla, avisamos)
-  await incrementarAsistencia([...equipo1, ...equipo2]);
+  // Lo añadimos en local para que la tabla y el contador se actualicen sin
+  // recargar, y para que el siguiente partido del día ya vea la jornada abierta
+  matchesData.push({ fecha, goles1, goles2, equipo1, equipo2, resultado: `${goles1} - ${goles2}` });
+
+  // 2) Sumar asistencia solo a los jugadores que aún no la tenían hoy
+  let avisoJornada = "";
+  if (nuevosDelDia.length) {
+    await incrementarAsistencia(nuevosDelDia);
+    if (yaAcreditados.size) {
+      avisoJornada = `\n📅 Misma jornada: asistencia sumada solo a los ${nuevosDelDia.length} jugadores nuevos del día.`;
+    }
+  } else {
+    avisoJornada = "\n📅 Misma jornada: todos estos jugadores ya tenían la asistencia de hoy.";
+  }
+
+  // Refrescamos balance, curiosidades y contador con el partido recién añadido
+  aplicarEstadisticasPartidos();
+  jugadoresOriginal = [...jugadores];
+  jugadoresOrdenados = [...jugadores];
+  aplicarPagos();
+  mostrarTabla();
 
   // 3) Registrar quién ha pagado (opcional: si falla, el resultado ya está guardado)
   const pagador = document.getElementById("pagador")?.value || "";
@@ -1063,7 +1163,7 @@ async function publicarResultado() {
     }
   }
 
-  alert("Resultado publicado ✅" + avisoPago);
+  alert("Resultado publicado ✅" + avisoJornada + avisoPago);
   mostrarHistorial();
 }
 
@@ -1109,6 +1209,22 @@ function tarjetaPartidoHTML(p) {
     </div>`;
 }
 
+/** Agrupa una lista de partidos por jornada (día), conservando el orden recibido */
+function agruparPorJornada(lista) {
+  const grupos = [];
+  const porClave = new Map();
+  (lista || []).forEach(p => {
+    const clave = claveJornada(p.fecha) || `sin-fecha-${grupos.length}`;
+    if (!porClave.has(clave)) {
+      const grupo = { clave, fecha: p.fecha, partidos: [] };
+      porClave.set(clave, grupo);
+      grupos.push(grupo);
+    }
+    porClave.get(clave).partidos.push(p);
+  });
+  return grupos;
+}
+
 async function mostrarHistorial() {
   try {
     // anti-cache
@@ -1133,9 +1249,28 @@ async function mostrarHistorial() {
     anteriores.reverse();
 
     if (actuales.length) {
-      cont.insertAdjacentHTML("beforeend", `<div class="row row-cols-1 row-cols-md-2 g-4" id="historial-actual"></div>`);
+      cont.insertAdjacentHTML("beforeend", `<div id="historial-actual"></div>`);
       const contActual = document.getElementById("historial-actual");
-      actuales.forEach(p => contActual.insertAdjacentHTML("beforeend", tarjetaPartidoHTML(p)));
+
+      // Los días con más de un partido (triangulares) se agrupan bajo una
+      // cabecera de jornada; un día con un solo partido se pinta tal cual.
+      agruparPorJornada(actuales).forEach(g => {
+        if (g.partidos.length > 1) {
+          contActual.insertAdjacentHTML("beforeend", `
+            <div class="jornada-bloque mb-4">
+              <div class="jornada-header">
+                <span class="jornada-fecha"><i class="fas fa-calendar-day"></i> Jornada del ${formatFechaHistorial(g.fecha)}</span>
+                <span class="jornada-count">${g.partidos.length} partidos</span>
+              </div>
+              <div class="row row-cols-1 row-cols-md-2 g-4"></div>
+            </div>`);
+        } else {
+          contActual.insertAdjacentHTML("beforeend", `<div class="row row-cols-1 row-cols-md-2 g-4 mb-4"></div>`);
+        }
+        const bloque = contActual.lastElementChild;
+        const fila = bloque.querySelector(".row") || bloque;
+        g.partidos.forEach(p => fila.insertAdjacentHTML("beforeend", tarjetaPartidoHTML(p)));
+      });
     } else {
       cont.insertAdjacentHTML("beforeend", `<p class="text-muted">Todavía no se ha disputado ningún partido esta temporada.</p>`);
     }
