@@ -283,7 +283,9 @@ async function cargarJugadores() {
 async function cargarPagos() {
   try {
     const data = await getJSON(`${GAS_URL}?type=payments&ts=${Date.now()}`);
-    pagosData = Array.isArray(data) ? data : [];
+    // Un Apps Script sin el endpoint de pagos devuelve la lista de jugadores:
+    // nos quedamos solo con las filas que de verdad son pagos.
+    pagosData = Array.isArray(data) ? data.filter(p => p && p.pagador) : [];
   } catch (e) {
     // Si el Apps Script todavía no tiene el endpoint de pagos, la web sigue
     // funcionando igual: simplemente todos los contadores se quedan a 0.
@@ -311,7 +313,7 @@ function aplicarPagos() {
 }
 
 async function guardarPago(pago) {
-  const resp = await postWithRetry({ type: "savePayment", payment: pago }, "pago");
+  const resp = await postWithRetry({ type: "savePayment", payment: pago }, "pago guardado");
   console.log("[GAS/savePayment] OK →", resp);
   return resp;
 }
@@ -934,12 +936,18 @@ function initManualTab() {
 
 // Últimos equipos generados en la pestaña "Partido": se usan para precargar
 // automáticamente esta pestaña y agilizar la publicación del resultado.
+// Se guardan en el Apps Script (para poder generar en el PC y publicar desde el
+// móvil) y además en localStorage como copia local por si falla la red.
 const LS_KEY_ULTIMO_PARTIDO = "sf_ultimo_partido_generado";
 let ultimoPartidoGenerado = null;
 
 function guardarUltimoPartidoGenerado(equipoAzul, equipoRojo) {
-  ultimoPartidoGenerado = { azul: equipoAzul, rojo: equipoRojo };
+  ultimoPartidoGenerado = { azul: equipoAzul, rojo: equipoRojo, ts: Date.now() };
   try { localStorage.setItem(LS_KEY_ULTIMO_PARTIDO, JSON.stringify(ultimoPartidoGenerado)); } catch (e) { /* almacenamiento no disponible */ }
+
+  postWithRetry({ type: "saveLastTeams", teams: ultimoPartidoGenerado }, "equipos guardados")
+    .then(resp => console.log("[GAS/saveLastTeams] OK →", resp))
+    .catch(e => console.warn("[GAS/saveLastTeams] No se pudieron compartir los equipos:", e));
 }
 
 function cargarUltimoPartidoGenerado() {
@@ -948,6 +956,23 @@ function cargarUltimoPartidoGenerado() {
     if (raw) ultimoPartidoGenerado = JSON.parse(raw);
   } catch (e) {
     ultimoPartidoGenerado = null;
+  }
+}
+
+/** Trae del Apps Script los últimos equipos generados (en cualquier dispositivo).
+ *  Devuelve true si son más recientes que los que ya teníamos. */
+async function cargarUltimoPartidoGeneradoRemoto() {
+  try {
+    const data = await getJSON(`${GAS_URL}?type=lastTeams&ts=${Date.now()}`);
+    const valido = data && !Array.isArray(data) && Array.isArray(data.azul) && Array.isArray(data.rojo);
+    if (!valido) return false;
+    if (ultimoPartidoGenerado && (ultimoPartidoGenerado.ts || 0) >= (data.ts || 0)) return false;
+    ultimoPartidoGenerado = { azul: data.azul, rojo: data.rojo, ts: data.ts || 0 };
+    try { localStorage.setItem(LS_KEY_ULTIMO_PARTIDO, JSON.stringify(ultimoPartidoGenerado)); } catch (e) { /* almacenamiento no disponible */ }
+    return true;
+  } catch (e) {
+    console.warn("No se pudieron cargar los últimos equipos generados:", e);
+    return false;
   }
 }
 
@@ -1693,7 +1718,7 @@ function generarEquiposTorneo() {
 document.addEventListener("DOMContentLoaded", async () => {
   cargarUltimoPartidoGenerado(); // últimos equipos generados en "Partido" (si los hubiera de una sesión anterior)
 
-  await cargarAsistencias();
+  await Promise.all([cargarAsistencias(), cargarUltimoPartidoGeneradoRemoto()]);
   await cargarJugadores();
   await mostrarHistorial();
 
@@ -1737,6 +1762,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   centrarPestanaActiva();
   tabsNav?.addEventListener("shown.bs.tab", centrarPestanaActiva);
+
+  // Al abrir "Asistencia y Resultado" miramos si se han generado equipos nuevos
+  // en otro dispositivo desde que se cargó la página (p. ej. en el PC)
+  tabsNav?.addEventListener("shown.bs.tab", async e => {
+    if (e.target?.getAttribute("href") !== "#asistencia") return;
+    if (await cargarUltimoPartidoGeneradoRemoto()) renderAsistenciaRes();
+  });
 
   // --- Móvil: selector de orden (la cabecera de la tabla queda oculta) ---
   const selOrden = document.getElementById("orden-movil");

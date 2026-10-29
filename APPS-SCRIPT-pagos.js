@@ -1,6 +1,6 @@
 /*******************************************************
  * SOLAR football - Google Apps Script WebApp Backend
- * Version: 2026-09-08_v7 (rangos fijos + grupos + pagos)
+ * Version: 2026-10-29_v8 (rangos fijos + grupos + pagos + últimos equipos)
  *
  * Players ranges (según tu sheet):
  *  - Habituales: 10..69
@@ -13,15 +13,17 @@
  *  GET  /exec?type=attendance       -> { "Nombre": asistencia, ... }
  *  GET  /exec?type=matches          -> matches (array)
  *  GET  /exec?type=payments         -> pagos (array) [{ fecha, pagador }]
+ *  GET  /exec?type=lastTeams        -> últimos equipos generados { azul:[...], rojo:[...], ts }
  *  GET  /exec?type=debug            -> info (json)
  *
  *  POST /exec  {type:"incAttendance", names:[...]}     -> "Asistencia actualizada"
  *  POST /exec  {type:"saveMatch", match:{...}}         -> "Partido guardado en matches"
  *  POST /exec  {type:"savePayment", payment:{...}}     -> "Pago guardado en Pagos"
+ *  POST /exec  {type:"saveLastTeams", teams:{...}}     -> "Equipos guardados"
  *******************************************************/
 
 const CONFIG = {
-  VERSION: "2026-09-08_v7",
+  VERSION: "2026-10-29_v8",
 
   SPREADSHEET_ID: "1yGaw8xyMCeHgM7waTTqM9szPg8AMiHz3DWBDn_RVtpg",
   PLAYERS_SHEET_GID: 2089846182,
@@ -46,7 +48,8 @@ const CONFIG = {
   COL_ASISTENCIA: 9,    // I
 
   MATCHES_SHEET_NAME: "matches",
-  PAYMENTS_SHEET_NAME: "Pagos",   // 👈 NUEVO: hoja del historial de pagos
+  PAYMENTS_SHEET_NAME: "Pagos",   // hoja del historial de pagos
+  LAST_TEAMS_PROP: "LAST_TEAMS",   // 👈 NUEVO: Script Property con los últimos equipos generados
 };
 
 /* =========================
@@ -64,6 +67,9 @@ function doGet(e) {
 
     case "payments":                      // 👈 NUEVO
       return json_(getPayments_());
+
+    case "lastTeams":                     // 👈 NUEVO
+      return json_(getLastTeams_());
 
     case "debug":
       return json_(getDebug_());
@@ -109,6 +115,11 @@ function doPost(e) {
     if (type === "savePayment") {          // 👈 NUEVO
       savePayment_(payload.payment || {});
       return text_("Pago guardado en Pagos");
+    }
+
+    if (type === "saveLastTeams") {        // 👈 NUEVO
+      saveLastTeams_(payload.teams || {});
+      return text_("Equipos guardados");
     }
 
     return text_(`Error: type desconocido "${type}"`);
@@ -379,6 +390,33 @@ function formatFechaPago_(v) {
     return Utilities.formatDate(v, Session.getScriptTimeZone(), "dd/MM/yyyy");
   }
   return normName_(v);
+}
+
+/* =========================
+   Últimos equipos generados   👈 BLOQUE NUEVO
+   Se guardan en las Script Properties para que los equipos generados en un
+   dispositivo (p. ej. el PC) se puedan precargar en otro (p. ej. el móvil).
+   ========================= */
+function getLastTeams_() {
+  const raw = PropertiesService.getScriptProperties().getProperty(CONFIG.LAST_TEAMS_PROP);
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveLastTeams_(teams) {
+  const limpiar = arr => (Array.isArray(arr) ? arr : []).map(normName_).filter(Boolean);
+  const azul = limpiar(teams.azul);
+  const rojo = limpiar(teams.rojo);
+  if (!azul.length || !rojo.length) throw new Error("Faltan jugadores en los equipos");
+
+  PropertiesService.getScriptProperties().setProperty(
+    CONFIG.LAST_TEAMS_PROP,
+    JSON.stringify({ azul, rojo, ts: Number(teams.ts) || Date.now() })
+  );
 }
 
 /* =========================
