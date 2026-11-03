@@ -114,7 +114,7 @@
     #tabla-jugadores tbody tr.fila-habitual:nth-child(even) { background: #f7faf8; }
 
     /* Columna Jugador: nombre completo en una sola línea, ancho contenido */
-    #tabla-jugadores td:first-child, #tabla-jugadores th:first-child {
+    #tabla-jugadores td.c-jugador, #tabla-jugadores th.th-jugador {
       min-width: 150px;
       white-space: nowrap;
       text-align: left;
@@ -185,7 +185,10 @@
     #tabla-jugadores tbody tr.fila-habitual td:first-child { border-left: 4px solid #4d8fdb; }
     #tabla-jugadores tbody tr.fila-visitor td:first-child  { border-left: 4px solid var(--sf-gold); }
     #tabla-jugadores tbody tr.fila-hall td:first-child     { border-left: 4px solid #9b6bff; }
-    #tabla-jugadores td:first-child { text-align: left; font-weight: 600; }
+    #tabla-jugadores td.c-jugador { text-align: left; font-weight: 600; }
+    #tabla-jugadores td.c-foto { width: 72px; padding: .35rem .5rem; }
+    #tabla-jugadores td.c-foto .foto-jugador { width: 56px; height: 56px; margin: 0 auto; display: block; }
+    #tabla-jugadores td.c-foto .foto-jugador-vacia { display: flex; font-size: 1.3rem; }
 
     .valor-rojo { color: #d93025; font-weight: bold; }
     .valor-naranja { color: #f57c00; font-weight: bold; }
@@ -393,6 +396,9 @@
       #tabla-jugadores tbody td { border: none !important; padding: 0; text-align: left; }
 
       /* --- Cabecera de la tarjeta (siempre visible) --- */
+      #tabla-jugadores td.c-foto { order: 0; width: auto; flex: 0 0 auto; padding: 0 .5rem 0 0 !important; }
+      #tabla-jugadores td.c-foto .foto-jugador { width: 44px; height: 44px; }
+      #tabla-jugadores td.c-foto .foto-jugador-vacia { font-size: 1.05rem; }
       #tabla-jugadores td.c-radar { order: 1; width: 52px; flex: 0 0 52px; }
       #tabla-jugadores td.c-jugador {
         order: 2; flex: 1 1 auto; min-width: 0 !important;
@@ -514,7 +520,8 @@
       <table id="tabla-jugadores" class="table table-bordered text-center">
         <thead class="table-dark">
           <tr>
-            <th class="sortable">Jugador</th>
+            <th>Foto</th>
+            <th class="sortable th-jugador">Jugador</th>
             <th>Radar</th>
             <th class="sortable">Ataque</th>
             <th class="sortable">Defensa</th>
@@ -718,7 +725,7 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="Jugadores.js?v=18"></script>
+<script src="Jugadores.js?v=19"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {

@@ -641,6 +641,7 @@ function mostrarTabla() {
       : `<span class="text-muted">—</span>`;
 
     const fila = `<tr class="fila-${grupo}">
+      <td class="c-foto">${fotoJugadorHTML(j.nombre)}</td>
       <td class="c-jugador"><span class="grupo-dot dot-${grupo}"></span>${j.nombre}</td>
       <td class="radar-cell c-radar">${generarRadarSVG(j)}</td>
       <td class="det c-stat" data-label="Ataque"><span class="${colorClase(j.ataque)}">${_num(j.ataque).toFixed(2)}</span></td>
@@ -736,23 +737,34 @@ function actualizarContadorTorneo() {
 const FOTOS_DIR = "Fotos jugadores/";
 const FOTOS_EXT = ["jpg", "png", "jpeg", "webp", "JPG", "PNG", "JPEG"];
 
+// Caché nombre -> URL de la foto encontrada, o null si no tiene foto. Así, al
+// repintar la tabla (p. ej. al ordenar) no se vuelven a probar todas las extensiones.
+const fotosCache = new Map();
+
+function inicialJugadorHTML(nombre) {
+  return `<span class="foto-jugador foto-jugador-vacia">${(nombre || "?").charAt(0).toUpperCase()}</span>`;
+}
+
 function siguienteFotoJugador(img) {
   const i = Number(img.dataset.ext || 0) + 1;
   if (i < FOTOS_EXT.length) {
     img.dataset.ext = i;
     img.src = FOTOS_DIR + encodeURIComponent(img.dataset.nombre) + "." + FOTOS_EXT[i];
   } else {
-    img.replaceWith(Object.assign(document.createElement("span"), {
-      className: "foto-jugador foto-jugador-vacia",
-      textContent: (img.dataset.nombre || "?").charAt(0).toUpperCase()
-    }));
+    fotosCache.set(img.dataset.nombre, null);
+    img.outerHTML = inicialJugadorHTML(img.dataset.nombre);
   }
 }
 
 function fotoJugadorHTML(nombre) {
   const n = String(nombre || "").trim().replace(/"/g, "&quot;");
+  if (fotosCache.has(n)) {
+    const url = fotosCache.get(n);
+    return url ? `<img class="foto-jugador" alt="${n}" src="${url}">` : inicialJugadorHTML(n);
+  }
   return `<img class="foto-jugador" alt="${n}" data-nombre="${n}" data-ext="0"
             src="${FOTOS_DIR}${encodeURIComponent(n)}.${FOTOS_EXT[0]}"
+            onload="fotosCache.set(this.dataset.nombre, this.getAttribute('src'))"
             onerror="siguienteFotoJugador(this)">`;
 }
 
@@ -1775,7 +1787,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (selOrden) selOrden.addEventListener("change", () => ordenarDesdeSelect(selOrden.value));
 
   // ⟵ Mapeo de columnas ordenables (alineado con las <th> de la tabla; null = no ordenable)
-  const columnas = ["nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "pagos", "media", "fifa", null, null];
+  const columnas = [null, "nombre", null, "ataque", "defensa", "tactica", "estamina", "partidosJugados", "puntualidad", "balance", "pagos", "media", "fifa", null, null];
   document.querySelectorAll("#tabla-jugadores thead th").forEach((th, index) => {
     const columna = columnas[index];
     if (columna) {
